@@ -12,11 +12,17 @@ datasource db {
 // ─────────────────────────────────────────────
 
 enum UserRole {
-  SUPERADMIN        // platform team
-  ORGANIZER_ADMIN   // tenant owner
-  ORGANIZER_STAFF   // tenant employee
-  SCANNER           // door staff (read-only + scan)
-  BUYER             // end customer
+  // Platform-level (no organizerId)
+  SUPERADMIN        // full platform access
+  STAFF             // internal operator – creates events for clients, support
+
+  // Tenant-scoped (organizerId required)
+  ORGANIZER_OWNER   // tenant owner – full control over org + events + billing
+  ORGANIZER_MEMBER  // tenant staff – limited management
+  SCANNER           // door staff – scan only
+
+  // Public
+  CUSTOMER          // end buyer
 }
 
 enum OrganizerStatus {
@@ -103,6 +109,9 @@ model Organizer {
   logoUrl          String?
   websiteUrl       String?
 
+  // Ticket template (JSON layout for ticket PDF/display – editor TBD)
+  ticketTemplate   Json?           // organizer-level default
+
   status           OrganizerStatus @default(PENDING)
 
   createdAt        DateTime        @default(now())
@@ -130,7 +139,7 @@ model User {
   firstName      String?
   lastName       String?
   phone          String?
-  role           UserRole  @default(BUYER)
+  role           UserRole  @default(CUSTOMER)
 
   // Non-null for ORGANIZER_* and SCANNER roles
   organizerId    String?
@@ -157,9 +166,11 @@ model RefreshToken {
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt  DateTime
+  revokedAt  DateTime?  // set on logout / rotation
   createdAt  DateTime @default(now())
 
   @@index([userId])
+  @@index([token])
 }
 
 // ─────────────────────────────────────────────
@@ -209,6 +220,9 @@ model Show {
   // SEO
   seoTitle      String?
   seoDescription String?
+
+  // Ticket template override for this show (overrides organizer-level template)
+  ticketTemplate Json?
 
   status        EventStatus @default(DRAFT)
   createdAt     DateTime    @default(now())
@@ -418,7 +432,7 @@ model Ticket {
 
   // QR payload: HMAC-SHA256 signed token (ticketId + terminId + nonce)
   qrToken        String       @unique
-  nonce          String       @default(cuid())  // prevents token reuse
+  nonce          String       @default(cuid())  // rotate on refund to invalidate printed QRs
 
   status         TicketStatus @default(VALID)
   usedAt         DateTime?    // set on first successful scan

@@ -51,12 +51,46 @@ Multi-tenant SaaS ticketing platform. Three actor types:
     └── .env.example
 ```
 
-## Multi-tenant isolation strategy
+## Auth & RBAC
 
+### JWT tokens
+- **Access token**: 15 min TTL, signed with `JWT_SECRET`, carries `{ sub, email, role, organizerId? }`.
+- **Refresh token**: 7-day TTL, random UUID stored in `RefreshToken` table, rotated on every use (old token marked `revokedAt`).
+- Endpoints: `POST /v1/auth/register`, `/v1/auth/login`, `/v1/auth/refresh`, `/v1/auth/logout`.
+
+### Self-registration flow
+`POST /v1/auth/register` requires `acceptTerms: true`. On success, a transaction creates:
+1. `Organizer` (status `PENDING` until approved by STAFF/SUPERADMIN)
+2. `User` with role `ORGANIZER_OWNER` linked to the new organizer
+3. `TermsAcceptance` for the current active `ORGANIZER_REGISTRATION` terms version
+
+### Role model
+
+| Role | Scope | Capabilities |
+|---|---|---|
+| `SUPERADMIN` | Platform | Full access to everything |
+| `STAFF` | Platform | Create/manage shows for clients, support; no billing changes |
+| `ORGANIZER_OWNER` | Tenant | Full control: org profile, shows, tickets, images, template, stats, own staff |
+| `ORGANIZER_MEMBER` | Tenant | Manage shows/termins/tickettypes, read orders/scans |
+| `SCANNER` | Tenant | Scan tickets only |
+| `CUSTOMER` | Public | Own orders and tickets |
+
+Platform roles (`SUPERADMIN`, `STAFF`) have `organizerId = null`.  
+Tenant roles (`ORGANIZER_OWNER`, `ORGANIZER_MEMBER`, `SCANNER`) require non-null `organizerId`.
+
+### CASL ability-based authorization
+`CaslAbilityFactory` builds a `MongoAbility` for each request from the JWT payload.  
+Use `@CheckPolicies(ability => ability.can('update', 'Show'))` on handlers, backed by `PoliciesGuard`.  
+Coarse role checks use `@Roles(...)` + `RolesGuard`.
+
+### Tenant isolation
 - Every tenant-owned model carries `organizerId` (FK to `Organizer`).
-- NestJS guards inject `organizerId` from the JWT on every authenticated request and filter all queries by it.
-- Superadmin bypass: `SUPERADMIN` role skips the tenant filter.
-- PostgreSQL Row-Level Security is **not** enabled in v1 (application-layer isolation is sufficient and simpler to reason about); can be added as a hardening step later.
+- NestJS services filter all queries by `organizerId` extracted from the JWT.
+- `SUPERADMIN`/`STAFF` bypass the tenant filter.
+- PostgreSQL Row-Level Security is **not** enabled in v1 (application-layer isolation is sufficient); can be added as a hardening step later.
+
+### Ticket template
+`Organizer.ticketTemplate` and `Show.ticketTemplate` hold arbitrary JSON for the ticket PDF/display layout. Show-level value overrides the organizer default. A visual editor is planned for a later milestone.
 
 ## Data model key decisions
 
@@ -110,10 +144,18 @@ Backend and postgres/redis are **not exposed** to the host — only Caddy has ex
 - `unattended-upgrades` for automatic security patches.
 - UFW: only ports 22, 80, 443 open.
 
-## Domain setup (TODO)
+## Domain setup
 
-Edit `infra/caddy/Caddyfile` – replace `api.example.com` / `app.example.com` with real domains.  
-Point DNS A records to this server's IP. Caddy handles TLS automatically on first request.
+DNS is live: `maxiticket.africa` + wildcard `*.maxiticket.africa` → this server.
+
+| Subdomain | Routes to | Purpose |
+|---|---|---|
+| `api.maxiticket.africa` | `backend:3001` | REST API |
+| `maxiticket.africa`, `www` | `frontend:3000` | Public event pages + checkout |
+| `admin.maxiticket.africa` | `frontend:3000` | Organizer + superadmin portal |
+| `skener.maxiticket.africa` | `frontend:3000` | Scanner PWA |
+
+ACME email: `info@maxiticket.sk`. TLS issued automatically by Caddy on first request.
 
 ## Backup
 

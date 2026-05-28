@@ -1,6 +1,4 @@
 # Maxiticket – Caddyfile
-# Replace api.example.com and app.example.com with real domains
-# Caddy handles Let's Encrypt automatically
 
 {
   email info@maxiticket.sk
@@ -8,7 +6,8 @@
   # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
-api.example.com {
+# ── API ────────────────────────────────────────────────
+api.maxiticket.africa {
   reverse_proxy backend:3001 {
     health_uri /health
     health_interval 15s
@@ -31,7 +30,41 @@ api.example.com {
   }
 }
 
-app.example.com {
+# ── Public web ─────────────────────────────────────────
+maxiticket.africa, www.maxiticket.africa {
+  reverse_proxy frontend:3000 {
+    health_uri /api/health
+    health_interval 15s
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+
+  encode zstd gzip
+}
+
+# ── Admin + Organizer portal ───────────────────────────
+admin.maxiticket.africa {
+  reverse_proxy frontend:3000 {
+    health_uri /api/health
+    health_interval 15s
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+
+  encode zstd gzip
+}
+
+# ── Scanner PWA ────────────────────────────────────────
+skener.maxiticket.africa {
   reverse_proxy frontend:3000 {
     health_uri /api/health
     health_interval 15s
