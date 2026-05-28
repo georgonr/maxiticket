@@ -78,3 +78,130 @@ export interface RegisterOrganizerPayload {
   phone?: string;
   acceptTerms: true;
 }
+
+// Shows
+export const showsApi = {
+  list: (token: string) => apiFetch<Show[]>('/v1/shows', { token }),
+  get: (id: string, token: string) => apiFetch<ShowDetail>('/v1/shows/' + id, { token }),
+  create: (body: CreateShowBody, token: string) => apiFetch<Show>('/v1/shows', { method: 'POST', body: JSON.stringify(body), token }),
+  update: (id: string, body: Partial<CreateShowBody>, token: string) => apiFetch<Show>('/v1/shows/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
+  delete: (id: string, token: string) => apiFetch<void>('/v1/shows/' + id, { method: 'DELETE', token }),
+  uploadImage: (id: string, file: File, token: string) => {
+    const fd = new FormData(); fd.append('file', file);
+    return apiFetch<{ url: string; thumbnailUrl: string }>('/v1/shows/' + id + '/image', { method: 'POST', body: fd, token, headers: {} });
+  },
+};
+
+export const venuesApi = {
+  list: (token: string) => apiFetch<Venue[]>('/v1/venues', { token }),
+  create: (body: CreateVenueBody, token: string) => apiFetch<Venue>('/v1/venues', { method: 'POST', body: JSON.stringify(body), token }),
+};
+
+export const terminsApi = {
+  list: (showId: string, token: string) => apiFetch<Termin[]>('/v1/shows/' + showId + '/termins', { token }),
+  create: (showId: string, body: CreateTerminBody, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins', { method: 'POST', body: JSON.stringify(body), token }),
+  update: (showId: string, id: string, body: Partial<CreateTerminBody>, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
+  delete: (showId: string, id: string, token: string) => apiFetch<void>('/v1/shows/' + showId + '/termins/' + id, { method: 'DELETE', token }),
+};
+
+export const ticketTypesApi = {
+  list: (terminId: string, token: string) => apiFetch<TicketType[]>('/v1/termins/' + terminId + '/ticket-types', { token }),
+  create: (terminId: string, body: CreateTicketTypeBody, token: string) => apiFetch<TicketType>('/v1/termins/' + terminId + '/ticket-types', { method: 'POST', body: JSON.stringify(body), token }),
+  update: (terminId: string, id: string, body: Partial<CreateTicketTypeBody>, token: string) => apiFetch<TicketType>('/v1/termins/' + terminId + '/ticket-types/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
+  delete: (terminId: string, id: string, token: string) => apiFetch<void>('/v1/termins/' + terminId + '/ticket-types/' + id, { method: 'DELETE', token }),
+};
+
+// Domain types
+export interface Show {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  category?: string;
+  posterUrl?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status: string;
+  organizerId: string;
+  createdAt: string;
+}
+
+export interface ShowDetail extends Show {
+  termins: Termin[];
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  city?: string;
+  street?: string;
+  capacity?: number;
+}
+
+export interface Termin {
+  id: string;
+  showId: string;
+  venueId: string;
+  venue?: Venue;
+  startsAt: string;
+  endsAt?: string;
+  timezone: string;
+  status: string;
+  visible: boolean;
+  capacity?: number;
+  ticketTypes?: TicketType[];
+}
+
+export interface TicketType {
+  id: string;
+  terminId: string;
+  name: string;
+  price: string;
+  currency: string;
+  totalQuantity?: number;
+  maxPerOrder: number;
+  saleStartsAt?: string;
+  saleEndsAt?: string;
+  isActive: boolean;
+}
+
+export interface CreateShowBody {
+  name: string;
+  slug: string;
+  description?: string;
+  category?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: string;
+}
+
+export interface CreateVenueBody {
+  name: string;
+  city?: string;
+  street?: string;
+  postalCode?: string;
+  capacity?: number;
+}
+
+export interface CreateTerminBody {
+  venueId: string;
+  startsAt: string;
+  endsAt?: string;
+  doorsOpenAt?: string;
+  timezone?: string;
+  capacity?: number;
+  status?: string;
+  visible?: boolean;
+  notes?: string;
+}
+
+export interface CreateTicketTypeBody {
+  name: string;
+  price: number;
+  currency?: string;
+  totalQuantity?: number;
+  maxPerOrder?: number;
+  saleStartsAt?: string;
+  saleEndsAt?: string;
+  isActive?: boolean;
+}

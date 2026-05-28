@@ -28,14 +28,18 @@ Multi-tenant SaaS ticketing platform. Three actor types:
 ├── backend/           # NestJS app
 │   ├── prisma/        # schema.prisma + migrations
 │   └── src/
-│       ├── auth/
-│       ├── organizers/
-│       ├── shows/
-│       ├── termins/
-│       ├── tickets/
-│       ├── orders/
-│       ├── scanner/
-│       └── admin/
+│       ├── auth/           # register, login, refresh, logout
+│       ├── casl/           # AppAbility factory (SUPERADMIN/STAFF/ORGANIZER_*/SCANNER/CUSTOMER)
+│       ├── common/         # guards, decorators, exception filter
+│       ├── health/         # GET /v1/health
+│       ├── organizers/     # tenant CRUD
+│       ├── users/          # user CRUD + role management
+│       ├── storage/        # StorageService abstraction + LocalStorageService (UPLOADS_DIR)
+│       ├── uploads/        # static file serving: GET /v1/uploads/images/:file
+│       ├── venues/         # Venue CRUD (tenant-scoped)
+│       ├── shows/          # Show CRUD + POST /v1/shows/:id/image upload
+│       ├── termins/        # Termin CRUD (nested: /v1/shows/:showId/termins)
+│       └── ticket-types/   # TicketType CRUD (nested: /v1/termins/:terminId/ticket-types)
 ├── frontend/          # Next.js 14 App Router (single app, host-based routing)
 │   ├── src/
 │   │   ├── middleware.ts       # reads Host → sets x-area header (public/admin/scanner)
@@ -56,6 +60,11 @@ Multi-tenant SaaS ticketing platform. Three actor types:
 │   │   └── components/
 │   │       ├── ui/             # Button, Input
 │   │       └── auth/           # LoginForm, RegisterForm
+│   ├── src/app/(admin)/shows/         # event list, new show form
+│   │   ├── [id]/                      # show detail + image upload
+│   │   │   ├── edit/                  # edit show
+│   │   │   └── termins/new/           # add termin (venue select + inline venue create)
+│   │   │       └── [terminId]/ticket-types/  # manage ticket types
 │   └── public/
 │       ├── manifest.json       # PWA manifest (scanner)
 │       ├── sw.js               # Service worker (scanner – cache-first)
@@ -139,6 +148,28 @@ Platform reports in EUR using fixed exchange rates stored separately (not in v1 
 ### Terms & Conditions
 `TermsVersion` is versioned; `isActive = true` marks the current version.  
 Acceptance is recorded with IP + user-agent for legal compliance.
+
+## Image upload & storage
+
+Provider token `STORAGE_SERVICE` is injected into `ShowsService`. The current implementation is `LocalStorageService` which writes to `UPLOADS_DIR` (Docker volume `uploads_data` → `/app/uploads`).
+
+- **Ingest**: `POST /v1/shows/:id/image` (multipart, max 10 MB, JPEG/PNG/WebP)
+  - Main image → resized to max 1200 px wide, converted to WebP Q85
+  - Thumbnail → 600×400 cover crop, WebP Q80
+- **Serve**: `GET /v1/uploads/images/:filename` and `/thumbs/:filename` (immutable cache headers)
+- **Swap to S3**: implement `S3StorageService` satisfying the same `StorageService` interface and swap the provider in `StorageModule`. No service code changes required.
+
+## Event data model (Show/Termin/TicketType)
+
+```
+Organizer ──< Show ──< Termin ──< TicketType
+                  └──< Venue (referenced by Termin)
+```
+
+- **Show**: metadata stable across dates (name, SEO, poster, ticketTemplate JSON)
+- **Termin**: one occurrence – date/time, venue, status (`DRAFT | COMING_SOON | ON_SALE | SOLD_OUT | CANCELLED | PAST`), visibility flag
+- **TicketType**: price, quantity, sale window per termin
+- All entities are tenant-scoped via `organizerId`; SUPERADMIN/STAFF bypass the filter
 
 ## Frontend routing strategy
 

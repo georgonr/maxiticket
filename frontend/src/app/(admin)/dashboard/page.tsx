@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getValidToken, logout } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 
@@ -85,7 +86,9 @@ export default function DashboardPage() {
             </>
           ) : role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' ? (
             <>
-              <DashCard title="Podujatia" desc="Vytvorte a spravujte show" />
+              <Link href="/shows">
+                <DashCard title="Podujatia" desc="Vytvorte a spravujte show" />
+              </Link>
               <DashCard title="Objednávky" desc="Prehľad predajov a lístkov" />
               <DashCard title="Tím" desc="Pozývajte členov a skenerov" />
             </>

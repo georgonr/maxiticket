@@ -45,10 +45,12 @@ enum EventStatus {
 }
 
 enum TerminStatus {
+  DRAFT
+  COMING_SOON
   ON_SALE
   SOLD_OUT
   CANCELLED
-  ENDED
+  PAST
 }
 
 enum OrderStatus {
@@ -252,7 +254,8 @@ model Termin {
   timezone     String       @default("Europe/Bratislava")
   notes        String?
 
-  status       TerminStatus @default(ON_SALE)
+  status       TerminStatus @default(DRAFT)
+  visible      Boolean      @default(true)
   capacity     Int?
 
   createdAt    DateTime     @default(now())

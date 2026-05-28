@@ -43,6 +43,10 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
+      UPLOADS_DIR: /app/uploads
+      UPLOADS_BASE_URL: https://api.maxiticket.africa/v1/uploads/images
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,6 +96,7 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+  uploads_data:
 
 networks:
   internal:
