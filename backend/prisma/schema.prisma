@@ -1,0 +1,497 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  SUPERADMIN        // platform team
+  ORGANIZER_ADMIN   // tenant owner
+  ORGANIZER_STAFF   // tenant employee
+  SCANNER           // door staff (read-only + scan)
+  BUYER             // end customer
+}
+
+enum OrganizerStatus {
+  PENDING   // registered, awaiting approval
+  ACTIVE
+  SUSPENDED
+}
+
+enum VatStatus {
+  NON_PAYER
+  PAYER
+  REGISTERED  // registered but not yet a full payer
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  ARCHIVED
+}
+
+enum TerminStatus {
+  ON_SALE
+  SOLD_OUT
+  CANCELLED
+  ENDED
+}
+
+enum OrderStatus {
+  PENDING    // payment initiated
+  PAID
+  REFUNDED
+  CANCELLED
+  FAILED
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
+  REFUNDED
+}
+
+enum ScanResult {
+  OK
+  ALREADY_USED
+  INVALID_SIGNATURE
+  NOT_FOUND
+  CANCELLED
+  WRONG_EVENT
+}
+
+enum TermsType {
+  ORGANIZER_REGISTRATION
+  BUYER_PURCHASE
+}
+
+// ─────────────────────────────────────────────
+// TENANT – ORGANIZER
+// ─────────────────────────────────────────────
+
+model Organizer {
+  id               String          @id @default(cuid())
+  name             String
+  slug             String          @unique  // used in URLs
+  email            String          @unique
+  phone            String?
+
+  // Legal / billing
+  ico              String?         // IČO
+  dic              String?         // DIČ
+  icoOrDic         String?         // combined for SK
+  vatStatus        VatStatus       @default(NON_PAYER)
+  iban             String?
+  bankName         String?
+
+  // Payout / commission
+  commissionPct    Decimal         @default(5.00) @db.Decimal(5, 2)
+  payoutEmail      String?
+  payoutNotes      String?
+
+  // Customisation
+  ticketFooterText String?         // printed on every ticket
+  logoUrl          String?
+  websiteUrl       String?
+
+  status           OrganizerStatus @default(PENDING)
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  // Relations
+  users            User[]
+  shows            Show[]
+  venues           Venue[]
+  orders           Order[]
+  products         Product[]
+  termsVersions    TermsVersion[]
+
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String?   // null for OAuth-only accounts
+  firstName      String?
+  lastName       String?
+  phone          String?
+  role           UserRole  @default(BUYER)
+
+  // Non-null for ORGANIZER_* and SCANNER roles
+  organizerId    String?
+  organizer      Organizer? @relation(fields: [organizerId], references: [id])
+
+  isActive       Boolean   @default(true)
+  emailVerified  Boolean   @default(false)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  orders         Order[]
+  refreshTokens  RefreshToken[]
+  termsAcceptances TermsAcceptance[]
+  scanLogs       ScanLog[]
+
+  @@index([organizerId])
+  @@index([role])
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// VENUE (miesto konania)
+// ─────────────────────────────────────────────
+
+model Venue {
+  id           String    @id @default(cuid())
+  organizerId  String
+  organizer    Organizer @relation(fields: [organizerId], references: [id])
+
+  name         String
+  street       String?
+  city         String?
+  postalCode   String?
+  country      String    @default("SK")
+  lat          Decimal?  @db.Decimal(10, 7)
+  lng          Decimal?  @db.Decimal(10, 7)
+  capacity     Int?
+  notes        String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  termins      Termin[]
+
+  @@index([organizerId])
+}
+
+// ─────────────────────────────────────────────
+// SHOW (podujatie / show – bez konkrétneho dátumu)
+// ─────────────────────────────────────────────
+
+model Show {
+  id            String      @id @default(cuid())
+  organizerId   String
+  organizer     Organizer   @relation(fields: [organizerId], references: [id])
+
+  // Content
+  name          String
+  slug          String      // unique within organizer
+  description   String?     @db.Text
+  category      String?
+  posterUrl     String?
+  bannerUrl     String?
+
+  // SEO
+  seoTitle      String?
+  seoDescription String?
+
+  status        EventStatus @default(DRAFT)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  termins       Termin[]
+  products      Product[]
+
+  @@unique([organizerId, slug])
+  @@index([organizerId, status])
+}
+
+// ─────────────────────────────────────────────
+// TERMIN (konkrétny termín show)
+// ─────────────────────────────────────────────
+
+model Termin {
+  id           String       @id @default(cuid())
+  showId       String
+  show         Show         @relation(fields: [showId], references: [id])
+  venueId      String
+  venue        Venue        @relation(fields: [venueId], references: [id])
+
+  startsAt     DateTime
+  endsAt       DateTime?
+  doorsOpenAt  DateTime?
+  timezone     String       @default("Europe/Bratislava")
+  notes        String?
+
+  status       TerminStatus @default(ON_SALE)
+  capacity     Int?
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  ticketTypes  TicketType[]
+  orderItems   OrderItem[]
+  tickets      Ticket[]
+  scanLogs     ScanLog[]
+
+  @@index([showId])
+  @@index([startsAt])
+}
+
+// ─────────────────────────────────────────────
+// TICKET TYPE (typ vstupenky na termín)
+// ─────────────────────────────────────────────
+
+model TicketType {
+  id                String    @id @default(cuid())
+  terminId          String
+  termin            Termin    @relation(fields: [terminId], references: [id])
+
+  name              String    // "VIP", "Štandard", "Dieťa"
+  description       String?
+  price             Decimal   @db.Decimal(10, 2)
+  currency          String    @default("EUR")  // ISO 4217
+  totalQuantity     Int?      // null = unlimited
+  maxPerOrder       Int       @default(10)
+
+  // Sale window
+  saleStartsAt      DateTime?
+  saleEndsAt        DateTime?
+
+  sortOrder         Int       @default(0)
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  orderItems        OrderItem[]
+  tickets           Ticket[]
+
+  @@index([terminId])
+}
+
+// ─────────────────────────────────────────────
+// PRODUCT + VARIANT (merch)
+// ─────────────────────────────────────────────
+
+model Product {
+  id           String           @id @default(cuid())
+  organizerId  String
+  organizer    Organizer        @relation(fields: [organizerId], references: [id])
+  showId       String?          // optionally linked to a specific show
+  show         Show?            @relation(fields: [showId], references: [id])
+
+  name         String
+  description  String?
+  imageUrl     String?
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  variants     ProductVariant[]
+
+  @@index([organizerId])
+  @@index([showId])
+}
+
+model ProductVariant {
+  id         String      @id @default(cuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id])
+
+  name       String      // "S", "M", "L", "One size"
+  sku        String?
+  price      Decimal     @db.Decimal(10, 2)
+  currency   String      @default("EUR")
+  stock      Int?        // null = unlimited
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([productId])
+}
+
+// ─────────────────────────────────────────────
+// ORDER
+// ─────────────────────────────────────────────
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique  // human-readable, e.g. MT-2024-00001
+  organizerId   String
+  organizer     Organizer   @relation(fields: [organizerId], references: [id])
+  userId        String?     // null for guest checkout
+  user          User?       @relation(fields: [userId], references: [id])
+
+  // Buyer snapshot (denormalised for receipts)
+  buyerEmail    String
+  buyerName     String?
+  buyerPhone    String?
+
+  status        OrderStatus @default(PENDING)
+  currency      String      @default("EUR")
+  totalAmount   Decimal     @db.Decimal(10, 2)
+  feeAmount     Decimal     @default(0) @db.Decimal(10, 2)
+
+  // Payment
+  paymentProvider  String?  // "stripe", "gopay", etc.
+  paymentRef       String?  // provider transaction ID
+  paidAt           DateTime?
+  refundedAt       DateTime?
+
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items         OrderItem[]
+  tickets       Ticket[]
+
+  @@index([organizerId])
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+// ─────────────────────────────────────────────
+// ORDER ITEM (vstupenka alebo merch v objednávke)
+// ─────────────────────────────────────────────
+
+model OrderItem {
+  id               String          @id @default(cuid())
+  orderId          String
+  order            Order           @relation(fields: [orderId], references: [id])
+
+  // Exactly one of these is non-null:
+  ticketTypeId     String?
+  ticketType       TicketType?     @relation(fields: [ticketTypeId], references: [id])
+  terminId         String?         // denorm for easier queries
+  termin           Termin?         @relation(fields: [terminId], references: [id])
+
+  productVariantId String?
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  quantity         Int
+  unitPrice        Decimal         @db.Decimal(10, 2)
+  currency         String          @default("EUR")
+
+  // Price snapshot at purchase time
+  priceSnapshot    Json
+
+  createdAt        DateTime        @default(now())
+
+  tickets          Ticket[]
+
+  @@index([orderId])
+  @@index([ticketTypeId])
+}
+
+// ─────────────────────────────────────────────
+// TICKET (jednotlivá vstupenka s QR)
+// ─────────────────────────────────────────────
+
+model Ticket {
+  id             String       @id @default(cuid())
+  orderId        String
+  order          Order        @relation(fields: [orderId], references: [id])
+  orderItemId    String
+  orderItem      OrderItem    @relation(fields: [orderItemId], references: [id])
+  ticketTypeId   String
+  ticketType     TicketType   @relation(fields: [ticketTypeId], references: [id])
+  terminId       String
+  termin         Termin       @relation(fields: [terminId], references: [id])
+
+  // QR payload: HMAC-SHA256 signed token (ticketId + terminId + nonce)
+  qrToken        String       @unique
+  nonce          String       @default(cuid())  // prevents token reuse
+
+  status         TicketStatus @default(VALID)
+  usedAt         DateTime?    // set on first successful scan
+
+  // Seat assignment (optional)
+  seatSection    String?
+  seatRow        String?
+  seatNumber     String?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  scanLogs       ScanLog[]
+
+  @@index([orderId])
+  @@index([terminId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// SCAN LOG (anti-passback audit trail)
+// ─────────────────────────────────────────────
+
+model ScanLog {
+  id          String     @id @default(cuid())
+  ticketId    String
+  ticket      Ticket     @relation(fields: [ticketId], references: [id])
+  terminId    String
+  termin      Termin     @relation(fields: [terminId], references: [id])
+  scannedById String?    // User (scanner role)
+  scannedBy   User?      @relation(fields: [scannedById], references: [id])
+
+  result      ScanResult
+  deviceId    String?    // PWA device fingerprint
+  ipAddress   String?
+  scannedAt   DateTime   @default(now())
+
+  @@index([ticketId])
+  @@index([terminId])
+  @@index([scannedAt])
+}
+
+// ─────────────────────────────────────────────
+// TERMS & CONDITIONS (verziované)
+// ─────────────────────────────────────────────
+
+model TermsVersion {
+  id           String     @id @default(cuid())
+  organizerId  String?    // null = platform-wide terms
+  organizer    Organizer? @relation(fields: [organizerId], references: [id])
+
+  type         TermsType
+  version      String     // e.g. "1.0", "2.1"
+  content      String     @db.Text
+  publishedAt  DateTime   @default(now())
+  isActive     Boolean    @default(true)
+
+  acceptances  TermsAcceptance[]
+
+  @@index([type, isActive])
+}
+
+model TermsAcceptance {
+  id             String       @id @default(cuid())
+  termsVersionId String
+  termsVersion   TermsVersion @relation(fields: [termsVersionId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+
+  acceptedAt     DateTime     @default(now())
+  ipAddress      String?
+  userAgent      String?
+
+  @@unique([termsVersionId, userId])
+  @@index([userId])
+}
