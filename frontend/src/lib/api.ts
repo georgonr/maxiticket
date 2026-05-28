@@ -3,11 +3,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.maxiticket.afri
 type FetchOptions = RequestInit & { token?: string };
 
 export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
-  const { token, headers, ...rest } = options;
+  const { token, headers, body, ...rest } = options;
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const res = await fetch(`${API_BASE}${path}`, {
     ...rest,
+    body,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },

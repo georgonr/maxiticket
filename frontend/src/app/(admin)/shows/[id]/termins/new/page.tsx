@@ -8,6 +8,7 @@ import { terminsApi, venuesApi, Venue, CreateTerminBody, CreateVenueBody } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 const TIMEZONE_OPTIONS = [
   { value: 'Europe/Bratislava', label: 'Europe/Bratislava' },
@@ -145,13 +146,15 @@ export default function NewTerminPage() {
             )}
           </div>
 
-          <Input
-            id="startsAt" label="Začiatok *" type="datetime-local" required
-            value={form.startsAt} onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
+          <DateTimePicker
+            id="startsAt" label="Začiatok *" required showQuickButtons
+            value={form.startsAt}
+            onChange={(v) => setForm((f) => ({ ...f, startsAt: v }))}
           />
-          <Input
-            id="endsAt" label="Koniec (voliteľné)" type="datetime-local"
-            value={form.endsAt ?? ''} onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
+          <DateTimePicker
+            id="endsAt" label="Koniec (voliteľné)" showQuickButtons
+            value={form.endsAt ?? ''}
+            onChange={(v) => setForm((f) => ({ ...f, endsAt: v }))}
           />
           <Select
             id="timezone" label="Časová zóna"

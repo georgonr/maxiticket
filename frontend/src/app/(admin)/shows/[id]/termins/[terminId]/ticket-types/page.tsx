@@ -7,6 +7,7 @@ import { getValidToken } from '@/lib/auth';
 import { ticketTypesApi, TicketType, CreateTicketTypeBody } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 const EMPTY_FORM: CreateTicketTypeBody = {
   name: '', price: 0, currency: 'EUR',
@@ -165,15 +166,15 @@ export default function TicketTypesPage() {
                 onChange={(e) => setForm((f) => ({ ...f, maxPerOrder: Number(e.target.value) }))}
               />
             </div>
-            <Input
-              id="saleStartsAt" label="Predaj od (voliteľné)" type="datetime-local"
+            <DateTimePicker
+              id="saleStartsAt" label="Predaj od (voliteľné)" showQuickButtons
               value={form.saleStartsAt ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, saleStartsAt: e.target.value }))}
+              onChange={(v) => setForm((f) => ({ ...f, saleStartsAt: v }))}
             />
-            <Input
-              id="saleEndsAt" label="Predaj do (voliteľné)" type="datetime-local"
+            <DateTimePicker
+              id="saleEndsAt" label="Predaj do (voliteľné)" showQuickButtons
               value={form.saleEndsAt ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, saleEndsAt: e.target.value }))}
+              onChange={(v) => setForm((f) => ({ ...f, saleEndsAt: v }))}
             />
             <label className="flex items-center gap-2 text-sm">
               <input
