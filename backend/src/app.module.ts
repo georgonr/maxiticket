@@ -12,6 +12,7 @@ import { StorageModule } from './storage/storage.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { VenuesModule } from './venues/venues.module';
 import { ShowsModule } from './shows/shows.module';
+import { ShowImagesModule } from './show-images/show-images.module';
 import { TerminsModule } from './termins/termins.module';
 import { TicketTypesModule } from './ticket-types/ticket-types.module';
 import { HealthController } from './health/health.controller';
@@ -30,6 +31,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     UsersModule,
     VenuesModule,
     ShowsModule,
+    ShowImagesModule,
     TerminsModule,
     TicketTypesModule,
   ],

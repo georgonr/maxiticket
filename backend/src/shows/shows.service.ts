@@ -1,21 +1,14 @@
 import {
-  Injectable, NotFoundException, ForbiddenException, ConflictException, Inject, BadRequestException,
+  Injectable, NotFoundException, ForbiddenException, ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
 import { UserRole } from '@prisma/client';
 import { CreateShowDto, UpdateShowDto } from './dto/show.dto';
-import { STORAGE_SERVICE, StorageService } from '../storage/storage.interface';
-
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 @Injectable()
 export class ShowsService {
-  constructor(
-    private prisma: PrismaService,
-    @Inject(STORAGE_SERVICE) private storage: StorageService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   private orgId(user: JwtPayload): string {
     if (!user.organizerId) throw new ForbiddenException();
@@ -35,7 +28,10 @@ export class ShowsService {
     return this.prisma.show.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { termins: true } } },
+      include: {
+        _count: { select: { termins: true } },
+        images: { where: { isCover: true }, take: 1 },
+      },
     });
   }
 
@@ -43,6 +39,7 @@ export class ShowsService {
     const show = await this.prisma.show.findUnique({
       where: { id },
       include: {
+        images: { orderBy: [{ isCover: 'desc' }, { sortOrder: 'asc' }] },
         termins: {
           orderBy: { startsAt: 'asc' },
           include: { venue: true, ticketTypes: { orderBy: { sortOrder: 'asc' } } },
@@ -77,25 +74,5 @@ export class ShowsService {
   async remove(id: string, user: JwtPayload) {
     await this.findOne(id, user);
     return this.prisma.show.delete({ where: { id } });
-  }
-
-  async uploadImage(id: string, buffer: Buffer, originalName: string, mimeType: string, size: number, user: JwtPayload) {
-    if (!ALLOWED_MIME.includes(mimeType)) throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG, WebP');
-    if (size > MAX_BYTES) throw new BadRequestException('File too large (max 10 MB)');
-
-    const show = await this.findOne(id, user);
-
-    // Delete old image if present
-    if (show.posterUrl) {
-      const old = show.posterUrl.split('/').pop();
-      if (old) await this.storage.deleteFile(old).catch(() => null);
-    }
-
-    const stored = await this.storage.saveImage(buffer, originalName, mimeType);
-    await this.prisma.show.update({
-      where: { id },
-      data: { posterUrl: stored.url },
-    });
-    return { url: stored.url, thumbnailUrl: stored.thumbnailUrl };
   }
 }

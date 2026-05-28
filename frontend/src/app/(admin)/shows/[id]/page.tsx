@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef, ChangeEvent } from 'react';
+import { useEffect, useState, useRef, ChangeEvent, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
-import { showsApi, ShowDetail, Termin, TicketType, ticketTypesApi } from '@/lib/api';
+import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -23,51 +23,63 @@ export default function ShowDetailPage() {
   const [show, setShow] = useState<ShowDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadPreviews, setUploadPreviews] = useState<{ file: File; preview: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function load(token: string) {
+  const load = useCallback(async (token: string) => {
     const data = await showsApi.get(id, token);
     setShow(data);
-  }
+  }, [id]);
 
   useEffect(() => {
     getValidToken().then(async (token) => {
       if (!token) { router.replace('/login'); return; }
-      try {
-        await load(token);
-      } catch (e) {
+      try { await load(token); } catch (e) {
         setError(e instanceof Error ? e.message : 'Chyba pri načítaní');
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     });
-  }, [id, router]);
+  }, [id, router, load]);
 
-  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+  function handleFilePick(e: ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
+    if (!picked.length) return;
+    setUploadPreviews(picked.map((f) => ({ file: f, preview: URL.createObjectURL(f) })));
+    e.target.value = '';
   }
 
-  async function handleImageUpload() {
-    if (!imageFile) return;
+  async function handleUpload() {
+    if (!uploadPreviews.length) return;
     setUploading(true);
     try {
       const token = await getValidToken();
       if (!token) { router.replace('/login'); return; }
-      await showsApi.uploadImage(id, imageFile, token);
+      await showImagesApi.upload(id, uploadPreviews.map((p) => p.file), token);
+      uploadPreviews.forEach((p) => URL.revokeObjectURL(p.preview));
+      setUploadPreviews([]);
       await load(token);
-      setImageFile(null);
-      setImagePreview('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Chyba pri nahrávaní obrázka');
-    } finally {
-      setUploading(false);
-    }
+      setError(e instanceof Error ? e.message : 'Chyba pri nahrávaní');
+    } finally { setUploading(false); }
+  }
+
+  async function handleSetCover(imageId: string) {
+    const token = await getValidToken();
+    if (!token) { router.replace('/login'); return; }
+    try {
+      await showImagesApi.setCover(id, imageId, token);
+      await load(token);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba'); }
+  }
+
+  async function handleDeleteImage(imageId: string) {
+    if (!confirm('Odstrániť tento obrázok?')) return;
+    const token = await getValidToken();
+    if (!token) { router.replace('/login'); return; }
+    try {
+      await showImagesApi.delete(id, imageId, token);
+      await load(token);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba pri mazaní'); }
   }
 
   async function handleDeleteTermin(terminId: string) {
@@ -78,9 +90,7 @@ export default function ShowDetailPage() {
       const { terminsApi } = await import('@/lib/api');
       await terminsApi.delete(id, terminId, token);
       await load(token);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Chyba pri mazaní termínu');
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba pri mazaní termínu'); }
   }
 
   async function handleDeleteTicketType(terminId: string, ticketTypeId: string) {
@@ -90,22 +100,17 @@ export default function ShowDetailPage() {
     try {
       await ticketTypesApi.delete(terminId, ticketTypeId, token);
       await load(token);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Chyba pri mazaní typu lístka');
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba pri mazaní'); }
   }
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+    </div>
+  );
+  if (!show) return <div className="p-8 text-red-600">{error || 'Podujatie nenájdené'}</div>;
 
-  if (!show) {
-    return <div className="p-8 text-red-600">{error || 'Podujatie nenájdené'}</div>;
-  }
+  const cover = show.images?.find((i) => i.isCover);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,39 +127,111 @@ export default function ShowDetailPage() {
         {/* Show header */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold">{show.name}</h1>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[show.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                  {show.status}
-                </span>
+            <div className="flex gap-4 items-start">
+              {cover && (
+                <img src={cover.squareUrl} alt={show.name} className="h-20 w-20 rounded-md object-cover flex-shrink-0 border border-gray-200" />
+              )}
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 className="text-2xl font-bold">{show.name}</h1>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[show.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {show.status}
+                  </span>
+                </div>
+                {show.category && <p className="text-sm text-gray-500">{show.category}</p>}
+                {show.description && <p className="mt-1 text-sm text-gray-700">{show.description}</p>}
               </div>
-              {show.category && <p className="text-sm text-gray-500">{show.category}</p>}
-              {show.description && <p className="mt-2 text-sm text-gray-700">{show.description}</p>}
             </div>
             <Button variant="outline" size="sm" onClick={() => router.push(`/shows/${id}/edit`)}>Editovať</Button>
           </div>
+        </div>
 
-          {/* Poster */}
-          {show.posterUrl && (
-            <img src={show.posterUrl} alt={show.name} className="mt-4 h-48 rounded-md object-cover" />
+        {/* Gallery */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold mb-4">Galéria</h2>
+
+          {/* Existing images */}
+          {show.images && show.images.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4">
+              {show.images.map((img: ShowImage) => (
+                <div key={img.id} className="relative group rounded-md overflow-hidden border-2 border-transparent"
+                  style={{ borderColor: img.isCover ? 'rgb(99 102 241)' : undefined }}>
+                  <img src={img.squareUrl} alt="" className="w-full aspect-square object-cover" />
+
+                  {img.isCover && (
+                    <span className="absolute top-1 left-1 bg-indigo-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                      Titulka
+                    </span>
+                  )}
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-1">
+                    {!img.isCover && (
+                      <button
+                        onClick={() => handleSetCover(img.id)}
+                        className="w-full text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded px-2 py-1"
+                      >
+                        Nastaviť titulku
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteImage(img.id)}
+                      className="w-full text-xs bg-red-600 hover:bg-red-700 text-white rounded px-2 py-1"
+                    >
+                      Odstrániť
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
-          {/* Image upload */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-sm font-medium text-gray-700 mb-2">Plagát / obrázok</p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-              <Button variant="outline" size="sm" type="button" onClick={() => fileInputRef.current?.click()}>
-                Vybrať obrázok
+          {show.images?.length === 0 && (
+            <p className="text-sm text-gray-400 mb-4">Žiadne obrázky. Nahrajte prvý obrázok.</p>
+          )}
+
+          {/* Upload new images */}
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={handleFilePick}
+            />
+
+            {uploadPreviews.length === 0 ? (
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                + Pridať obrázky
               </Button>
-              {imagePreview && (
-                <>
-                  <img src={imagePreview} alt="Náhľad" className="h-16 w-16 rounded object-cover border border-gray-200" />
-                  <Button size="sm" loading={uploading} onClick={handleImageUpload}>Nahrať</Button>
-                </>
-              )}
-            </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {uploadPreviews.map((p, i) => (
+                    <div key={i} className="relative">
+                      <img src={p.preview} alt="" className="h-16 w-16 rounded object-cover border border-gray-200" />
+                      <button
+                        onClick={() => setUploadPreviews((prev) => { URL.revokeObjectURL(prev[i].preview); return prev.filter((_, j) => j !== i); })}
+                        className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center leading-none"
+                      >×</button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-16 w-16 rounded border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xl hover:border-gray-400"
+                  >+</button>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" loading={uploading} onClick={handleUpload}>
+                    Nahrať ({uploadPreviews.length})
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { uploadPreviews.forEach((p) => URL.revokeObjectURL(p.preview)); setUploadPreviews([]); }}>
+                    Zrušiť
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -214,7 +291,6 @@ function TerminCard({
         <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={onDelete}>Odstrániť</Button>
       </div>
 
-      {/* Ticket types */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-medium text-gray-600">Typy lístkov ({ticketTypes.length})</p>

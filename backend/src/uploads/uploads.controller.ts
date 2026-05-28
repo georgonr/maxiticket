@@ -14,6 +14,11 @@ export class UploadsController {
     this.uploadsDir = config.get('UPLOADS_DIR', '/app/uploads');
   }
 
+  @Get('images/squares/:filename')
+  serveSquare(@Param('filename') filename: string, @Res() reply: FastifyReply) {
+    return this.serveFile(join(this.uploadsDir, 'squares', filename), reply);
+  }
+
   @Get('images/thumbs/:filename')
   serveThumb(@Param('filename') filename: string, @Res() reply: FastifyReply) {
     return this.serveFile(join(this.uploadsDir, 'thumbs', filename), reply);

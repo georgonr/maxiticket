@@ -88,10 +88,19 @@ export const showsApi = {
   create: (body: CreateShowBody, token: string) => apiFetch<Show>('/v1/shows', { method: 'POST', body: JSON.stringify(body), token }),
   update: (id: string, body: Partial<CreateShowBody>, token: string) => apiFetch<Show>('/v1/shows/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
   delete: (id: string, token: string) => apiFetch<void>('/v1/shows/' + id, { method: 'DELETE', token }),
-  uploadImage: (id: string, file: File, token: string) => {
-    const fd = new FormData(); fd.append('file', file);
-    return apiFetch<{ url: string; thumbnailUrl: string }>('/v1/shows/' + id + '/image', { method: 'POST', body: fd, token, headers: {} });
+};
+
+export const showImagesApi = {
+  list: (showId: string, token: string) => apiFetch<ShowImage[]>(`/v1/shows/${showId}/images`, { token }),
+  upload: (showId: string, files: File[], token: string) => {
+    const fd = new FormData();
+    files.forEach((f) => fd.append('files', f));
+    return apiFetch<ShowImage[]>(`/v1/shows/${showId}/images`, { method: 'POST', body: fd, token });
   },
+  setCover: (showId: string, imageId: string, token: string) =>
+    apiFetch<ShowImage>(`/v1/shows/${showId}/images/${imageId}/cover`, { method: 'PATCH', token }),
+  delete: (showId: string, imageId: string, token: string) =>
+    apiFetch<void>(`/v1/shows/${showId}/images/${imageId}`, { method: 'DELETE', token }),
 };
 
 export const venuesApi = {
@@ -114,21 +123,31 @@ export const ticketTypesApi = {
 };
 
 // Domain types
+export interface ShowImage {
+  id: string;
+  url: string;
+  thumbUrl: string;
+  squareUrl: string;
+  isCover: boolean;
+  sortOrder: number;
+}
+
 export interface Show {
   id: string;
   name: string;
   slug: string;
   description?: string;
   category?: string;
-  posterUrl?: string;
   seoTitle?: string;
   seoDescription?: string;
   status: string;
   organizerId: string;
+  images?: ShowImage[];
   createdAt: string;
 }
 
 export interface ShowDetail extends Show {
+  images: ShowImage[];
   termins: Termin[];
 }
 

@@ -2,6 +2,7 @@ export interface StoredFile {
   filename: string;
   url: string;
   thumbnailUrl: string;
+  squareUrl: string;
   size: number;
   mimeType: string;
 }

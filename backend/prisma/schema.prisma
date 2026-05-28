@@ -216,8 +216,6 @@ model Show {
   slug          String      // unique within organizer
   description   String?     @db.Text
   category      String?
-  posterUrl     String?
-  bannerUrl     String?
 
   // SEO
   seoTitle      String?
@@ -230,11 +228,35 @@ model Show {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
+  images        ShowImage[]
   termins       Termin[]
   products      Product[]
 
   @@unique([organizerId, slug])
   @@index([organizerId, status])
+}
+
+// ─────────────────────────────────────────────
+// SHOW IMAGE (galéria podujatia)
+// ─────────────────────────────────────────────
+
+model ShowImage {
+  id          String   @id @default(cuid())
+  showId      String
+  show        Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  url         String   // main ~1200px wide WebP
+  thumbUrl    String   // 600×400 crop WebP
+  squareUrl   String   // 1000×1000 crop WebP (cover / listing)
+
+  isCover     Boolean  @default(false)
+  sortOrder   Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([showId])
+  @@index([showId, isCover])
 }
 
 // ─────────────────────────────────────────────

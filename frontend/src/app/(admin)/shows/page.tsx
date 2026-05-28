@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
-import { showsApi, Show } from '@/lib/api';
+import { showsApi, Show, ShowImage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -75,9 +75,11 @@ export default function ShowsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {shows.map((show) => (
               <div key={show.id} className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-                {show.posterUrl && (
-                  <img src={show.posterUrl} alt={show.name} className="w-full h-40 object-cover" />
-                )}
+                {(() => { const cover = show.images?.find((i: ShowImage) => i.isCover); return cover ? (
+                  <img src={cover.squareUrl} alt={show.name} className="w-full h-40 object-cover" />
+                ) : (
+                  <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Bez obrázka</div>
+                ); })()}
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3 className="font-semibold text-gray-900 leading-tight">{show.name}</h3>
