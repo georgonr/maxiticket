@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterOrganizerDto } from './dto/register.dto';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserRole, TermsType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -110,6 +111,39 @@ export class AuthService {
 
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
     return this.issueTokenPair(user.id, user.email, user.role, user.organizerId);
+  }
+
+  async registerCustomer(dto: RegisterCustomerDto, ipAddress?: string, userAgent?: string) {
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('Email already registered');
+
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+
+    const activeTerms = await this.prisma.termsVersion.findFirst({
+      where: { type: TermsType.BUYER_PURCHASE, isActive: true, organizerId: null },
+      orderBy: { publishedAt: 'desc' },
+    });
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          phone: dto.phone,
+          role: UserRole.CUSTOMER,
+        },
+      });
+      if (activeTerms) {
+        await tx.termsAcceptance.create({
+          data: { termsVersionId: activeTerms.id, userId: u.id, ipAddress, userAgent },
+        });
+      }
+      return u;
+    });
+
+    return this.issueTokenPair(user.id, user.email, user.role, null);
   }
 
   async logout(rawRefreshToken: string) {

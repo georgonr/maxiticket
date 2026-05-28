@@ -45,6 +45,13 @@ services:
       PORT: 3001
       UPLOADS_DIR: /app/uploads
       UPLOADS_BASE_URL: https://api.maxiticket.africa/v1/uploads/images
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@maxiticket.africa}
+      APP_BASE_URL: ${APP_BASE_URL:-https://maxiticket.africa}
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET:-${JWT_SECRET}}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
@@ -73,6 +80,18 @@ services:
       - internal
     expose:
       - "3000"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ALLOW_INSECURE: true
+    networks:
+      - internal
+    expose:
+      - "1025"
+      - "8025"
 
   caddy:
     image: caddy:2-alpine

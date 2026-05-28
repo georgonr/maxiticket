@@ -54,6 +54,19 @@ admin.maxiticket.africa {
   encode zstd gzip
 }
 
+# ── Mailpit (dev email UI) ─────────────────────────────
+mail.maxiticket.africa {
+  reverse_proxy mailpit:8025
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+
+  encode zstd gzip
+}
+
 # ── Scanner PWA ────────────────────────────────────────
 skener.maxiticket.africa {
   reverse_proxy frontend:3000

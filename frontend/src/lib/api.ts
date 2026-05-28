@@ -62,6 +62,9 @@ export const authApi = {
       token,
       body: JSON.stringify({ refreshToken }),
     }),
+
+  registerCustomer: (body: RegisterCustomerPayload) =>
+    apiFetch<TokenPair>('/v1/auth/register-customer', { method: 'POST', body: JSON.stringify(body) }),
 };
 
 export interface TokenPair {
@@ -226,3 +229,148 @@ export interface CreateTicketTypeBody {
   saleEndsAt?: string;
   isActive?: boolean;
 }
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export interface PublicTermin {
+  id: string;
+  startsAt: string;
+  timezone: string;
+  status: string;
+  city: string | null;
+  venueName: string | null;
+  minPrice: number | null;
+  currency: string;
+}
+
+export interface PublicShow {
+  id: string;
+  slug: string;
+  name: string;
+  category: string | null;
+  coverUrl: string | null;
+  termins: PublicTermin[];
+}
+
+export interface PublicTicketType {
+  id: string;
+  terminId: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  totalQuantity: number | null;
+  maxPerOrder: number;
+  saleStartsAt?: string;
+  saleEndsAt?: string;
+  isActive: boolean;
+  available: number | null;
+}
+
+export interface PublicTerminDetail {
+  id: string;
+  startsAt: string;
+  endsAt?: string;
+  doorsOpenAt?: string;
+  timezone: string;
+  status: string;
+  venue: { id: string; name: string; city?: string; street?: string };
+  ticketTypes: PublicTicketType[];
+}
+
+export interface PublicShowDetail {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  category?: string;
+  images: ShowImage[];
+  termins: PublicTerminDetail[];
+}
+
+export const publicApi = {
+  listShows: (params?: { category?: string; date?: string; city?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.category) q.set('category', params.category);
+    if (params?.date) q.set('date', params.date);
+    if (params?.city) q.set('city', params.city);
+    const qs = q.toString();
+    return apiFetch<PublicShow[]>(`/v1/public/shows${qs ? '?' + qs : ''}`);
+  },
+  getShow: (slug: string) => apiFetch<PublicShowDetail>(`/v1/public/shows/${slug}`),
+  getFilters: () => apiFetch<{ categories: string[]; cities: string[] }>('/v1/public/filters'),
+};
+
+// ── Customer auth ─────────────────────────────────────────────────────────────
+
+export interface RegisterCustomerPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  acceptTerms: true;
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────────
+
+export interface CreateOrderPayload {
+  terminId: string;
+  items: { ticketTypeId: string; quantity: number }[];
+  acceptTerms: true;
+}
+
+export interface OrderItem {
+  id: string;
+  ticketTypeId: string;
+  terminId: string;
+  quantity: number;
+  unitPrice: number;
+  currency: string;
+  priceSnapshot: { name: string; price: number; currency: string; showName: string; startsAt: string };
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  buyerEmail: string;
+  buyerName?: string;
+  paidAt?: string;
+  items: OrderItem[];
+  tickets?: { id: string; status: string; qrToken: string }[];
+}
+
+export const ordersApi = {
+  create: (body: CreateOrderPayload, token: string) =>
+    apiFetch<Order>('/v1/orders', { method: 'POST', body: JSON.stringify(body), token }),
+  get: (id: string, token: string) =>
+    apiFetch<Order>('/v1/orders/' + id, { token }),
+  pay: (id: string, token: string) =>
+    apiFetch<Order>('/v1/orders/' + id + '/pay', { method: 'POST', token }),
+};
+
+// ── My tickets ────────────────────────────────────────────────────────────────
+
+export interface MyTicket {
+  id: string;
+  status: string;
+  qrToken: string;
+  createdAt: string;
+  ticketType: { name: string; price: number; currency: string };
+  order: { orderNumber: string };
+  termin: {
+    startsAt: string;
+    timezone: string;
+    doorsOpenAt?: string;
+    show: { name: string; slug: string };
+    venue: { name: string; city?: string; street?: string };
+  };
+}
+
+export const myApi = {
+  tickets: (token: string) => apiFetch<MyTicket[]>('/v1/my/tickets', { token }),
+  ticket: (id: string, token: string) => apiFetch<MyTicket>('/v1/my/tickets/' + id, { token }),
+};

@@ -15,6 +15,9 @@ import { ShowsModule } from './shows/shows.module';
 import { ShowImagesModule } from './show-images/show-images.module';
 import { TerminsModule } from './termins/termins.module';
 import { TicketTypesModule } from './ticket-types/ticket-types.module';
+import { PublicModule } from './public/public.module';
+import { MailModule } from './mail/mail.module';
+import { OrdersModule } from './orders/orders.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -34,6 +37,9 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     ShowImagesModule,
     TerminsModule,
     TicketTypesModule,
+    PublicModule,
+    MailModule,
+    OrdersModule,
   ],
   controllers: [HealthController],
   providers: [

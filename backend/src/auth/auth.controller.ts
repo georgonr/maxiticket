@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterOrganizerDto } from './dto/register.dto';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -27,6 +28,12 @@ export class AuthController {
     const ip = req.ip;
     const ua = req.headers['user-agent'];
     return this.authService.registerOrganizer(dto, ip, ua);
+  }
+
+  @Post('register-customer')
+  @HttpCode(HttpStatus.CREATED)
+  registerCustomer(@Body() dto: RegisterCustomerDto, @Req() req: FastifyRequest) {
+    return this.authService.registerCustomer(dto, req.ip, req.headers['user-agent']);
   }
 
   @Post('login')
