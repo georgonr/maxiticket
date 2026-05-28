@@ -5,8 +5,8 @@ RUN apk add --no-cache openssl
 # Dependencies
 FROM base AS deps
 COPY package*.json ./
-RUN npm ci --only=production && cp -R node_modules /prod_modules
-RUN npm ci
+RUN npm install --omit=dev --legacy-peer-deps && cp -R node_modules /prod_modules
+RUN npm install --legacy-peer-deps
 
 # Build
 FROM deps AS builder

@@ -3,10 +3,12 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package*.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 FROM deps AS builder
 COPY . .
+ARG NEXT_PUBLIC_API_URL=https://api.maxiticket.africa
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
 FROM base AS runner

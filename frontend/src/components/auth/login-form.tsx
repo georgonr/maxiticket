@@ -1,0 +1,59 @@
+'use client';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { setAccessToken } from '@/lib/auth';
+
+const schema = z.object({
+  email: z.string().email('Neplatný e-mail'),
+  password: z.string().min(1, 'Zadajte heslo'),
+});
+
+type Fields = z.infer<typeof schema>;
+
+export function LoginForm() {
+  const router = useRouter();
+  const [serverError, setServerError] = useState('');
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Fields>({
+    resolver: zodResolver(schema),
+  });
+
+  async function onSubmit(data: Fields) {
+    setServerError('');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!res.ok) { setServerError(json.message ?? 'Chyba prihlásenia'); return; }
+      setAccessToken(json.accessToken);
+      router.push('/dashboard');
+    } catch {
+      setServerError('Nepodarilo sa spojiť so serverom');
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <Input
+        id="email" label="E-mail" type="email" autoComplete="email"
+        error={errors.email?.message} {...register('email')}
+      />
+      <Input
+        id="password" label="Heslo" type="password" autoComplete="current-password"
+        error={errors.password?.message} {...register('password')}
+      />
+      {serverError && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{serverError}</p>}
+      <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
+        Prihlásiť sa
+      </Button>
+    </form>
+  );
+}

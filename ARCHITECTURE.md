@@ -36,12 +36,30 @@ Multi-tenant SaaS ticketing platform. Three actor types:
 │       ├── orders/
 │       ├── scanner/
 │       └── admin/
-├── frontend/          # Next.js app
-│   └── src/app/
-│       ├── (public)/  # event pages, checkout
-│       ├── (organizer)/ # organizer dashboard
-│       ├── (admin)/   # superadmin dashboard
-│       └── scanner/   # PWA scanner
+├── frontend/          # Next.js 14 App Router (single app, host-based routing)
+│   ├── src/
+│   │   ├── middleware.ts       # reads Host → sets x-area header (public/admin/scanner)
+│   │   ├── app/
+│   │   │   ├── layout.tsx      # root layout + globals.css (Tailwind)
+│   │   │   ├── page.tsx        # root "/" – area-aware redirect / public homepage
+│   │   │   ├── (public)/       # maxiticket.africa / www – event pages, checkout
+│   │   │   ├── (admin)/        # admin.maxiticket.africa – login, register, dashboard
+│   │   │   │   ├── login/
+│   │   │   │   ├── register/   # self-reg with acceptTerms
+│   │   │   │   └── dashboard/  # role-aware placeholder
+│   │   │   ├── (scanner)/      # skener.maxiticket.africa – PWA scanner
+│   │   │   │   └── scan/
+│   │   │   └── api/auth/       # route handlers: login, register, refresh, logout
+│   │   ├── lib/
+│   │   │   ├── api.ts          # typed fetch wrapper + authApi helpers
+│   │   │   └── auth.ts         # access token in memory, refresh via /api/auth/refresh
+│   │   └── components/
+│   │       ├── ui/             # Button, Input
+│   │       └── auth/           # LoginForm, RegisterForm
+│   └── public/
+│       ├── manifest.json       # PWA manifest (scanner)
+│       ├── sw.js               # Service worker (scanner – cache-first)
+│       └── icons/              # PWA icons
 └── infra/
     ├── docker-compose.yml
     ├── caddy/Caddyfile
@@ -121,6 +139,20 @@ Platform reports in EUR using fixed exchange rates stored separately (not in v1 
 ### Terms & Conditions
 `TermsVersion` is versioned; `isActive = true` marks the current version.  
 Acceptance is recorded with IP + user-agent for legal compliance.
+
+## Frontend routing strategy
+
+One Next.js app serves all three subdomains. `src/middleware.ts` reads the `Host` header and writes `x-area: public|admin|scanner` into request headers. Pages read this via `headers()` (Server Components) to conditionally redirect or render different content.
+
+**Token security model:**
+- Access token: stored in React module-level memory only (never localStorage). Lost on page refresh → automatically refreshed via `/api/auth/refresh`.
+- Refresh token: stored in `httpOnly; Secure; SameSite=Strict` cookie under the `/api/auth` path, managed by Next.js route handlers. Never exposed to client JS.
+- `/api/auth/refresh` rotates the refresh token on every call (single-use tokens).
+
+**PWA (skener.maxiticket.africa):**
+- `public/manifest.json` declares standalone display mode, start_url `/scan`.
+- `public/sw.js` cache-first service worker for offline support.
+- Camera scanning deferred to next milestone.
 
 ## Networking (Docker Compose)
 

@@ -8,10 +8,7 @@
 
 # ── API ────────────────────────────────────────────────
 api.maxiticket.africa {
-  reverse_proxy backend:3001 {
-    health_uri /health
-    health_interval 15s
-  }
+  reverse_proxy backend:3001
 
   header {
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
@@ -32,10 +29,7 @@ api.maxiticket.africa {
 
 # ── Public web ─────────────────────────────────────────
 maxiticket.africa, www.maxiticket.africa {
-  reverse_proxy frontend:3000 {
-    health_uri /api/health
-    health_interval 15s
-  }
+  reverse_proxy frontend:3000
 
   header {
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
@@ -48,10 +42,7 @@ maxiticket.africa, www.maxiticket.africa {
 
 # ── Admin + Organizer portal ───────────────────────────
 admin.maxiticket.africa {
-  reverse_proxy frontend:3000 {
-    health_uri /api/health
-    health_interval 15s
-  }
+  reverse_proxy frontend:3000
 
   header {
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
@@ -65,10 +56,7 @@ admin.maxiticket.africa {
 
 # ── Scanner PWA ────────────────────────────────────────
 skener.maxiticket.africa {
-  reverse_proxy frontend:3000 {
-    health_uri /api/health
-    health_interval 15s
-  }
+  reverse_proxy frontend:3000
 
   header {
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
