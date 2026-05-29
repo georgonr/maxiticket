@@ -51,6 +51,7 @@ export default function ShowDetailPage() {
 
   async function handleUpload() {
     if (!uploadPreviews.length) return;
+    setError('');
     setUploading(true);
     try {
       const token = await getValidToken();
@@ -65,6 +66,7 @@ export default function ShowDetailPage() {
   }
 
   async function handleSetCover(imageId: string) {
+    setError('');
     const token = await getValidToken();
     if (!token) { router.replace('/login'); return; }
     try {
@@ -75,6 +77,7 @@ export default function ShowDetailPage() {
 
   async function handleDeleteImage(imageId: string) {
     if (!confirm('Odstrániť tento obrázok?')) return;
+    setError('');
     const token = await getValidToken();
     if (!token) { router.replace('/login'); return; }
     try {
