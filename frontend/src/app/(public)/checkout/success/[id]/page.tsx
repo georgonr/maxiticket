@@ -1,29 +1,101 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ordersApi, Order } from '@/lib/api';
 import { getValidToken } from '@/lib/auth';
 import { formatPrice } from '@/lib/format';
-import { CheckCircle2, Ticket, Mail, Loader2 } from 'lucide-react';
+import { CheckCircle2, Ticket, Mail, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+const POLL_INTERVAL_MS = 2500;
+const POLL_MAX_ATTEMPTS = 40; // ~100 s
 
 export default function SuccessPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [polling, setPolling] = useState(false);
+  const attemptsRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    getValidToken().then((token) => {
-      if (!token) return;
-      return ordersApi.get(id, token);
-    }).then((o) => o && setOrder(o))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    async function fetchOrder() {
+      const token = await getValidToken();
+      if (!token || cancelled) return;
+      try {
+        const o = await ordersApi.get(id, token);
+        if (cancelled) return;
+        setOrder(o);
+
+        if (o.status === 'PAID') {
+          setLoading(false);
+          setPolling(false);
+          return;
+        }
+
+        // Order not yet paid – keep polling
+        attemptsRef.current += 1;
+        if (attemptsRef.current >= POLL_MAX_ATTEMPTS) {
+          setLoading(false);
+          setPolling(false);
+          return;
+        }
+
+        setPolling(true);
+        setLoading(false);
+        timerRef.current = setTimeout(fetchOrder, POLL_INTERVAL_MS);
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchOrder();
+    return () => {
+      cancelled = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [id]);
 
   if (loading) {
     return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-indigo-600" size={32} /></div>;
+  }
+
+  if (!order || order.status !== 'PAID') {
+    return (
+      <div className="mx-auto max-w-md text-center py-16">
+        {polling ? (
+          <>
+            <div className="mb-6 flex justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-yellow-100">
+                <Clock size={40} className="text-yellow-600 animate-pulse" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Spracúvame platbu…</h1>
+            <p className="text-gray-500 mb-4">
+              Čakáme na potvrdenie od platobnej brány. Prosím, nezatváraje toto okno.
+            </p>
+            <div className="flex justify-center">
+              <Loader2 className="animate-spin text-indigo-500" size={24} />
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Platba sa ešte nepotvrdila</h1>
+            <p className="text-gray-500 mb-6">
+              Ak ste platbu dokončili, lístky dorazíte emailom do niekoľkých minút. Stav objednávky si môžete skontrolovať v sekcii Moje lístky.
+            </p>
+            <Link href="/account/tickets">
+              <Button size="lg" className="w-full gap-2">
+                <Ticket size={16} /> Moje lístky
+              </Button>
+            </Link>
+          </>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -34,9 +106,7 @@ export default function SuccessPage({ params }: { params: { id: string } }) {
         </div>
       </div>
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Platba úspešná!</h1>
-      {order && (
-        <p className="text-gray-500 mb-1">Objednávka <strong>{order.orderNumber}</strong></p>
-      )}
+      <p className="text-gray-500 mb-1">Objednávka <strong>{order.orderNumber}</strong></p>
       <p className="text-gray-500 mb-8">
         Vstupenky sme odoslali na váš e-mail. Nájdete ich aj v sekcii Moje lístky.
       </p>
@@ -46,21 +116,19 @@ export default function SuccessPage({ params }: { params: { id: string } }) {
         Skontrolujte si e-mail s vstupenkami a QR kódmi
       </div>
 
-      {order && (
-        <div className="mb-8 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm">
-          <p className="text-sm font-medium text-gray-500 mb-2">Zakúpené vstupenky</p>
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between py-1.5 text-sm">
-              <span className="text-gray-700">{item.priceSnapshot.name} × {item.quantity}</span>
-              <span className="font-medium">{formatPrice(Number(item.unitPrice) * item.quantity, item.currency)}</span>
-            </div>
-          ))}
-          <div className="mt-2 flex justify-between border-t pt-2 font-semibold">
-            <span>Celkom</span>
-            <span className="text-indigo-600">{formatPrice(Number(order.totalAmount), order.currency)}</span>
+      <div className="mb-8 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm">
+        <p className="text-sm font-medium text-gray-500 mb-2">Zakúpené vstupenky</p>
+        {order.items.map((item) => (
+          <div key={item.id} className="flex justify-between py-1.5 text-sm">
+            <span className="text-gray-700">{item.priceSnapshot.name} × {item.quantity}</span>
+            <span className="font-medium">{formatPrice(Number(item.unitPrice) * item.quantity, item.currency)}</span>
           </div>
+        ))}
+        <div className="mt-2 flex justify-between border-t pt-2 font-semibold">
+          <span>Celkom</span>
+          <span className="text-indigo-600">{formatPrice(Number(order.totalAmount), order.currency)}</span>
         </div>
-      )}
+      </div>
 
       <div className="flex flex-col gap-3">
         <Link href="/account/tickets">

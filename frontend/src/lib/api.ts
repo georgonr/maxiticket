@@ -5,11 +5,14 @@ type FetchOptions = RequestInit & { token?: string };
 export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
   const { token, headers, body, ...rest } = options;
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const hasBody = body !== undefined && body !== null;
   const res = await fetch(`${API_BASE}${path}`, {
     ...rest,
     body,
     headers: {
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      // Only set Content-Type: application/json when there is actually a body to send.
+      // Sending it with an empty body causes Fastify to reject the request (FST_ERR_CTP_EMPTY_JSON_BODY).
+      ...(!isFormData && hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
@@ -348,6 +351,10 @@ export const ordersApi = {
     apiFetch<Order>('/v1/orders', { method: 'POST', body: JSON.stringify(body), token }),
   get: (id: string, token: string) =>
     apiFetch<Order>('/v1/orders/' + id, { token }),
+  /** Initiate payment – returns { url } to redirect to (Stripe or success page for mock). */
+  checkout: (id: string, token: string) =>
+    apiFetch<{ url: string }>('/v1/orders/' + id + '/checkout', { method: 'POST', token }),
+  /** Dev-only mock payment fallback. */
   pay: (id: string, token: string) =>
     apiFetch<Order>('/v1/orders/' + id + '/pay', { method: 'POST', token }),
 };

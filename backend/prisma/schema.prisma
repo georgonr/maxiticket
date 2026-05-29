@@ -402,10 +402,11 @@ model Order {
   feeAmount     Decimal     @default(0) @db.Decimal(10, 2)
 
   // Payment
-  paymentProvider  String?  // "stripe", "gopay", etc.
-  paymentRef       String?  // provider transaction ID
+  paymentProvider  String?   // "stripe", "mock", etc.
+  paymentRef       String?   // provider session/transaction ID
   paidAt           DateTime?
   refundedAt       DateTime?
+  expiresAt        DateTime? // PENDING orders expire at this time
 
   notes         String?
   createdAt     DateTime    @default(now())
@@ -516,6 +517,15 @@ model ScanLog {
 // ─────────────────────────────────────────────
 // TERMS & CONDITIONS (verziované)
 // ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// STRIPE EVENT (idempotency log)
+// ─────────────────────────────────────────────
+
+model StripeEvent {
+  id          String   @id   // Stripe event ID (evt_...)
+  processedAt DateTime @default(now())
+}
 
 model TermsVersion {
   id           String     @id @default(cuid())

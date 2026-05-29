@@ -55,6 +55,10 @@ services:
       APP_BASE_URL: ${APP_BASE_URL:-https://maxiticket.africa}
       ADMIN_BASE_URL: ${ADMIN_BASE_URL:-https://admin.maxiticket.africa}
       QR_HMAC_SECRET: ${QR_HMAC_SECRET:-${JWT_SECRET}}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      ORDER_EXPIRY_MINUTES: ${ORDER_EXPIRY_MINUTES:-30}
     volumes:
       - uploads_data:/app/uploads
     depends_on:

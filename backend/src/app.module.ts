@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { CaslModule } from './casl/casl.module';
@@ -18,6 +19,7 @@ import { TicketTypesModule } from './ticket-types/ticket-types.module';
 import { PublicModule } from './public/public.module';
 import { MailModule } from './mail/mail.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -25,6 +27,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     CaslModule,
     AuthModule,
@@ -40,6 +43,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     PublicModule,
     MailModule,
     OrdersModule,
+    PaymentsModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import fastifyMultipart from '@fastify/multipart';
+import { Transform } from 'stream';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -8,6 +9,30 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ logger: true }),
   );
+
+  // Capture raw body for the Stripe webhook BEFORE parsing (needed for signature verification).
+  // Uses a preParsing passthrough stream so the normal JSON parser still gets the full body.
+  // Only active for the webhook route – all other routes are unaffected.
+  const fastify = app.getHttpAdapter().getInstance() as any;
+  fastify.addHook('preParsing', async (req: any, _rep: any, payload: any) => {
+    if (!req.url?.includes('/payments/webhook/stripe')) return;
+
+    const chunks: Buffer[] = [];
+    const passThrough = new Transform({
+      transform(chunk: Buffer, _: string, cb: () => void) {
+        chunks.push(chunk);
+        this.push(chunk);
+        cb();
+      },
+      flush(cb: () => void) {
+        req.rawBody = Buffer.concat(chunks).toString('utf8');
+        cb();
+      },
+    });
+
+    payload.pipe(passThrough);
+    return passThrough;
+  });
 
   await app.register(fastifyMultipart as any, {
     limits: { fileSize: 10 * 1024 * 1024, files: 1 },

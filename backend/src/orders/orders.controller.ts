@@ -23,6 +23,14 @@ export class OrdersController {
     return this.svc.getOrder(id, user);
   }
 
+  /** Initiate payment (Stripe or mock). Returns { url } to redirect to. */
+  @Post('orders/:id/checkout')
+  @HttpCode(HttpStatus.OK)
+  checkout(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.svc.initiateCheckout(id, user);
+  }
+
+  /** Dev-only mock payment (PAYMENT_PROVIDER=mock). Kept for convenience. */
   @Post('orders/:id/pay')
   @HttpCode(HttpStatus.OK)
   mockPay(@Param('id') id: string, @CurrentUser() user: JwtPayload) {

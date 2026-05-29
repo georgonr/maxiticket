@@ -9,7 +9,7 @@ import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
 import { formatDate, formatPrice } from '@/lib/format';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, ShoppingBag, Loader2, CheckCircle2, Lock } from 'lucide-react';
+import { Calendar, MapPin, ShoppingBag, Loader2, Lock } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -25,7 +25,6 @@ export default function CheckoutPage() {
     setCartState(c);
   }, [router]);
 
-  // Redirect to login if not logged in
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
       router.push('/account/login?next=/checkout');
@@ -40,16 +39,19 @@ export default function CheckoutPage() {
       const token = await getValidToken();
       if (!token) { router.push('/account/login?next=/checkout'); return; }
 
+      // 1. Create the order
       const order = await ordersApi.create({
         terminId: cart.terminId,
         items: cart.items.map((i) => ({ ticketTypeId: i.ticketTypeId, quantity: i.quantity })),
         acceptTerms: true,
       }, token);
 
-      // Mock payment
-      const paid = await ordersApi.pay(order.id, token);
+      // 2. Initiate checkout – returns { url } (Stripe URL or direct success URL for mock)
+      const { url } = await ordersApi.checkout(order.id, token);
+
+      // 3. Clear cart and redirect
       clearCart();
-      router.push(`/checkout/success/${paid.id}`);
+      window.location.href = url;
     } catch (e: any) {
       setError(e.message ?? 'Nastala chyba. Skúste znova.');
       setSubmitting(false);
@@ -106,7 +108,7 @@ export default function CheckoutPage() {
       {/* Payment info */}
       <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
         <Lock size={14} />
-        Platba prebieha v bezpečnom prostredí (testovací mód)
+        Platba prebieha cez zabezpečenú platobnú bránu Stripe
       </div>
 
       {/* Terms */}
@@ -136,7 +138,7 @@ export default function CheckoutPage() {
         className="w-full gap-2"
       >
         <ShoppingBag size={16} />
-        {submitting ? 'Spracovávam...' : `Zaplatiť ${formatPrice(total, currency)}`}
+        {submitting ? 'Presmerovávam na platbu...' : `Zaplatiť ${formatPrice(total, currency)}`}
       </Button>
 
       <p className="mt-3 text-center text-xs text-gray-400">
