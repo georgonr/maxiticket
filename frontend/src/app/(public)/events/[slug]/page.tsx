@@ -2,24 +2,31 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { publicApi, PublicShowDetail, PublicTerminDetail } from '@/lib/api';
 import { formatDate, formatPrice } from '@/lib/format';
 import { setCart, Cart } from '@/lib/cart';
-import { Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import {
+  Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart,
+  ChevronRight, ChevronLeft, Tag, AlertCircle, CheckCircle2,
+  Share2, Copy, Check, MessageCircle,
+} from 'lucide-react';
 
 export default function EventDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const router = useRouter();
-  const [show, setShow] = useState<PublicShowDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const [show, setShow]                   = useState<PublicShowDetail | null>(null);
+  const [loading, setLoading]             = useState(true);
   const [selectedTermin, setSelectedTermin] = useState<PublicTerminDetail | null>(null);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [coverIdx, setCoverIdx] = useState(0);
+  const [quantities, setQuantities]       = useState<Record<string, number>>({});
+  const [coverIdx, setCoverIdx]           = useState(0);
+  const [copied, setCopied]               = useState(false);
 
   useEffect(() => {
-    publicApi.getShow(slug)
+    publicApi
+      .getShow(slug)
       .then((s) => {
         setShow(s);
         if (s.termins.length > 0) setSelectedTermin(s.termins[0]);
@@ -51,7 +58,6 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
         price: tt.price,
         currency: tt.currency,
       }));
-
     const cart: Cart = {
       terminId: selectedTermin.id,
       showSlug: show.slug,
@@ -66,192 +72,343 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
     router.push('/checkout');
   }
 
+  function copyLink() {
+    const url = `${window.location.origin}/events/${slug}`;
+    navigator.clipboard.writeText(url).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  // ── Loading / not-found ─────────────────────────────────────────────────────
+
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="animate-spin text-indigo-600" size={32} />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="animate-spin text-purple-600" size={40} />
       </div>
     );
   }
 
   if (!show) {
-    return <div className="py-20 text-center text-gray-500">Podujatie nenájdené.</div>;
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+        <AlertCircle size={48} className="mb-4 text-slate-300" />
+        <h1 className="text-xl font-semibold text-slate-700">Podujatie nenájdené</h1>
+        <p className="mt-1 text-sm text-slate-400">Odkaz môže byť neplatný alebo podujatie bolo odstránené.</p>
+        <Link
+          href="/events"
+          className="mt-6 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
+        >
+          Späť na podujatia
+        </Link>
+      </div>
+    );
   }
 
   const coverImages = show.images.filter((i) => i.squareUrl || i.url);
+  const totalQty    = Object.values(quantities).reduce((a, b) => a + b, 0);
+  const totalPrice  = selectedTermin
+    ? selectedTermin.ticketTypes.reduce((sum, tt) => sum + tt.price * (quantities[tt.id] ?? 0), 0)
+    : 0;
+  const totalCurrency = selectedTermin?.ticketTypes[0]?.currency ?? 'EUR';
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      {/* Left: Images */}
-      <div className="lg:col-span-2">
-        {/* Main image */}
-        <div className="relative aspect-video overflow-hidden rounded-xl bg-gray-100">
-          {coverImages.length > 0 ? (
-            <Image
-              src={coverImages[coverIdx].squareUrl ?? coverImages[coverIdx].url}
-              alt={show.name}
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 1024px) 100vw, 66vw"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-gray-300">
-              <span className="text-6xl font-bold">{show.name.charAt(0)}</span>
+    <div>
+      {/* Breadcrumb */}
+      <nav className="mb-6 flex items-center gap-1.5 text-sm text-slate-400">
+        <Link href="/events" className="hover:text-purple-700 transition-colors">Podujatia</Link>
+        <ChevronRight size={14} />
+        <span className="text-slate-600 font-medium line-clamp-1">{show.name}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+        {/* ── Left: Gallery + Description ───────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* Main image */}
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-violet-100 aspect-video">
+            {coverImages.length > 0 ? (
+              <Image
+                src={coverImages[coverIdx].squareUrl ?? coverImages[coverIdx].url}
+                alt={show.name}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 1024px) 100vw, 66vw"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <span className="text-8xl font-extrabold text-purple-200">{show.name.charAt(0)}</span>
+              </div>
+            )}
+
+            {/* Prev / next arrows */}
+            {coverImages.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCoverIdx((i) => (i - 1 + coverImages.length) % coverImages.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
+                  aria-label="Predchádzajúci obrázok"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  onClick={() => setCoverIdx((i) => (i + 1) % coverImages.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
+                  aria-label="Nasledujúci obrázok"
+                >
+                  <ChevronRight size={18} />
+                </button>
+
+                {/* Dot indicators */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {coverImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCoverIdx(idx)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        idx === coverIdx ? 'w-5 bg-white' : 'w-1.5 bg-white/50'
+                      }`}
+                      aria-label={`Obrázok ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Thumbnails */}
+          {coverImages.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {coverImages.map((img, idx) => (
+                <button
+                  key={img.id}
+                  onClick={() => setCoverIdx(idx)}
+                  className={`relative h-16 w-16 flex-none overflow-hidden rounded-xl border-2 transition-all ${
+                    idx === coverIdx
+                      ? 'border-purple-600 shadow-md'
+                      : 'border-transparent opacity-60 hover:opacity-100 hover:border-slate-300'
+                  }`}
+                >
+                  <Image
+                    src={img.thumbUrl ?? img.squareUrl ?? img.url}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Description */}
+          {show.description && (
+            <div className="rounded-2xl border border-slate-100 bg-white p-6">
+              <h2 className="mb-3 text-base font-semibold text-slate-900">O podujatí</h2>
+              <p className="whitespace-pre-line text-sm text-slate-600 leading-relaxed">
+                {show.description}
+              </p>
             </div>
           )}
         </div>
 
-        {/* Gallery thumbnails */}
-        {coverImages.length > 1 && (
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {coverImages.map((img, idx) => (
-              <button
-                key={img.id}
-                onClick={() => setCoverIdx(idx)}
-                className={`relative h-16 w-16 flex-none overflow-hidden rounded-lg border-2 transition-all ${
-                  idx === coverIdx ? 'border-indigo-600' : 'border-transparent'
-                }`}
-              >
-                <Image src={img.thumbUrl ?? img.squareUrl} alt="" fill className="object-cover" sizes="64px" />
-              </button>
-            ))}
-          </div>
-        )}
+        {/* ── Right: Info + Ticket selection ────────────────────────────── */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-20 space-y-4">
 
-        {/* Description */}
-        {show.description && (
-          <div className="mt-6">
-            <h2 className="mb-2 font-semibold text-gray-900">O podujatí</h2>
-            <p className="whitespace-pre-line text-gray-600 leading-relaxed">{show.description}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Right: Info + Ticket Selection */}
-      <div className="lg:col-span-1">
-        <div className="sticky top-20 space-y-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{show.name}</h1>
-            {show.category && (
-              <span className="mt-1 inline-block rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-                {show.category}
-              </span>
-            )}
-          </div>
-
-          {/* Termin selector */}
-          {show.termins.length > 1 && (
+            {/* Title + category + share */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Vyberte termín</label>
-              <div className="space-y-2">
-                {show.termins.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => { setSelectedTermin(t); setQuantities({}); }}
-                    className={`w-full rounded-lg border p-3 text-left text-sm transition-all ${
-                      selectedTermin?.id === t.id
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-900'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <Calendar size={13} />{formatDate(t.startsAt, t.timezone, { weekday: 'short', year: undefined, hour: '2-digit', minute: '2-digit' })}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  {show.category && (
+                    <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700">
+                      <Tag size={11} />
+                      {show.category}
                     </span>
-                    <span className="flex items-center gap-1 mt-0.5 text-gray-500">
-                      <MapPin size={12} />{t.venue.name}{t.venue.city ? `, ${t.venue.city}` : ''}
-                    </span>
-                  </button>
-                ))}
+                  )}
+                  <h1 className="text-2xl font-bold text-slate-900 leading-tight">{show.name}</h1>
+                </div>
+                <button
+                  onClick={copyLink}
+                  className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-purple-300 hover:text-purple-700 transition-colors"
+                  title="Kopírovať odkaz"
+                >
+                  {copied ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
+                  {copied ? 'Skopírované' : 'Zdieľať'}
+                </button>
               </div>
             </div>
-          )}
 
-          {selectedTermin && (
-            <>
-              {/* Single termin info */}
-              {show.termins.length === 1 && (
-                <div className="space-y-1.5 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-                  <p className="flex items-center gap-1.5">
-                    <Calendar size={14} />
-                    {formatDate(selectedTermin.startsAt, selectedTermin.timezone)}
-                  </p>
-                  {selectedTermin.doorsOpenAt && (
-                    <p className="flex items-center gap-1.5 text-xs text-gray-400">
-                      <Clock size={12} />
-                      Dvere: {formatDate(selectedTermin.doorsOpenAt, selectedTermin.timezone, { weekday: undefined, year: undefined, month: undefined, day: undefined })}
-                    </p>
-                  )}
-                  <p className="flex items-center gap-1.5">
-                    <MapPin size={14} />
-                    {selectedTermin.venue.name}{selectedTermin.venue.city ? `, ${selectedTermin.venue.city}` : ''}
-                  </p>
-                </div>
-              )}
-
-              {/* Ticket types */}
+            {/* Termin selector (multiple termins) */}
+            {show.termins.length > 1 && (
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">Vstupenky</label>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Vyberte termín</p>
+                <div className="space-y-2">
+                  {show.termins.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => { setSelectedTermin(t); setQuantities({}); }}
+                      className={`w-full rounded-xl border p-3 text-left text-sm transition-all ${
+                        selectedTermin?.id === t.id
+                          ? 'border-purple-600 bg-purple-50 ring-1 ring-purple-200'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5 font-semibold text-slate-900">
+                        <Calendar size={13} className="text-purple-500" />
+                        {formatDate(t.startsAt, t.timezone, {
+                          weekday: 'short', year: undefined, hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                        <MapPin size={11} />
+                        {t.venue.name}{t.venue.city ? `, ${t.venue.city}` : ''}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Single termin info box */}
+            {selectedTermin && show.termins.length === 1 && (
+              <div className="rounded-xl border border-slate-100 bg-white p-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Calendar size={15} className="flex-shrink-0 text-purple-500" />
+                  <span>{formatDate(selectedTermin.startsAt, selectedTermin.timezone)}</span>
+                </div>
+                {selectedTermin.doorsOpenAt && (
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Clock size={13} className="flex-shrink-0" />
+                    <span>Dvere:{' '}
+                      {formatDate(selectedTermin.doorsOpenAt, selectedTermin.timezone, {
+                        weekday: undefined, year: undefined, month: undefined, day: undefined,
+                      })}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <MapPin size={15} className="flex-shrink-0 text-purple-500" />
+                  <span>
+                    {selectedTermin.venue.name}
+                    {selectedTermin.venue.city ? `, ${selectedTermin.venue.city}` : ''}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Ticket types */}
+            {selectedTermin && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Vstupenky</p>
                 <div className="space-y-2">
                   {(() => {
                     const now = new Date();
                     return selectedTermin.ticketTypes.map((tt) => {
-                    const qty = quantities[tt.id] ?? 0;
-                    const isSoldOut = tt.available === 0;
-                    const terminNotOnSale = selectedTermin.status !== 'ON_SALE';
-                    const saleNotStarted = !!tt.saleStartsAt && new Date(tt.saleStartsAt) > now;
-                    const saleEnded = !!tt.saleEndsAt && new Date(tt.saleEndsAt) <= now;
-                    const isNotOnSale = terminNotOnSale || saleNotStarted || saleEnded;
-                    const disabled = isSoldOut || isNotOnSale;
+                      const qty            = quantities[tt.id] ?? 0;
+                      const isSoldOut      = tt.available === 0;
+                      const terminNotOnSale = selectedTermin.status !== 'ON_SALE';
+                      const saleNotStarted = !!tt.saleStartsAt && new Date(tt.saleStartsAt) > now;
+                      const saleEnded      = !!tt.saleEndsAt && new Date(tt.saleEndsAt) <= now;
+                      const disabled       = isSoldOut || terminNotOnSale || saleNotStarted || saleEnded;
 
-                    return (
-                      <div key={tt.id} className={`rounded-lg border p-3 ${disabled ? 'opacity-60' : 'border-gray-200'}`}>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-gray-900">{tt.name}</p>
-                            <p className="text-sm font-semibold text-indigo-600">{formatPrice(tt.price, tt.currency)}</p>
-                            {tt.description && <p className="text-xs text-gray-400 mt-0.5">{tt.description}</p>}
-                            {isSoldOut && <p className="text-xs text-red-500 mt-0.5">Vypredané</p>}
-                            {!isSoldOut && saleEnded && <p className="text-xs text-gray-400 mt-0.5">Predaj ukončený</p>}
-                            {!isSoldOut && !saleEnded && (terminNotOnSale || saleNotStarted) && <p className="text-xs text-blue-500 mt-0.5">Čoskoro v predaji</p>}
-                            {tt.available != null && tt.available > 0 && tt.available <= 10 && (
-                              <p className="text-xs text-orange-500 mt-0.5">Posledné {tt.available} ks</p>
+                      return (
+                        <div
+                          key={tt.id}
+                          className={`rounded-xl border bg-white p-3.5 transition-all ${
+                            disabled ? 'border-slate-100 opacity-60' : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-slate-900 text-sm">{tt.name}</p>
+                              <p className="text-base font-bold text-purple-700 mt-0.5">
+                                {formatPrice(tt.price, tt.currency)}
+                              </p>
+                              {tt.description && (
+                                <p className="mt-0.5 text-xs text-slate-400">{tt.description}</p>
+                              )}
+
+                              {/* Status messages */}
+                              {isSoldOut && (
+                                <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                                  <AlertCircle size={11} /> Vypredané
+                                </p>
+                              )}
+                              {!isSoldOut && saleEnded && (
+                                <p className="mt-1 text-xs text-slate-400">Predaj ukončený</p>
+                              )}
+                              {!isSoldOut && !saleEnded && (terminNotOnSale || saleNotStarted) && (
+                                <p className="mt-1 text-xs text-blue-500">Čoskoro v predaji</p>
+                              )}
+                              {!disabled && tt.available != null && tt.available > 0 && tt.available <= 10 && (
+                                <p className="mt-1 flex items-center gap-1 text-xs text-orange-500">
+                                  <AlertCircle size={11} /> Posledné {tt.available} ks
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Quantity stepper */}
+                            {!disabled && (
+                              <div className="flex flex-shrink-0 items-center gap-2">
+                                <button
+                                  onClick={() => adjustQty(tt.id, -1, tt.maxPerOrder)}
+                                  disabled={qty === 0}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                                >
+                                  <Minus size={13} />
+                                </button>
+                                <span className="w-5 text-center text-sm font-bold text-slate-900">
+                                  {qty}
+                                </span>
+                                <button
+                                  onClick={() => adjustQty(tt.id, +1, tt.maxPerOrder)}
+                                  disabled={
+                                    qty >= tt.maxPerOrder ||
+                                    (tt.available != null && qty >= tt.available)
+                                  }
+                                  className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-600 disabled:opacity-30 transition-colors"
+                                >
+                                  <Plus size={13} />
+                                </button>
+                              </div>
                             )}
                           </div>
-                          {!disabled && (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => adjustQty(tt.id, -1, tt.maxPerOrder)}
-                                disabled={qty === 0}
-                                className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
-                              >
-                                <Minus size={13} />
-                              </button>
-                              <span className="w-5 text-center text-sm font-semibold">{qty}</span>
-                              <button
-                                onClick={() => adjustQty(tt.id, +1, tt.maxPerOrder)}
-                                disabled={qty >= tt.maxPerOrder || (tt.available != null && qty >= tt.available)}
-                                className="flex h-7 w-7 items-center justify-center rounded-full border border-indigo-600 text-indigo-600 hover:bg-indigo-50 disabled:opacity-30"
-                              >
-                                <Plus size={13} />
-                              </button>
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    );
-                  });
+                      );
+                    });
                   })()}
                 </div>
               </div>
+            )}
 
-              {canAddToCart() && (
-                <Button onClick={addToCart} className="w-full gap-2" size="lg">
-                  <ShoppingCart size={16} /> Pokračovať k objednávke
-                </Button>
-              )}
-            </>
-          )}
+            {/* Cart summary + CTA */}
+            {canAddToCart() && (
+              <div className="space-y-3">
+                {/* Summary */}
+                <div className="flex items-center justify-between rounded-xl bg-purple-50 px-4 py-3 text-sm">
+                  <span className="text-slate-600 flex items-center gap-1.5">
+                    <CheckCircle2 size={14} className="text-purple-600" />
+                    {totalQty} {totalQty === 1 ? 'vstupenka' : totalQty < 5 ? 'vstupenky' : 'vstupeniek'}
+                  </span>
+                  <span className="font-bold text-slate-900">
+                    {formatPrice(totalPrice, totalCurrency)}
+                  </span>
+                </div>
+
+                {/* CTA button */}
+                <button
+                  onClick={addToCart}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500 px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-rose-600 hover:shadow-md transition-all active:scale-[0.98]"
+                >
+                  <ShoppingCart size={18} />
+                  Pokračovať k objednávke
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
