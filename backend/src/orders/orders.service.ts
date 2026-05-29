@@ -28,7 +28,7 @@ export class OrdersService {
       include: { show: true, venue: true, ticketTypes: true },
     });
     if (!termin) throw new NotFoundException('Termin not found');
-    if (termin.status !== TerminStatus.ON_SALE && termin.status !== TerminStatus.COMING_SOON) {
+    if (termin.status !== TerminStatus.ON_SALE) {
       throw new BadRequestException('This event is not available for purchase');
     }
 

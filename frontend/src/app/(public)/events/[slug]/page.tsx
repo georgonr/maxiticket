@@ -193,10 +193,15 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">Vstupenky</label>
                 <div className="space-y-2">
-                  {selectedTermin.ticketTypes.map((tt) => {
+                  {(() => {
+                    const now = new Date();
+                    return selectedTermin.ticketTypes.map((tt) => {
                     const qty = quantities[tt.id] ?? 0;
                     const isSoldOut = tt.available === 0;
-                    const isNotOnSale = selectedTermin.status !== 'ON_SALE';
+                    const terminNotOnSale = selectedTermin.status !== 'ON_SALE';
+                    const saleNotStarted = !!tt.saleStartsAt && new Date(tt.saleStartsAt) > now;
+                    const saleEnded = !!tt.saleEndsAt && new Date(tt.saleEndsAt) <= now;
+                    const isNotOnSale = terminNotOnSale || saleNotStarted || saleEnded;
                     const disabled = isSoldOut || isNotOnSale;
 
                     return (
@@ -207,7 +212,8 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                             <p className="text-sm font-semibold text-indigo-600">{formatPrice(tt.price, tt.currency)}</p>
                             {tt.description && <p className="text-xs text-gray-400 mt-0.5">{tt.description}</p>}
                             {isSoldOut && <p className="text-xs text-red-500 mt-0.5">Vypredané</p>}
-                            {isNotOnSale && !isSoldOut && <p className="text-xs text-blue-500 mt-0.5">Čoskoro v predaji</p>}
+                            {!isSoldOut && saleEnded && <p className="text-xs text-gray-400 mt-0.5">Predaj ukončený</p>}
+                            {!isSoldOut && !saleEnded && (terminNotOnSale || saleNotStarted) && <p className="text-xs text-blue-500 mt-0.5">Čoskoro v predaji</p>}
                             {tt.available != null && tt.available > 0 && tt.available <= 10 && (
                               <p className="text-xs text-orange-500 mt-0.5">Posledné {tt.available} ks</p>
                             )}
@@ -234,7 +240,8 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                         </div>
                       </div>
                     );
-                  })}
+                  });
+                  })()}
                 </div>
               </div>
 

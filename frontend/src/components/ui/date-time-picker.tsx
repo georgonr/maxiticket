@@ -7,6 +7,7 @@ interface DateTimePickerProps {
   onChange: (value: string) => void;
   required?: boolean;
   showQuickButtons?: boolean;
+  disabled?: boolean;
 }
 
 export function DateTimePicker({
@@ -16,6 +17,7 @@ export function DateTimePicker({
   onChange,
   required,
   showQuickButtons = false,
+  disabled = false,
 }: DateTimePickerProps) {
   const parts = value ? value.split('T') : ['', ''];
   const datePart = parts[0] ?? '';
@@ -58,16 +60,18 @@ export function DateTimePicker({
           value={datePart}
           onChange={(e) => emit(e.target.value, timePart)}
           required={required}
-          className={base}
+          disabled={disabled}
+          className={`${base} ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
         />
         <input
           id={`${id}-time`}
           type="time"
           value={timePart}
           onChange={(e) => emit(datePart, e.target.value)}
-          className={`${base} w-28`}
+          disabled={disabled}
+          className={`${base} w-28 ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
         />
-        {showQuickButtons && (
+        {showQuickButtons && !disabled && (
           <div className="flex gap-1">
             <button
               type="button"

@@ -116,6 +116,7 @@ export const venuesApi = {
 
 export const terminsApi = {
   list: (showId: string, token: string) => apiFetch<Termin[]>('/v1/shows/' + showId + '/termins', { token }),
+  get: (showId: string, id: string, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins/' + id, { token }),
   create: (showId: string, body: CreateTerminBody, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins', { method: 'POST', body: JSON.stringify(body), token }),
   update: (showId: string, id: string, body: Partial<CreateTerminBody>, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
   delete: (showId: string, id: string, token: string) => apiFetch<void>('/v1/shows/' + showId + '/termins/' + id, { method: 'DELETE', token }),
