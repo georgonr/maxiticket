@@ -1,32 +1,54 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { publicApi, PublicShow } from '@/lib/api';
 import { formatDate, formatPrice } from '@/lib/format';
-import { Search, Calendar, MapPin, Tag, Loader2 } from 'lucide-react';
+import {
+  Search, Calendar, MapPin, LayoutGrid, CalendarDays,
+  Music, Users, Dumbbell, Briefcase, Drama, Sparkles, Star,
+  Loader2, ChevronDown,
+} from 'lucide-react';
 
-const DATE_OPTIONS = [
-  { value: '', label: 'Všetky dátumy' },
-  { value: 'today', label: 'Dnes' },
-  { value: 'week', label: 'Tento týždeň' },
-  { value: 'weekend', label: 'Víkend' },
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const DATE_CHIPS = [
+  { value: '',        label: 'Všetky dátumy' },
+  { value: 'today',  label: 'Dnes' },
+  { value: 'week',   label: 'Tento týždeň' },
+  { value: 'weekend',label: 'Víkend' },
 ];
 
+const FIXED_CATEGORIES = [
+  { value: '',             label: 'Všetko',      Icon: Star },
+  { value: 'Koncerty',     label: 'Koncerty',     Icon: Music },
+  { value: 'Festivaly',    label: 'Festivaly',    Icon: Users },
+  { value: 'Šport',        label: 'Šport',        Icon: Dumbbell },
+  { value: 'Konferencie',  label: 'Konferencie',  Icon: Briefcase },
+  { value: 'Divadlo',      label: 'Divadlo',      Icon: Drama },
+  { value: 'Ostatné',      label: 'Ostatné',      Icon: Sparkles },
+];
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
 export default function EventsPage() {
-  const [shows, setShows] = useState<PublicShow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
-  const [filterCat, setFilterCat] = useState('');
+  const [shows, setShows]           = useState<PublicShow[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [cities, setCities]         = useState<string[]>([]);
+  const [extraCats, setExtraCats]   = useState<string[]>([]);
+  const [filterCat, setFilterCat]   = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterCity, setFilterCity] = useState('');
+  const [view, setView]             = useState<'grid' | 'calendar'>('grid');
 
   useEffect(() => {
     publicApi.getFilters().then((f) => {
-      setCategories(f.categories);
-      setCities(f.cities);
+      setCities(f.categories ? [] : []);          // cities only
+      setCities(f.cities ?? []);
+      // Extra categories not in FIXED list
+      const fixedVals = FIXED_CATEGORIES.map((c) => c.value).filter(Boolean);
+      setExtraCats((f.categories ?? []).filter((c) => !fixedVals.includes(c)));
     }).catch(() => {});
   }, []);
 
@@ -35,106 +57,222 @@ export default function EventsPage() {
     publicApi
       .listShows({
         category: filterCat || undefined,
-        date: filterDate || undefined,
-        city: filterCity || undefined,
+        date:     filterDate || undefined,
+        city:     filterCity || undefined,
       })
       .then(setShows)
       .catch(() => setShows([]))
       .finally(() => setLoading(false));
   }, [filterCat, filterDate, filterCity]);
 
+  const allCategories = [
+    ...FIXED_CATEGORIES,
+    ...extraCats.map((c) => ({ value: c, label: c, Icon: Sparkles })),
+  ];
+
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Podujatia</h1>
-        <p className="mt-1 text-gray-500">Nájdite a kúpte vstupenky na vaše obľúbené podujatia</p>
-      </div>
+    <div className="-mx-4 sm:-mx-6">
 
-      {/* Filters */}
-      <div className="mb-6 flex flex-wrap gap-3">
-        {categories.length > 0 && (
-          <div className="flex items-center gap-1.5">
-            <Tag size={14} className="text-gray-400" />
-            <select
-              value={filterCat}
-              onChange={(e) => setFilterCat(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Všetky kategórie</option>
-              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-violet-900 px-4 sm:px-6 py-16 sm:py-24 mb-0">
+        {/* Subtle pattern overlay */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 25% 60%, #ffffff 1px, transparent 1px),
+                              radial-gradient(circle at 75% 30%, #ffffff 1px, transparent 1px)`,
+            backgroundSize: '48px 48px',
+          }}
+        />
+
+        <div className="relative mx-auto max-w-7xl">
+          <div className="flex items-start justify-between gap-4">
+            <div className="max-w-xl">
+              <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-purple-200 backdrop-blur-sm">
+                <Sparkles size={12} /> Vstupenky online
+              </p>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight">
+                Nájdite vaše<br />
+                <span className="text-rose-400">ďalšie podujatie.</span>
+              </h1>
+              <p className="mt-4 text-base sm:text-lg text-purple-200 max-w-sm">
+                Koncerty, festivaly, šport a konferencie na Slovensku aj v Afrike.
+              </p>
+            </div>
+
+            {/* Grid / Calendar toggle */}
+            <div className="flex-shrink-0 self-start mt-1">
+              <div className="flex items-center gap-1 rounded-xl bg-white/10 p-1 backdrop-blur-sm">
+                <button
+                  onClick={() => setView('grid')}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
+                    view === 'grid'
+                      ? 'bg-white text-purple-800 shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <LayoutGrid size={14} />
+                  <span className="hidden sm:inline">Grid</span>
+                </button>
+                <button
+                  onClick={() => setView('calendar')}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
+                    view === 'calendar'
+                      ? 'bg-white text-purple-800 shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <CalendarDays size={14} />
+                  <span className="hidden sm:inline">Kalendár</span>
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-
-        <div className="flex items-center gap-1.5">
-          <Calendar size={14} className="text-gray-400" />
-          <select
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {DATE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
         </div>
+      </section>
 
-        {cities.length > 0 && (
-          <div className="flex items-center gap-1.5">
-            <MapPin size={14} className="text-gray-400" />
-            <select
-              value={filterCity}
-              onChange={(e) => setFilterCity(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Všetky mestá</option>
-              {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+      {/* ── Category pills ──────────────────────────────────────────────── */}
+      <section className="bg-white border-b border-slate-100 px-4 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex gap-2 overflow-x-auto py-4 scrollbar-hide">
+            {allCategories.map(({ value, label, Icon }) => {
+              const active = filterCat === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => setFilterCat(value)}
+                  className={`flex flex-none items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all whitespace-nowrap ${
+                    active
+                      ? 'bg-purple-700 text-white shadow-sm'
+                      : 'bg-slate-50 border border-slate-200 text-slate-600 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50'
+                  }`}
+                >
+                  <Icon size={13} />
+                  {label}
+                </button>
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      </section>
 
-      {/* Grid */}
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="animate-spin text-indigo-600" size={32} />
+      {/* ── Filter chips + city ─────────────────────────────────────────── */}
+      <section className="bg-slate-50 border-b border-slate-100 px-4 sm:px-6 py-3">
+        <div className="mx-auto max-w-7xl flex flex-wrap items-center gap-2">
+          {/* Date chips */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {DATE_CHIPS.map((chip) => {
+              const active = filterDate === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  onClick={() => setFilterDate(chip.value)}
+                  className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
+                    active
+                      ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {chip.value && <Calendar size={11} />}
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* City selector */}
+          {cities.length > 0 && (
+            <div className="relative">
+              <MapPin size={12} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <select
+                value={filterCity}
+                onChange={(e) => setFilterCity(e.target.value)}
+                className="appearance-none rounded-full border border-slate-200 bg-white pl-7 pr-7 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 focus:outline-none focus:border-purple-400 transition-colors cursor-pointer"
+              >
+                <option value="">Všetky mestá</option>
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            </div>
+          )}
         </div>
-      ) : shows.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 py-20 text-center">
-          <Search size={32} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500">Žiadne podujatia nenájdené</p>
+      </section>
+
+      {/* ── Content ─────────────────────────────────────────────────────── */}
+      <div className="px-4 sm:px-6 py-8">
+        <div className="mx-auto max-w-7xl">
+
+          {/* Result summary */}
+          {!loading && shows.length > 0 && (
+            <p className="mb-5 text-sm text-slate-500">
+              Zobrazených{' '}
+              <span className="font-semibold text-slate-700">{shows.length}</span>{' '}
+              {shows.length === 1 ? 'podujatie' : shows.length < 5 ? 'podujatia' : 'podujatí'}
+              {filterCat && <> v kategórii <span className="font-semibold text-purple-700">{filterCat}</span></>}
+            </p>
+          )}
+
+          {loading ? (
+            <div className="flex justify-center py-24">
+              <Loader2 className="animate-spin text-purple-600" size={36} />
+            </div>
+          ) : shows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-24 text-center">
+              <Search size={40} className="mb-4 text-slate-300" />
+              <p className="text-lg font-semibold text-slate-500">Žiadne podujatia nenájdené</p>
+              <p className="mt-1 text-sm text-slate-400">Skúste zmeniť filter alebo sa vráťte neskôr.</p>
+              {(filterCat || filterDate || filterCity) && (
+                <button
+                  onClick={() => { setFilterCat(''); setFilterDate(''); setFilterCity(''); }}
+                  className="mt-5 rounded-xl bg-purple-700 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
+                >
+                  Zrušiť filtre
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {shows.map((show) => (
+                <ShowCard key={show.id} show={show} />
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {shows.map((show) => (
-            <ShowCard key={show.id} show={show} />
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
+
+// ─── ShowCard (placeholder, full redesign in Step 4) ─────────────────────────
 
 function ShowCard({ show }: { show: PublicShow }) {
   const termin = show.termins[0];
 
   return (
-    <Link href={`/events/${show.slug}`} className="group block rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-shadow">
+    <Link
+      href={`/events/${show.slug}`}
+      className="group block rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-xl hover:border-slate-300 transition-all duration-300"
+    >
       {/* Cover */}
-      <div className="aspect-square bg-gradient-to-br from-indigo-100 to-purple-100 relative overflow-hidden">
+      <div className="aspect-square bg-gradient-to-br from-purple-100 to-violet-100 relative overflow-hidden">
         {show.coverUrl ? (
           <Image
             src={show.coverUrl}
             alt={show.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-indigo-300">
-            <span className="text-5xl font-bold opacity-30">{show.name.charAt(0)}</span>
+          <div className="flex h-full items-center justify-center">
+            <span className="text-6xl font-extrabold text-purple-200">{show.name.charAt(0)}</span>
           </div>
         )}
         {show.category && (
-          <span className="absolute top-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
+          <span className="absolute top-3 left-3 rounded-full bg-black/50 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
             {show.category}
           </span>
         )}
@@ -142,43 +280,57 @@ function ShowCard({ show }: { show: PublicShow }) {
 
       {/* Info */}
       <div className="p-4">
-        <h2 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2">{show.name}</h2>
+        <h2 className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-2 leading-snug">
+          {show.name}
+        </h2>
 
         {termin && (
-          <>
-            <p className="mt-1.5 flex items-center gap-1 text-sm text-gray-500">
-              <Calendar size={13} />
+          <div className="mt-2 space-y-1">
+            <p className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Calendar size={11} className="flex-shrink-0 text-purple-400" />
               {formatDate(termin.startsAt, termin.timezone, { weekday: undefined, year: undefined })}
             </p>
             {termin.city && (
-              <p className="flex items-center gap-1 text-sm text-gray-500">
-                <MapPin size={13} /> {termin.venueName}{termin.city !== termin.venueName ? `, ${termin.city}` : ''}
+              <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                <MapPin size={11} className="flex-shrink-0 text-purple-400" />
+                {termin.venueName}{termin.city !== termin.venueName ? `, ${termin.city}` : ''}
               </p>
             )}
-          </>
+          </div>
         )}
 
         {show.termins.length > 1 && (
-          <p className="mt-1 text-xs text-indigo-600">{show.termins.length} termínov</p>
+          <p className="mt-1.5 text-xs text-purple-600 font-medium">{show.termins.length} termínov</p>
         )}
 
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between gap-2">
           {termin?.minPrice != null ? (
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-bold text-slate-900">
               od {formatPrice(termin.minPrice, termin.currency)}
             </span>
           ) : (
-            <span className="text-sm text-gray-400">Cena neuvedená</span>
+            <span className="text-xs text-slate-400">Cena neuvedená</span>
           )}
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            termin?.status === 'ON_SALE'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-blue-100 text-blue-700'
-          }`}>
-            {termin?.status === 'ON_SALE' ? 'V predaji' : 'Čoskoro'}
-          </span>
+          <StatusBadge status={termin?.status} />
         </div>
       </div>
     </Link>
+  );
+}
+
+function StatusBadge({ status }: { status?: string }) {
+  if (!status) return null;
+  const map: Record<string, { label: string; cls: string }> = {
+    ON_SALE:    { label: 'V predaji',  cls: 'bg-emerald-100 text-emerald-700' },
+    COMING_SOON:{ label: 'Čoskoro',    cls: 'bg-blue-100 text-blue-700' },
+    SOLD_OUT:   { label: 'Vypredané',  cls: 'bg-red-100 text-red-600' },
+    CANCELLED:  { label: 'Zrušené',   cls: 'bg-slate-100 text-slate-500' },
+    PAST:       { label: 'Ukončené',  cls: 'bg-slate-100 text-slate-500' },
+  };
+  const s = map[status] ?? { label: status, cls: 'bg-slate-100 text-slate-500' };
+  return (
+    <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${s.cls}`}>
+      {s.label}
+    </span>
   );
 }
