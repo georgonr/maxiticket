@@ -44,7 +44,8 @@ export default function ShowDetailPage() {
   function handleFilePick(e: ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files ?? []);
     if (!picked.length) return;
-    setUploadPreviews(picked.map((f) => ({ file: f, preview: URL.createObjectURL(f) })));
+    const newEntries = picked.map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
+    setUploadPreviews((prev) => [...prev, ...newEntries]);
     e.target.value = '';
   }
 
@@ -148,7 +149,10 @@ export default function ShowDetailPage() {
 
         {/* Gallery */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Galéria</h2>
+          <h2 className="text-lg font-semibold mb-1">Galéria</h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Prvý nahraný obrázok sa automaticky stane titulkou. Titulku môžete neskôr zmeniť kliknutím na ľubovoľný obrázok.
+          </p>
 
           {/* Existing images */}
           {show.images && show.images.length > 0 && (

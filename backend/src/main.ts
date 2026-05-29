@@ -10,10 +10,19 @@ async function bootstrap() {
     new FastifyAdapter({ logger: true }),
   );
 
+  const fastify = app.getHttpAdapter().getInstance() as any;
+
+  // Catch-all content-type parser: handles requests with no Content-Type header
+  // (e.g. PATCH /images/.../cover which sends no body).
+  // Without this, Fastify 4 throws FST_ERR_CTP_INVALID_MEDIA_TYPE for such requests.
+  // Specific parsers (application/json, multipart/form-data) take precedence over '*'.
+  fastify.addContentTypeParser('*', { parseAs: 'buffer' }, (_req: any, body: Buffer, done: any) => {
+    done(null, body.length > 0 ? body : undefined);
+  });
+
   // Capture raw body for the Stripe webhook BEFORE parsing (needed for signature verification).
   // Uses a preParsing passthrough stream so the normal JSON parser still gets the full body.
   // Only active for the webhook route – all other routes are unaffected.
-  const fastify = app.getHttpAdapter().getInstance() as any;
   fastify.addHook('preParsing', async (req: any, _rep: any, payload: any) => {
     if (!req.url?.includes('/payments/webhook/stripe')) return;
 
@@ -35,7 +44,7 @@ async function bootstrap() {
   });
 
   await app.register(fastifyMultipart as any, {
-    limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+    limits: { fileSize: 10 * 1024 * 1024, files: 20 },
   });
 
   app.enableCors({
