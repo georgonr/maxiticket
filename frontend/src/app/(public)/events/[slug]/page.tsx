@@ -88,7 +88,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
         <div className="relative aspect-video overflow-hidden rounded-xl bg-gray-100">
           {coverImages.length > 0 ? (
             <Image
-              src={coverImages[coverIdx].url ?? coverImages[coverIdx].squareUrl}
+              src={coverImages[coverIdx].squareUrl ?? coverImages[coverIdx].url}
               alt={show.name}
               fill
               className="object-cover"

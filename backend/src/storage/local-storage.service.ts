@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { mkdir, unlink } from 'fs/promises';
+import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
 import * as sharp from 'sharp';
 import { StorageService, StoredFile } from './storage.interface';
@@ -31,27 +31,32 @@ export class LocalStorageService implements StorageService {
     const thumbPath = join(this.uploadsDir, 'thumbs', thumbFilename);
     const squarePath = join(this.uploadsDir, 'squares', squareFilename);
 
-    const [mainBuffer, thumbBuffer, squareBuffer] = await Promise.all([
-      // Main: max 1200px wide, WebP Q85
-      sharp(buffer).resize(1200, undefined, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer(),
-      // Thumb: 600×400 cover crop, WebP Q80
-      sharp(buffer).resize(600, 400, { fit: 'cover' }).webp({ quality: 80 }).toBuffer(),
-      // Square: 1000×1000 cover crop, WebP Q85 (for listing / cover cards)
-      sharp(buffer).resize(1000, 1000, { fit: 'cover' }).webp({ quality: 85 }).toBuffer(),
-    ]);
-
+    // Single-pass: process and write directly to file (avoids double-encoding)
     await Promise.all([
-      sharp(mainBuffer).toFile(mainPath),
-      sharp(thumbBuffer).toFile(thumbPath),
-      sharp(squareBuffer).toFile(squarePath),
+      // Main: max 1200px wide, enlarge small images to at least 800px, WebP Q85
+      sharp(buffer)
+        .resize(1200, 1200, { fit: 'inside', withoutReduction: false })
+        .webp({ quality: 85 })
+        .toFile(mainPath),
+      // Thumb: 600×400 cover crop, WebP Q80
+      sharp(buffer)
+        .resize(600, 400, { fit: 'cover' })
+        .webp({ quality: 80 })
+        .toFile(thumbPath),
+      // Square: 1000×1000 cover crop, WebP Q85 (listing / cover cards)
+      sharp(buffer)
+        .resize(1000, 1000, { fit: 'cover' })
+        .webp({ quality: 85 })
+        .toFile(squarePath),
     ]);
 
+    const { size } = await import('fs/promises').then((m) => m.stat(mainPath));
     return {
       filename,
       url: `${this.baseUrl}/${filename}`,
       thumbnailUrl: `${this.baseUrl}/thumbs/${thumbFilename}`,
       squareUrl: `${this.baseUrl}/squares/${squareFilename}`,
-      size: mainBuffer.length,
+      size,
       mimeType: 'image/webp',
     };
   }

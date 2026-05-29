@@ -59,11 +59,10 @@ export class ShowImagesService {
     const img = await this.prisma.showImage.findFirst({ where: { id: imageId, showId } });
     if (!img) throw new NotFoundException();
 
-    const [, updated] = await this.prisma.$transaction([
-      this.prisma.showImage.updateMany({ where: { showId }, data: { isCover: false } }),
-      this.prisma.showImage.update({ where: { id: imageId }, data: { isCover: true } }),
-    ]);
-    return updated;
+    return this.prisma.$transaction(async (tx) => {
+      await tx.showImage.updateMany({ where: { showId }, data: { isCover: false } });
+      return tx.showImage.update({ where: { id: imageId }, data: { isCover: true } });
+    });
   }
 
   async remove(showId: string, imageId: string, user: JwtPayload) {
