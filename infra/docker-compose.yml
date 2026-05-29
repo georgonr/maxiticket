@@ -51,6 +51,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-noreply@maxiticket.africa}
       APP_BASE_URL: ${APP_BASE_URL:-https://maxiticket.africa}
+      ADMIN_BASE_URL: ${ADMIN_BASE_URL:-https://admin.maxiticket.africa}
       QR_HMAC_SECRET: ${QR_HMAC_SECRET:-${JWT_SECRET}}
     volumes:
       - uploads_data:/app/uploads

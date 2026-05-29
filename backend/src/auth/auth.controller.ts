@@ -10,6 +10,7 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterOrganizerDto } from './dto/register.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -54,5 +55,19 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   logout(@Body() dto: RefreshDto) {
     return this.authService.logout(dto.refreshToken);
+  }
+
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto.email);
+    return { message: 'Ak účet existuje, e-mail bol odoslaný.' };
+  }
+
+  @Post('password/reset')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.newPassword);
+    return { message: 'Heslo bolo úspešne zmenené.' };
   }
 }

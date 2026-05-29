@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { setAccessToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 
 const schema = z.object({
@@ -63,7 +64,7 @@ function RegisterContent() {
           </div>
           <Input id="email" label="E-mail" type="email" autoComplete="email"
             error={errors.email?.message} {...register('email')} />
-          <Input id="password" label="Heslo" type="password" autoComplete="new-password"
+          <PasswordInput id="password" label="Heslo" autoComplete="new-password"
             error={errors.password?.message} {...register('password')} />
           <Input id="phone" label="Telefón (voliteľné)" type="tel"
             error={errors.phone?.message} {...register('phone')} />

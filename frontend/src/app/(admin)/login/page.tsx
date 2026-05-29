@@ -1,5 +1,19 @@
+'use client';
+
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { LoginForm } from '@/components/auth/login-form';
 import Link from 'next/link';
+
+function SuccessBanner() {
+  const params = useSearchParams();
+  if (!params.get('reset')) return null;
+  return (
+    <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+      Heslo bolo úspešne zmenené. Prihláste sa novým heslom.
+    </div>
+  );
+}
 
 export default function LoginPage() {
   return (
@@ -9,6 +23,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold">Prihlásenie</h1>
           <p className="mt-1 text-sm text-gray-500">Maxiticket Admin portál</p>
         </div>
+        <Suspense><SuccessBanner /></Suspense>
         <LoginForm />
         <p className="mt-5 text-center text-sm text-gray-500">
           Nemáte účet?{' '}

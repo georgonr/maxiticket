@@ -12,7 +12,8 @@ import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserRole, TermsType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes, createHash } from 'crypto';
+import { MailService } from '../mail/mail.service';
 
 const BCRYPT_ROUNDS = 12;
 const ACCESS_TOKEN_TTL = '15m';
@@ -24,6 +25,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
+    private mail: MailService,
   ) {}
 
   async registerOrganizer(dto: RegisterOrganizerDto, ipAddress?: string, userAgent?: string) {
@@ -150,6 +152,64 @@ export class AuthService {
     await this.prisma.refreshToken.updateMany({
       where: { token: rawRefreshToken, revokedAt: null },
       data: { revokedAt: new Date() },
+    });
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    // Always return silently – do not reveal whether the email exists
+    if (!user || !user.isActive || !user.passwordHash) return;
+
+    // Invalidate any existing unused tokens for this user
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    const rawToken = randomBytes(32).toString('hex'); // 64-char hex
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await this.prisma.passwordResetToken.create({
+      data: { userId: user.id, tokenHash, expiresAt },
+    });
+
+    // Route to correct frontend domain based on role
+    const isCustomer = user.role === UserRole.CUSTOMER;
+    const frontendBase = isCustomer
+      ? (this.config.get('APP_BASE_URL') ?? 'https://maxiticket.africa')
+      : (this.config.get('ADMIN_BASE_URL') ?? 'https://admin.maxiticket.africa');
+    const resetLink = `${frontendBase}/reset-password?token=${rawToken}`;
+
+    await this.mail.sendPasswordReset({
+      to: email,
+      firstName: user.firstName ?? undefined,
+      resetLink,
+    }).catch((e) => console.error('Password reset email failed:', e));
+  }
+
+  async resetPassword(rawToken: string, newPassword: string): Promise<void> {
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const record = await this.prisma.passwordResetToken.findFirst({
+      where: { tokenHash, usedAt: null, expiresAt: { gt: new Date() } },
+    });
+    if (!record) throw new BadRequestException('Token je neplatný alebo expirovaný');
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.passwordResetToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      });
+      await tx.user.update({
+        where: { id: record.userId },
+        data: { passwordHash },
+      });
+      await tx.refreshToken.updateMany({
+        where: { userId: record.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
     });
   }
 

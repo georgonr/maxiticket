@@ -91,6 +91,13 @@ Multi-tenant SaaS ticketing platform. Three actor types:
 2. `User` with role `ORGANIZER_OWNER` linked to the new organizer
 3. `TermsAcceptance` for the current active `ORGANIZER_REGISTRATION` terms version
 
+### Password reset flow
+1. `POST /v1/auth/password/forgot { email }` – always returns 200 (no email enumeration).  
+   - If user exists and is active: generates 32-byte cryptographically random token, stores **SHA-256 hash** in `PasswordResetToken` table (1-hour TTL), sends email via Mailpit/SMTP.  
+   - Reset link domain is role-aware: `admin.maxiticket.africa` for ORGANIZER_*/STAFF/SUPERADMIN, `maxiticket.africa` for CUSTOMER.
+2. `POST /v1/auth/password/reset { token, newPassword }` – verifies token (unhashed raw token → SHA-256 → lookup), sets new bcrypt-12 hash, marks token `usedAt` (one-time use), revokes all refresh tokens for the user.
+3. Frontend: `/forgot-password` and `/reset-password?token=...` pages live at **root level** (not in route groups) to avoid Next.js path conflicts; Server Component reads `x-area` header to pass `isAdmin` prop to the client form.
+
 ### Role model
 
 | Role | Scope | Capabilities |

@@ -140,6 +140,39 @@ export class MailService {
     });
   }
 
+  async sendPasswordReset(data: { to: string; firstName?: string; resetLink: string }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'noreply@maxiticket.africa');
+    const name = data.firstName ? `, ${data.firstName}` : '';
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#e63946;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">MT</div>
+  </div>
+  <h2 style="font-size:20px;margin:0 0 12px;">Reset hesla</h2>
+  <p style="color:#374151;">Dobrý deň${name},</p>
+  <p style="color:#374151;">Dostali sme žiadosť o reset hesla pre váš účet. Kliknite na tlačidlo nižšie – link je platný <strong>1 hodinu</strong>.</p>
+  <div style="text-align:center;margin:28px 0;">
+    <a href="${data.resetLink}"
+       style="background:#e63946;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+      Nastaviť nové heslo
+    </a>
+  </div>
+  <p style="color:#6b7280;font-size:13px;">Ak ste o reset nepožiadali, tento e-mail ignorujte. Vaše heslo zostane nezmenené.</p>
+  <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">
+    Maxiticket · <a href="${data.resetLink}" style="color:#9ca3af;">${data.resetLink}</a>
+  </p>
+</body></html>`;
+
+    await this.transporter.sendMail({
+      from: `Maxiticket <${from}>`,
+      to: data.to,
+      subject: 'Reset hesla – Maxiticket',
+      html,
+    });
+    this.logger.log(`Password reset email sent to ${data.to}`);
+  }
+
   private formatDate(date: Date, timezone: string): string {
     try {
       return new Intl.DateTimeFormat('sk-SK', {

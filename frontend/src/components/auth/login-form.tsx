@@ -5,7 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { setAccessToken } from '@/lib/auth';
 
@@ -46,10 +48,15 @@ export function LoginForm() {
         id="email" label="E-mail" type="email" autoComplete="email"
         error={errors.email?.message} {...register('email')}
       />
-      <Input
-        id="password" label="Heslo" type="password" autoComplete="current-password"
+      <PasswordInput
+        id="password" label="Heslo" autoComplete="current-password"
         error={errors.password?.message} {...register('password')}
       />
+      <div className="text-right -mt-2">
+        <Link href="/forgot-password" className="text-xs text-gray-500 hover:text-brand hover:underline">
+          Zabudli ste heslo?
+        </Link>
+      </div>
       {serverError && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{serverError}</p>}
       <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
         Prihlásiť sa

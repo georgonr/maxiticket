@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { setAccessToken } from '@/lib/auth';
 
@@ -55,26 +56,24 @@ export function RegisterForm() {
         <Input id="lastName" label="Priezvisko" error={errors.lastName?.message} {...register('lastName')} />
       </div>
       <Input id="email" label="E-mail" type="email" error={errors.email?.message} {...register('email')} />
-      <Input id="password" label="Heslo" type="password" error={errors.password?.message} {...register('password')} />
+      <PasswordInput
+        id="password" label="Heslo" autoComplete="new-password"
+        error={errors.password?.message} {...register('password')}
+      />
       <Input id="organizerName" label="Názov organizátora" error={errors.organizerName?.message} {...register('organizerName')} />
       <Input
         id="organizerSlug" label="URL slug (napr. moj-festival)"
         error={errors.organizerSlug?.message} {...register('organizerSlug')}
       />
       <label className="flex items-start gap-2 text-sm text-gray-700">
-        <input
-          type="checkbox" className="mt-0.5 accent-brand"
-          {...register('acceptTerms')}
-        />
+        <input type="checkbox" className="mt-0.5 accent-brand" {...register('acceptTerms')} />
         <span>
           Súhlasím s{' '}
           <a href="#" className="text-brand underline">obchodnými podmienkami</a>
           {' '}a spracovaním osobných údajov.
         </span>
       </label>
-      {errors.acceptTerms && (
-        <p className="text-xs text-red-600">{errors.acceptTerms.message}</p>
-      )}
+      {errors.acceptTerms && <p className="text-xs text-red-600">{errors.acceptTerms.message}</p>}
       {serverError && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{serverError}</p>}
       <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
         Vytvoriť účet
