@@ -11,6 +11,7 @@ import { usePublicAuth } from '@/lib/public-auth';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
+import { CheckCircle2 } from 'lucide-react';
 
 const schema = z.object({
   email: z.string().email('Neplatný e-mail'),
@@ -49,33 +50,72 @@ function LoginContent() {
   const resetSuccess = params.get('reset');
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold">Prihlásenie</h1>
-          <p className="mt-1 text-sm text-gray-500">Váš zákaznícky účet Maxiticket</p>
+    <div className="flex min-h-[72vh] items-center justify-center py-12">
+      <div className="w-full max-w-sm">
+
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-700 shadow-lg">
+            <span className="text-lg font-extrabold text-white">MT</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">Prihlásenie</h1>
+          <p className="mt-1 text-sm text-slate-500">Váš zákaznícky účet Maxiticket</p>
         </div>
-        {resetSuccess && (
-          <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-            Heslo bolo úspešne zmenené. Prihláste sa novým heslom.
-          </div>
-        )}
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <Input id="email" label="E-mail" type="email" autoComplete="email"
-            error={errors.email?.message} {...register('email')} />
-          <PasswordInput id="password" label="Heslo" autoComplete="current-password"
-            error={errors.password?.message} {...register('password')} />
-          <div className="text-right -mt-1">
-            <Link href="/forgot-password" className="text-xs text-gray-500 hover:text-indigo-600 hover:underline">
-              Zabudli ste heslo?
-            </Link>
-          </div>
-          {serverError && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{serverError}</p>}
-          <Button type="submit" size="lg" loading={isSubmitting} className="w-full">Prihlásiť sa</Button>
-        </form>
-        <p className="mt-5 text-center text-sm text-gray-500">
+
+        {/* Card */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          {resetSuccess && (
+            <div className="mb-5 flex items-start gap-2.5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" />
+              Heslo bolo úspešne zmenené. Prihláste sa novým heslom.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <Input
+              id="email"
+              label="E-mail"
+              type="email"
+              autoComplete="email"
+              error={errors.email?.message}
+              {...register('email')}
+            />
+            <div>
+              <PasswordInput
+                id="password"
+                label="Heslo"
+                autoComplete="current-password"
+                error={errors.password?.message}
+                {...register('password')}
+              />
+              <div className="mt-1.5 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-slate-400 hover:text-purple-700 transition-colors"
+                >
+                  Zabudli ste heslo?
+                </Link>
+              </div>
+            </div>
+
+            {serverError && (
+              <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                {serverError}
+              </div>
+            )}
+
+            <Button type="submit" size="lg" loading={isSubmitting} className="w-full mt-1">
+              Prihlásiť sa
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-5 text-center text-sm text-slate-500">
           Nemáte účet?{' '}
-          <Link href={`/account/register?next=${encodeURIComponent(next)}`} className="text-indigo-600 hover:underline">
+          <Link
+            href={`/account/register?next=${encodeURIComponent(next)}`}
+            className="font-medium text-purple-700 hover:text-purple-600 hover:underline transition-colors"
+          >
             Zaregistrujte sa
           </Link>
         </p>

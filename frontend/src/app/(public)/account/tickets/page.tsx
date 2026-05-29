@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { myApi, MyTicket } from '@/lib/api';
 import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
-import { formatDate, formatPrice } from '@/lib/format';
-import { Calendar, MapPin, Ticket, Loader2, QrCode } from 'lucide-react';
+import { formatDate } from '@/lib/format';
+import { Calendar, MapPin, Ticket, QrCode, ChevronRight } from 'lucide-react';
 
 export default function MyTicketsPage() {
   const router = useRouter();
@@ -32,49 +32,90 @@ export default function MyTicketsPage() {
   }, [isLoggedIn]);
 
   if (isLoading || loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-indigo-600" size={32} /></div>;
+    return (
+      <div className="space-y-3">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="h-8 w-8 rounded-xl bg-slate-100 animate-pulse" />
+          <div className="h-7 w-40 rounded-full bg-slate-100 animate-pulse" />
+        </div>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-24 rounded-2xl border border-slate-100 bg-slate-50 animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <Ticket size={24} className="text-indigo-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Moje lístky</h1>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
+          <Ticket size={20} className="text-purple-700" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Moje lístky</h1>
+          {tickets.length > 0 && (
+            <p className="text-sm text-slate-400">{tickets.length} {tickets.length === 1 ? 'vstupenka' : tickets.length < 5 ? 'vstupenky' : 'vstupeniek'}</p>
+          )}
+        </div>
       </div>
 
       {tickets.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 py-20 text-center">
-          <Ticket size={32} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 mb-4">Zatiaľ nemáte žiadne vstupenky</p>
-          <Link href="/events" className="text-indigo-600 hover:underline text-sm">Prehliadnuť podujatia</Link>
+        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <Ticket size={28} className="text-slate-300" />
+          </div>
+          <p className="font-semibold text-slate-500">Zatiaľ nemáte žiadne vstupenky</p>
+          <p className="mt-1 text-sm text-slate-400">Kúpte si lístky na niektoré z našich podujatí</p>
+          <Link
+            href="/events"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
+          >
+            Prehliadnuť podujatia
+          </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {tickets.map((ticket) => (
-            <Link key={ticket.id} href={`/account/tickets/${ticket.id}`} className="block">
-              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 group-hover:text-indigo-600 truncate">
-                    {ticket.termin.show.name}
-                  </p>
-                  <p className="text-sm font-medium text-indigo-600">{ticket.ticketType.name}</p>
-                  <p className="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                    <Calendar size={11} />
-                    {formatDate(ticket.termin.startsAt, ticket.termin.timezone)}
-                  </p>
-                  <p className="flex items-center gap-1 text-xs text-gray-500">
-                    <MapPin size={11} />
-                    {ticket.termin.venue.name}{ticket.termin.venue.city ? `, ${ticket.termin.venue.city}` : ''}
-                  </p>
-                </div>
-                <div className="ml-4 flex flex-col items-end gap-2">
-                  <QrCode size={32} className="text-gray-400 group-hover:text-indigo-600 transition-colors" />
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    ticket.status === 'VALID' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {ticket.status === 'VALID' ? 'Platná' : ticket.status}
+            <Link
+              key={ticket.id}
+              href={`/account/tickets/${ticket.id}`}
+              className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-purple-200 transition-all"
+            >
+              {/* Left: QR icon area */}
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-purple-50 group-hover:bg-purple-100 transition-colors">
+                <QrCode size={24} className="text-purple-600" />
+              </div>
+
+              {/* Info */}
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-1">
+                  {ticket.termin.show.name}
+                </p>
+                <p className="text-sm font-medium text-purple-600">{ticket.ticketType.name}</p>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                  <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <Calendar size={10} className="text-purple-400" />
+                    {formatDate(ticket.termin.startsAt, ticket.termin.timezone, { year: undefined })}
                   </span>
+                  {ticket.termin.venue.city && (
+                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                      <MapPin size={10} className="text-purple-400" />
+                      {ticket.termin.venue.name}{ticket.termin.venue.city ? `, ${ticket.termin.venue.city}` : ''}
+                    </span>
+                  )}
                 </div>
+              </div>
+
+              {/* Status + arrow */}
+              <div className="ml-2 flex flex-shrink-0 flex-col items-end gap-2">
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  ticket.status === 'VALID'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {ticket.status === 'VALID' ? 'Platná' : ticket.status}
+                </span>
+                <ChevronRight size={15} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
               </div>
             </Link>
           ))}

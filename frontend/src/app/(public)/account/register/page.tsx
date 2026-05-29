@@ -51,40 +51,84 @@ function RegisterContent() {
   }
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold">Registrácia</h1>
-          <p className="mt-1 text-sm text-gray-500">Vytvorte zákaznícky účet Maxiticket</p>
-        </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Input id="firstName" label="Meno" error={errors.firstName?.message} {...register('firstName')} />
-            <Input id="lastName" label="Priezvisko" error={errors.lastName?.message} {...register('lastName')} />
+    <div className="flex min-h-[72vh] items-center justify-center py-12">
+      <div className="w-full max-w-sm">
+
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-700 shadow-lg">
+            <span className="text-lg font-extrabold text-white">MT</span>
           </div>
-          <Input id="email" label="E-mail" type="email" autoComplete="email"
-            error={errors.email?.message} {...register('email')} />
-          <PasswordInput id="password" label="Heslo" autoComplete="new-password"
-            error={errors.password?.message} {...register('password')} />
-          <Input id="phone" label="Telefón (voliteľné)" type="tel"
-            error={errors.phone?.message} {...register('phone')} />
+          <h1 className="text-2xl font-bold text-slate-900">Registrácia</h1>
+          <p className="mt-1 text-sm text-slate-500">Vytvorte zákaznícky účet Maxiticket</p>
+        </div>
 
-          <label className="flex items-start gap-2 cursor-pointer mt-1">
-            <input type="checkbox" className="mt-0.5 h-4 w-4 rounded border-gray-300" {...register('acceptTerms')} />
-            <span className="text-sm text-gray-600">
-              Súhlasím s{' '}
-              <Link href="#" className="text-indigo-600 hover:underline">obchodnými podmienkami</Link>
-              {' '}a spracovaním osobných údajov
-            </span>
-          </label>
-          {errors.acceptTerms && <p className="text-xs text-red-600">{errors.acceptTerms.message}</p>}
+        {/* Card */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+            <div className="grid grid-cols-2 gap-3">
+              <Input id="firstName" label="Meno" error={errors.firstName?.message} {...register('firstName')} />
+              <Input id="lastName" label="Priezvisko" error={errors.lastName?.message} {...register('lastName')} />
+            </div>
+            <Input
+              id="email"
+              label="E-mail"
+              type="email"
+              autoComplete="email"
+              error={errors.email?.message}
+              {...register('email')}
+            />
+            <PasswordInput
+              id="password"
+              label="Heslo"
+              autoComplete="new-password"
+              error={errors.password?.message}
+              {...register('password')}
+            />
+            <Input
+              id="phone"
+              label="Telefón (voliteľné)"
+              type="tel"
+              error={errors.phone?.message}
+              {...register('phone')}
+            />
 
-          {serverError && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{serverError}</p>}
-          <Button type="submit" size="lg" loading={isSubmitting} className="w-full mt-1">Zaregistrovať sa</Button>
-        </form>
-        <p className="mt-5 text-center text-sm text-gray-500">
+            <label className="mt-1 flex cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-purple-700"
+                {...register('acceptTerms')}
+              />
+              <span className="text-sm text-slate-600">
+                Súhlasím s{' '}
+                <Link href="#" className="font-medium text-purple-700 hover:underline">
+                  obchodnými podmienkami
+                </Link>
+                {' '}a spracovaním osobných údajov
+              </span>
+            </label>
+            {errors.acceptTerms && (
+              <p className="text-xs text-red-600">{errors.acceptTerms.message}</p>
+            )}
+
+            {serverError && (
+              <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                {serverError}
+              </div>
+            )}
+
+            <Button type="submit" size="lg" loading={isSubmitting} className="w-full mt-1">
+              Zaregistrovať sa
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-5 text-center text-sm text-slate-500">
           Máte účet?{' '}
-          <Link href={`/account/login?next=${encodeURIComponent(next)}`} className="text-indigo-600 hover:underline">
+          <Link
+            href={`/account/login?next=${encodeURIComponent(next)}`}
+            className="font-medium text-purple-700 hover:text-purple-600 hover:underline transition-colors"
+          >
             Prihláste sa
           </Link>
         </p>

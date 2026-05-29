@@ -218,9 +218,17 @@ export default function EventsPage() {
       <div className="px-4 sm:px-6 py-8">
         <div className="mx-auto max-w-7xl">
           {loading ? (
-            <div className="flex justify-center py-24">
-              <Loader2 className="animate-spin text-purple-600" size={36} />
-            </div>
+            view === 'calendar' ? (
+              <div className="flex justify-center py-24">
+                <Loader2 className="animate-spin text-purple-600" size={36} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <CardSkeleton key={i} />
+                ))}
+              </div>
+            )
           ) : view === 'calendar' ? (
             <CalendarView shows={shows} filterCity={filterCity} cities={cities} setFilterCity={setFilterCity} />
           ) : shows.length === 0 ? (
@@ -698,6 +706,25 @@ function StatusBadge({ status }: { status?: string }) {
     <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${s.cls}`}>
       {s.label}
     </span>
+  );
+}
+
+// ─── CardSkeleton ─────────────────────────────────────────────────────────────
+
+function CardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden animate-pulse">
+      <div className="aspect-square bg-slate-100" />
+      <div className="p-4 space-y-2.5">
+        <div className="h-4 bg-slate-100 rounded-full w-3/4" />
+        <div className="h-3 bg-slate-100 rounded-full w-1/2" />
+        <div className="h-3 bg-slate-100 rounded-full w-2/3" />
+        <div className="mt-3 flex items-center justify-between">
+          <div className="h-4 bg-slate-100 rounded-full w-20" />
+          <div className="h-5 bg-slate-100 rounded-full w-16" />
+        </div>
+      </div>
+    </div>
   );
 }
 
