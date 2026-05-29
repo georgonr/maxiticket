@@ -27,15 +27,31 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
 
   constructor(private config: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: this.config.get('SMTP_HOST', 'mailpit'),
-      port: Number(this.config.get('SMTP_PORT', '1025')),
-      secure: false,
-      auth:
-        this.config.get('SMTP_USER')
-          ? { user: this.config.get('SMTP_USER'), pass: this.config.get('SMTP_PASS') }
-          : undefined,
-    } as any);
+    const transport = this.config.get<string>('MAIL_TRANSPORT', 'mailpit');
+    const secure = this.config.get<string>('SMTP_SECURE', 'false') === 'true';
+
+    if (transport === 'smtp') {
+      // Production SMTP (e.g. SSL on port 465)
+      this.transporter = nodemailer.createTransport({
+        host: this.config.get<string>('SMTP_HOST'),
+        port: Number(this.config.get<string>('SMTP_PORT', '465')),
+        secure,
+        auth: {
+          user: this.config.get<string>('SMTP_USER'),
+          pass: this.config.get<string>('SMTP_PASS'),
+        },
+        tls: { rejectUnauthorized: true },
+      });
+    } else {
+      // Dev fallback: Mailpit (no auth, no TLS)
+      this.transporter = nodemailer.createTransport({
+        host: this.config.get<string>('SMTP_HOST', 'mailpit'),
+        port: Number(this.config.get<string>('SMTP_PORT', '1025')),
+        secure: false,
+      });
+    }
+
+    this.logger.log(`Mail transport: ${transport} (${this.config.get('SMTP_HOST')}:${this.config.get('SMTP_PORT')})`);
   }
 
   async sendTickets(data: TicketEmailData): Promise<void> {

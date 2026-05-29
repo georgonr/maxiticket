@@ -45,8 +45,10 @@ services:
       PORT: 3001
       UPLOADS_DIR: /app/uploads
       UPLOADS_BASE_URL: https://api.maxiticket.africa/v1/uploads/images
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-mailpit}
       SMTP_HOST: ${SMTP_HOST:-mailpit}
       SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-noreply@maxiticket.africa}

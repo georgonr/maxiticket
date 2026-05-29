@@ -227,6 +227,22 @@ DNS is live: `maxiticket.africa` + wildcard `*.maxiticket.africa` → this serve
 
 ACME email: `info@maxiticket.sk`. TLS issued automatically by Caddy on first request.
 
+## Email (MailService)
+
+`MailService` supports two transport modes, switched via `MAIL_TRANSPORT` env var:
+
+| `MAIL_TRANSPORT` | When to use | Config |
+|---|---|---|
+| `smtp` | Production | `SMTP_HOST`, `SMTP_PORT=587`, `SMTP_SECURE=false` (STARTTLS), `SMTP_USER`, `SMTP_PASS` |
+| `mailpit` | Development (default) | Connects to Mailpit container on port 1025, no auth/TLS |
+
+**Notes:**
+- Port 465 (SMTPS/SSL) is blocked by Hetzner; use **587 with STARTTLS** (`SMTP_SECURE=false`).
+- SPF: ✅ `v=spf1 a mx include:_spf.hostcreators.sk -all` covers `smtp.hostcreators.sk` IP range.
+- DKIM: ❌ not yet configured – enable in HostCreators control panel (Email → DKIM) for `info@maxiticket.africa`.
+- DMARC: ✅ `p=reject; aspf=r; adkim=r` – currently relies on SPF only; add DKIM for full coverage.
+- `MAIL_FROM` supports RFC 5322 format: `"Maxiticket <info@maxiticket.africa>"`.
+
 ## Backup
 
 Daily cron via `infra/postgres/backup.sh`:  
