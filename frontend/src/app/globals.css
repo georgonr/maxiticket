@@ -4,4 +4,23 @@
 
 :root {
   --brand: #e63946;
+  --mt-purple: #7C3AED;
+  --mt-purple-dark: #5B21B6;
+  --mt-rose: #F43F5E;
+  --mt-rose-dark: #E11D48;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  ::selection {
+    background-color: #EDE9FE;
+    color: #5B21B6;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
 }
