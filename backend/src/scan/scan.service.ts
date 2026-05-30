@@ -166,19 +166,27 @@ export class ScanService {
     };
   }
 
-  async getTerminy(user: JwtPayload) {
-    const now = new Date();
-    const windowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const windowEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
+  async getTerminy(user: JwtPayload, showAll = false) {
     const orgFilter: Prisma.TerminWhereInput = this.isSuperOrStaff(user)
       ? {}
       : { show: { organizerId: user.organizerId! } };
 
+    const windowFilter: Prisma.TerminWhereInput = showAll
+      ? {}
+      : (() => {
+          const now = new Date();
+          return {
+            startsAt: {
+              gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+              lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+            },
+          };
+        })();
+
     const terminy = await this.prisma.termin.findMany({
       where: {
         ...orgFilter,
-        startsAt: { gte: windowStart, lte: windowEnd },
+        ...windowFilter,
         tickets: { some: { status: { in: [TicketStatus.VALID, TicketStatus.USED] } } },
       },
       select: {

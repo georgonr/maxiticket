@@ -442,3 +442,40 @@ export const heroAdminApi = {
   listShowImages: (showId: string, token: string) =>
     apiFetch<ShowImage[]>('/v1/shows/' + showId + '/images', { token }),
 };
+
+// ── Scanner ───────────────────────────────────────────────────────────────────
+
+export interface ScanTermin {
+  id: string;
+  show: { id: string; name: string };
+  startsAt: string;
+  endsAt: string | null;
+  venue: { name: string; city: string } | null;
+  ticketCount: number;
+  scannedCount: number;
+}
+
+export interface ScanValidateOk {
+  ticketId: string;
+  showName: string;
+  terminStartsAt: string;
+  ticketTypeName: string;
+  buyerName: string | null;
+  seatSection: string | null;
+  seatRow: string | null;
+  seatNumber: string | null;
+}
+
+export interface ScanError {
+  code: 'NOT_FOUND' | 'INVALID_SIGNATURE' | 'WRONG_TERMIN' | 'ALREADY_USED' | 'CANCELLED' | 'REFUNDED';
+  usedAt?: string | null;
+  scannedBy?: string | null;
+  correctTermin?: { id: string; startsAt: string; showName: string };
+}
+
+export const scanApi = {
+  terminy: (token: string, showAll = false) =>
+    apiFetch<ScanTermin[]>(`/v1/scan/terminy${showAll ? '?showAll=true' : ''}`, { token }),
+  validate: (body: { qrToken: string; terminId: string }, token: string) =>
+    apiFetch<ScanValidateOk>('/v1/scan/validate', { method: 'POST', body: JSON.stringify(body), token }),
+};

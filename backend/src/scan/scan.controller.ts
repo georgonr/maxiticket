@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -37,7 +38,10 @@ export class ScanController {
   }
 
   @Get('terminy')
-  getTerminy(@CurrentUser() user: JwtPayload) {
-    return this.svc.getTerminy(user);
+  getTerminy(
+    @CurrentUser() user: JwtPayload,
+    @Query('showAll') showAll?: string,
+  ) {
+    return this.svc.getTerminy(user, showAll === 'true');
   }
 }
