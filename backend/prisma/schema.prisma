@@ -75,6 +75,8 @@ enum ScanResult {
   NOT_FOUND
   CANCELLED
   WRONG_EVENT
+  WRONG_TERMIN
+  REFUNDED
 }
 
 enum TermsType {

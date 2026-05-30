@@ -21,6 +21,7 @@ import { MailModule } from './mail/mail.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { HeroBannersModule } from './hero-banners/hero-banners.module';
+import { ScanModule } from './scan/scan.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -46,6 +47,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     OrdersModule,
     PaymentsModule,
     HeroBannersModule,
+    ScanModule,
   ],
   controllers: [HealthController],
   providers: [

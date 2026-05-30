@@ -1,0 +1,43 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Ip,
+} from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { ScanService } from './scan.service';
+import { ValidateScanDto } from './dto/scan.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../casl/casl-ability.factory';
+import { UserRole } from '@prisma/client';
+
+@Controller('scan')
+@UseGuards(JwtAuthGuard, RolesGuard, ThrottlerGuard)
+@Roles(UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER, UserRole.SCANNER)
+@Throttle({ default: { ttl: 60_000, limit: 30 } })
+export class ScanController {
+  constructor(private readonly svc: ScanService) {}
+
+  @Post('validate')
+  @HttpCode(HttpStatus.OK)
+  validate(
+    @Body() dto: ValidateScanDto,
+    @CurrentUser() user: JwtPayload,
+    @Ip() ip: string,
+  ) {
+    return this.svc.validateScan(dto.qrToken, dto.terminId, user, ip);
+  }
+
+  @Get('terminy')
+  getTerminy(@CurrentUser() user: JwtPayload) {
+    return this.svc.getTerminy(user);
+  }
+}
