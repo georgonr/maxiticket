@@ -583,10 +583,16 @@ export default function HeroAdminPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <DateTimePicker id="activeFrom" label="Aktívny od" value={form.activeFrom}
-                  onChange={(v) => fieldChange('activeFrom', v)} />
-                <DateTimePicker id="activeUntil" label="Aktívny do" value={form.activeUntil}
-                  onChange={(v) => fieldChange('activeUntil', v)} />
+                <div>
+                  <DateTimePicker id="activeFrom" label="Aktívny od" value={form.activeFrom}
+                    onChange={(v) => fieldChange('activeFrom', v)} />
+                  <p className="mt-1 text-xs text-gray-400">Prázdne = okamžite aktívny</p>
+                </div>
+                <div>
+                  <DateTimePicker id="activeUntil" label="Aktívny do" value={form.activeUntil}
+                    onChange={(v) => fieldChange('activeUntil', v)} />
+                  <p className="mt-1 text-xs text-gray-400">Prázdne = bez expirácie</p>
+                </div>
               </div>
 
               {formError && (
