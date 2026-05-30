@@ -1,5 +1,7 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, HttpCode, Ip } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { PublicService } from './public.service';
+import { ContactDto } from './contact.dto';
 
 @Controller('public')
 export class PublicController {
@@ -26,5 +28,12 @@ export class PublicController {
   @Get('shows/:slug')
   getShow(@Param('slug') slug: string) {
     return this.svc.getShowBySlug(slug);
+  }
+
+  @Post('contact')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
+  contact(@Body() dto: ContactDto, @Ip() _ip: string) {
+    return this.svc.sendContactEmail(dto);
   }
 }

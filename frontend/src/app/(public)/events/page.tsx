@@ -9,7 +9,7 @@ import {
   Search, Calendar, MapPin, LayoutGrid, CalendarDays,
   Music, Users, Dumbbell, Briefcase, Drama, Sparkles, Star,
   Loader2, ChevronDown, ChevronLeft, ChevronRight,
-  Share2, Copy, Check, MessageCircle, QrCode, Download, X,
+  Share2, Copy, Check, MessageCircle, QrCode, X,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -554,28 +554,9 @@ function ShowCard({ show }: { show: PublicShow }) {
   }
 
   function openWhatsApp() {
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(`${show.name} – ${eventUrl}`)}`,
-      '_blank', 'noopener'
-    );
-  }
-
-  async function downloadPoster() {
-    if (!show.coverUrl) return;
-    try {
-      const res = await fetch(show.coverUrl);
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `${show.slug}-plagat.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch {
-      window.open(show.coverUrl, '_blank', 'noopener');
-    }
+    const datum = termin ? formatDate(termin.startsAt, termin.timezone) : '';
+    const text = `Pozri si toto podujatie: ${show.name} – ${eventUrl}${datum ? ' ' + datum : ''}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
 
   return (
@@ -623,11 +604,10 @@ function ShowCard({ show }: { show: PublicShow }) {
           }`}>
             <div className="border-t border-slate-100 bg-white/95 p-3 shadow-xl backdrop-blur-md">
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Zdieľať</p>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
                 <ShareBtn icon={copied ? Check : Copy} label={copied ? 'Skopírované!' : 'Kopírovať'} active={copied} onClick={copyLink} />
                 <ShareBtn icon={MessageCircle} label="WhatsApp" onClick={openWhatsApp} />
                 <ShareBtn icon={QrCode} label="QR kód" onClick={() => { setQrOpen(true); setShareOpen(false); }} />
-                <ShareBtn icon={Download} label="Plagát" onClick={downloadPoster} disabled={!show.coverUrl} />
               </div>
             </div>
           </div>

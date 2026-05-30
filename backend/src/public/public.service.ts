@@ -1,12 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { ContactDto } from './contact.dto';
 import { EventStatus, TerminStatus } from '@prisma/client';
 
 const SALE_STATUSES: TerminStatus[] = [TerminStatus.ON_SALE, TerminStatus.COMING_SOON];
 
 @Injectable()
 export class PublicService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private mail: MailService) {}
+
+  async sendContactEmail(dto: ContactDto): Promise<{ ok: boolean }> {
+    await this.mail.sendContactEmail(dto);
+    return { ok: true };
+  }
 
   async listShows(q: { category?: string; dateFilter?: string; city?: string }) {
     const now = new Date();

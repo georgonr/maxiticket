@@ -189,6 +189,30 @@ export class MailService {
     this.logger.log(`Password reset email sent to ${data.to}`);
   }
 
+  async sendContactEmail(data: { meno: string; email: string; predmet: string; sprava: string }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'noreply@maxiticket.africa');
+    const to = this.config.get('CONTACT_EMAIL', 'info@maxiticket.sk');
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+  <h2 style="font-size:18px;margin:0 0 16px;">Správa z kontaktného formulára</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;">
+    <tr><td style="padding:6px 0;color:#6b7280;width:120px;">Meno:</td><td style="padding:6px 0;color:#111827;">${data.meno}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">E-mail:</td><td style="padding:6px 0;color:#111827;"><a href="mailto:${data.email}">${data.email}</a></td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">Predmet:</td><td style="padding:6px 0;color:#111827;">${data.predmet}</td></tr>
+  </table>
+  <div style="margin-top:16px;padding:16px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;white-space:pre-wrap;">${data.sprava}</div>
+</body></html>`;
+    await this.transporter.sendMail({
+      from: `Maxiticket Kontakt <${from}>`,
+      to,
+      replyTo: data.email,
+      subject: `[Kontakt] ${data.predmet} – ${data.meno}`,
+      html,
+    });
+    this.logger.log(`Contact email from ${data.email} sent to ${to}`);
+  }
+
   private formatDate(date: Date, timezone: string): string {
     try {
       return new Intl.DateTimeFormat('sk-SK', {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePublicAuth } from '@/lib/public-auth';
-import { Ticket, LogOut, LogIn, Menu, X, UserCircle2, ChevronDown, ShoppingBag } from 'lucide-react';
+import { TicketCheck, Ticket, LogOut, LogIn, Menu, X, UserCircle2, ChevronDown, ShoppingBag } from 'lucide-react';
 
 const NAV_LINKS = [
   { href: '/events', label: 'Podujatia' },
@@ -38,11 +38,18 @@ export function PublicHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 h-16">
 
         {/* Logo */}
-        <Link href="/events" className="flex items-center gap-2.5 flex-shrink-0 group">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-700 text-white text-sm font-extrabold tracking-tight shadow-md group-hover:bg-purple-600 transition-colors">
-            MT
+        <Link href="/events" className="flex items-center gap-2 flex-shrink-0 group">
+          <TicketCheck
+            size={22}
+            className="text-purple-600 group-hover:text-purple-700 transition-colors flex-shrink-0"
+            strokeWidth={2.2}
+          />
+          <span
+            className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent"
+            style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
+          >
+            Maxiticket
           </span>
-          <span className="text-lg font-extrabold text-slate-900 tracking-tight">Maxiticket</span>
         </Link>
 
         {/* Desktop nav */}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { TicketCheck } from 'lucide-react';
 
 const FOOTER_COLS = [
   {
@@ -23,7 +24,13 @@ const FOOTER_COLS = [
       { href: '/faq', label: 'FAQ' },
       { href: '/kontakt', label: 'Kontakt' },
       { href: '/vop', label: 'VOP' },
-      { href: '/ochrana-osobnych-udajov', label: 'Ochrana OÚ' },
+    ],
+  },
+  {
+    title: 'Právne',
+    links: [
+      { href: '/gdpr', label: 'Ochrana osobných údajov' },
+      { href: '/cookies', label: 'Cookies' },
     ],
   },
 ];
@@ -72,18 +79,21 @@ export function PublicFooter() {
     <footer className="bg-slate-950 text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-16 pb-8">
         {/* Main columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
 
           {/* Brand column */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-600 text-white text-sm font-extrabold">
-                MT
+            <div className="flex items-center gap-2 mb-4">
+              <TicketCheck size={20} className="text-purple-400 flex-shrink-0" strokeWidth={2.2} />
+              <span
+                className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-purple-400 to-rose-400 bg-clip-text text-transparent"
+                style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
+              >
+                Maxiticket
               </span>
-              <span className="text-lg font-extrabold tracking-tight">Maxiticket</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              Slovenská vstupenková platforma pre každé podujatie. Rýchlo, bezpečne, moderne.
+              Medzinárodná vstupenková platforma pre každé podujatie. Rýchlo, bezpečne, moderne.
             </p>
             {/* Social icons */}
             <div className="flex items-center gap-3 mt-6">
@@ -104,7 +114,7 @@ export function PublicFooter() {
 
           {/* Link columns */}
           {FOOTER_COLS.map((col) => (
-            <div key={col.title}>
+            <div key={col.title} className="lg:col-span-1">
               <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
                 {col.title}
               </h3>
