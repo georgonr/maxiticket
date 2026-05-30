@@ -1,13 +1,11 @@
-# Maxiticket – Caddyfile
+# TicketAll – Caddyfile
 
 {
-  email info@maxiticket.sk
-  # Uncomment for staging (avoids LE rate limits during testing):
-  # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+  email info@ticketall.eu
 }
 
 # ── API ────────────────────────────────────────────────
-api.maxiticket.africa {
+api.ticketall.eu {
   reverse_proxy backend:3001
 
   header {
@@ -28,7 +26,7 @@ api.maxiticket.africa {
 }
 
 # ── Public web ─────────────────────────────────────────
-maxiticket.africa, www.maxiticket.africa {
+ticketall.eu, www.ticketall.eu {
   reverse_proxy frontend:3000
 
   header {
@@ -41,7 +39,7 @@ maxiticket.africa, www.maxiticket.africa {
 }
 
 # ── Admin + Organizer portal ───────────────────────────
-admin.maxiticket.africa {
+admin.ticketall.eu {
   reverse_proxy frontend:3000
 
   header {
@@ -54,21 +52,8 @@ admin.maxiticket.africa {
   encode zstd gzip
 }
 
-# ── Mailpit (dev email UI) ─────────────────────────────
-mail.maxiticket.africa {
-  reverse_proxy mailpit:8025
-
-  header {
-    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    X-Content-Type-Options nosniff
-    Referrer-Policy strict-origin-when-cross-origin
-  }
-
-  encode zstd gzip
-}
-
 # ── Scanner PWA ────────────────────────────────────────
-skener.maxiticket.africa {
+skener.ticketall.eu {
   reverse_proxy frontend:3000
 
   header {
