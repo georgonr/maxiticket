@@ -19,14 +19,14 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
+    const errBody = await res.json().catch(() => ({}));
     const message =
-      typeof body?.message === 'string'
-        ? body.message
-        : Array.isArray(body?.message)
-          ? body.message.join(', ')
+      typeof errBody?.message === 'string'
+        ? errBody.message
+        : Array.isArray(errBody?.message)
+          ? errBody.message.join(', ')
           : `HTTP ${res.status}`;
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, errBody);
   }
 
   if (res.status === 204) return undefined as T;
@@ -37,6 +37,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public body: Record<string, unknown> = {},
   ) {
     super(message);
   }

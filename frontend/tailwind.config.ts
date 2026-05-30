@@ -33,10 +33,16 @@ const config: Config = {
           from: { opacity: '0' },
           to:   { opacity: '1' },
         },
+        'scan-line': {
+          '0%':   { top: '8px',  opacity: '1' },
+          '50%':  { opacity: '0.6' },
+          '100%': { top: 'calc(100% - 8px)', opacity: '1' },
+        },
       },
       animation: {
-        'slide-up': 'slide-up 0.2s ease-out',
-        'fade-in':  'fade-in 0.15s ease-out',
+        'slide-up':  'slide-up 0.2s ease-out',
+        'fade-in':   'fade-in 0.15s ease-out',
+        'scan-line': 'scan-line 2s ease-in-out infinite alternate',
       },
     },
   },
