@@ -39,7 +39,7 @@ export function PublicHeader() {
 
         {/* Logo */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Link href="/events" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group">
             <TicketCheck
               size={22}
               className="text-purple-600 group-hover:text-purple-700 transition-colors flex-shrink-0"
