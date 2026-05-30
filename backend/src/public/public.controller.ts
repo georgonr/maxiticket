@@ -7,6 +7,11 @@ import { ContactDto } from './contact.dto';
 export class PublicController {
   constructor(private readonly svc: PublicService) {}
 
+  @Get('hero')
+  getHero() {
+    return this.svc.getHeroSlides();
+  }
+
   @Get('shows')
   listShows(
     @Query('category') category?: string,

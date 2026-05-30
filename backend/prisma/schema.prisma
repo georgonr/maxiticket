@@ -237,6 +237,8 @@ model Show {
   // Ticket template override for this show (overrides organizer-level template)
   ticketTemplate Json?
 
+  isPromoted    Boolean     @default(false)
+
   status        EventStatus @default(DRAFT)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -247,6 +249,7 @@ model Show {
 
   @@unique([organizerId, slug])
   @@index([organizerId, status])
+  @@index([isPromoted])
 }
 
 // ─────────────────────────────────────────────
@@ -525,6 +528,27 @@ model ScanLog {
 model StripeEvent {
   id          String   @id   // Stripe event ID (evt_...)
   processedAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// HERO BANNER (marketing bannery na homepage)
+// ─────────────────────────────────────────────
+
+model HeroBanner {
+  id          String    @id @default(cuid())
+  title       String
+  subtitle    String?
+  imageUrl    String
+  ctaLabel    String?
+  ctaUrl      String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  activeFrom  DateTime?
+  activeUntil DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive, sortOrder])
 }
 
 model TermsVersion {

@@ -5,10 +5,86 @@ import { ContactDto } from './contact.dto';
 import { EventStatus, TerminStatus } from '@prisma/client';
 
 const SALE_STATUSES: TerminStatus[] = [TerminStatus.ON_SALE, TerminStatus.COMING_SOON];
+const HERO_CAP = 8;
+const HERO_CACHE_TTL_MS = 60_000;
 
 @Injectable()
 export class PublicService {
+  private heroCache: { data: unknown; expiresAt: number } | null = null;
+
   constructor(private prisma: PrismaService, private mail: MailService) {}
+
+  async getHeroSlides(): Promise<unknown[]> {
+    const now = Date.now();
+    if (this.heroCache && this.heroCache.expiresAt > now) {
+      return this.heroCache.data as unknown[];
+    }
+
+    const nowDate = new Date();
+
+    // Fetch active banners
+    const banners = await this.prisma.heroBanner.findMany({
+      where: {
+        isActive: true,
+        OR: [{ activeFrom: null }, { activeFrom: { lte: nowDate } }],
+        AND: [{ OR: [{ activeUntil: null }, { activeUntil: { gte: nowDate } }] }],
+      },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    // Fetch promoted shows with nearest active termin
+    const promotedShows = await this.prisma.show.findMany({
+      where: {
+        isPromoted: true,
+        status: EventStatus.PUBLISHED,
+        termins: { some: { status: { in: SALE_STATUSES }, visible: true } },
+      },
+      include: {
+        images: { where: { isCover: true }, take: 1 },
+        termins: {
+          where: { status: { in: SALE_STATUSES }, visible: true },
+          orderBy: { startsAt: 'asc' },
+          take: 1,
+          include: { venue: { select: { name: true, city: true } } },
+        },
+      },
+    });
+
+    const bannerSlides = banners.map((b) => ({
+      type: 'banner' as const,
+      id: b.id,
+      title: b.title,
+      subtitle: b.subtitle ?? null,
+      imageUrl: b.imageUrl,
+      ctaLabel: b.ctaLabel ?? null,
+      ctaUrl: b.ctaUrl ?? null,
+      sortOrder: b.sortOrder,
+    }));
+
+    const showSlides = promotedShows
+      .filter((s) => s.termins.length > 0)
+      .sort((a, b) => a.termins[0].startsAt.getTime() - b.termins[0].startsAt.getTime())
+      .map((s) => {
+        const t = s.termins[0];
+        return {
+          type: 'show' as const,
+          id: s.id,
+          slug: s.slug,
+          name: s.name,
+          imageUrl: (s.images[0] as any)?.squareUrl ?? null,
+          startsAt: t.startsAt,
+          timezone: t.timezone,
+          city: (t.venue as any)?.city ?? null,
+          venueName: (t.venue as any)?.name ?? null,
+          ctaUrl: `/events/${s.slug}`,
+        };
+      });
+
+    const slides = [...bannerSlides, ...showSlides].slice(0, HERO_CAP);
+
+    this.heroCache = { data: slides, expiresAt: now + HERO_CACHE_TTL_MS };
+    return slides;
+  }
 
   async sendContactEmail(dto: ContactDto): Promise<{ ok: boolean }> {
     await this.mail.sendContactEmail(dto);
