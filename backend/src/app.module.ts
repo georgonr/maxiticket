@@ -20,6 +20,7 @@ import { PublicModule } from './public/public.module';
 import { MailModule } from './mail/mail.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
+import { HeroBannersModule } from './hero-banners/hero-banners.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -44,6 +45,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     MailModule,
     OrdersModule,
     PaymentsModule,
+    HeroBannersModule,
   ],
   controllers: [HealthController],
   providers: [
