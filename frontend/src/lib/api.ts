@@ -382,3 +382,53 @@ export const myApi = {
   tickets: (token: string) => apiFetch<MyTicket[]>('/v1/my/tickets', { token }),
   ticket: (id: string, token: string) => apiFetch<MyTicket>('/v1/my/tickets/' + id, { token }),
 };
+
+// ── Hero Admin ────────────────────────────────────────────────────────────────
+
+export interface HeroBanner {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string;
+  ctaLabel: string | null;
+  ctaUrl: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  activeFrom: string | null;
+  activeUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminShow {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  isPromoted: boolean;
+  category: string | null;
+  images: { squareUrl: string }[];
+  termins: { startsAt: string; status: string }[];
+}
+
+export type CreateHeroBannerBody = Omit<HeroBanner, 'id' | 'createdAt' | 'updatedAt'>;
+
+export const heroAdminApi = {
+  listBanners: (token: string) =>
+    apiFetch<HeroBanner[]>('/v1/admin/hero-banners', { token }),
+  createBanner: (body: Partial<CreateHeroBannerBody>, token: string) =>
+    apiFetch<HeroBanner>('/v1/admin/hero-banners', { method: 'POST', body: JSON.stringify(body), token }),
+  updateBanner: (id: string, body: Partial<CreateHeroBannerBody>, token: string) =>
+    apiFetch<HeroBanner>('/v1/admin/hero-banners/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
+  deleteBanner: (id: string, token: string) =>
+    apiFetch<void>('/v1/admin/hero-banners/' + id, { method: 'DELETE', token }),
+  uploadImage: (file: File, token: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return apiFetch<{ imageUrl: string }>('/v1/admin/hero-banners/upload-image', { method: 'POST', body: fd, token });
+  },
+  listShows: (token: string) =>
+    apiFetch<AdminShow[]>('/v1/admin/shows', { token }),
+  promoteShow: (id: string, isPromoted: boolean, token: string) =>
+    apiFetch<AdminShow>('/v1/admin/shows/' + id + '/promote', { method: 'PATCH', body: JSON.stringify({ isPromoted }), token }),
+};
