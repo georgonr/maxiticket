@@ -292,6 +292,10 @@ export interface PublicShowDetail {
   termins: PublicTerminDetail[];
 }
 
+export type HeroSlideType =
+  | { type: 'banner'; id: string; title: string; subtitle: string | null; imageUrl: string; ctaLabel: string | null; ctaUrl: string | null }
+  | { type: 'show'; id: string; slug: string; name: string; imageUrl: string | null; startsAt: string; timezone: string; city: string | null; venueName: string | null; ctaUrl: string };
+
 export const publicApi = {
   listShows: (params?: { category?: string; date?: string; city?: string }) => {
     const q = new URLSearchParams();
@@ -303,6 +307,7 @@ export const publicApi = {
   },
   getShow: (slug: string) => apiFetch<PublicShowDetail>(`/v1/public/shows/${slug}`),
   getFilters: () => apiFetch<{ categories: string[]; cities: string[] }>('/v1/public/filters'),
+  getHero: () => apiFetch<HeroSlideType[]>('/v1/public/hero'),
 };
 
 // ── Customer auth ─────────────────────────────────────────────────────────────

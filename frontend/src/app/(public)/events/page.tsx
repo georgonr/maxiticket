@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { publicApi, PublicShow, PublicTermin } from '@/lib/api';
 import { formatDate, formatPrice } from '@/lib/format';
+import { HeroSlider } from '@/components/public/HeroSlider';
 import {
   Search, Calendar, MapPin, LayoutGrid, CalendarDays,
   Music, Users, Dumbbell, Briefcase, Drama, Sparkles, Star,
@@ -96,53 +97,34 @@ export default function EventsPage() {
   return (
     <div className="-mx-4 sm:-mx-6">
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-violet-900 px-4 sm:px-6 py-16 sm:py-24">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `radial-gradient(circle at 25% 60%, #ffffff 1px, transparent 1px),
-                              radial-gradient(circle at 75% 30%, #ffffff 1px, transparent 1px)`,
-            backgroundSize: '48px 48px',
-          }}
-        />
-        <div className="relative mx-auto max-w-7xl">
-          <div className="flex items-start justify-between gap-4">
-            <div className="max-w-xl">
-              <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-purple-200 backdrop-blur-sm">
-                <Sparkles size={12} /> Vstupenky online
-              </p>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight">
-                Nájdite vaše<br />
-                <span className="text-rose-400">ďalšie podujatie.</span>
-              </h1>
-              <p className="mt-4 text-base sm:text-lg text-purple-200 max-w-sm">
-                Koncerty, festivaly, šport a konferencie na Slovensku aj v Afrike.
-              </p>
-            </div>
-            {/* Grid / Calendar toggle */}
-            <div className="flex-shrink-0 self-start mt-1">
-              <div className="flex items-center gap-1 rounded-xl bg-white/10 p-1 backdrop-blur-sm">
-                <button
-                  onClick={() => setView('grid')}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
-                    view === 'grid' ? 'bg-white text-purple-800 shadow-sm' : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <LayoutGrid size={14} />
-                  <span className="hidden sm:inline">Grid</span>
-                </button>
-                <button
-                  onClick={() => setView('calendar')}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
-                    view === 'calendar' ? 'bg-white text-purple-800 shadow-sm' : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <CalendarDays size={14} />
-                  <span className="hidden sm:inline">Kalendár</span>
-                </button>
-              </div>
-            </div>
+      {/* ── Hero Slider ──────────────────────────────────────────────────── */}
+      <HeroSlider />
+
+      {/* ── Subheader: title + Grid/Calendar toggle ───────────────────── */}
+      <section className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
+        <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900">
+            Najbližšie podujatia
+          </h1>
+          <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+            <button
+              onClick={() => setView('grid')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                view === 'grid' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <LayoutGrid size={13} />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button
+              onClick={() => setView('calendar')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                view === 'calendar' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <CalendarDays size={13} />
+              <span className="hidden sm:inline">Kalendár</span>
+            </button>
           </div>
         </div>
       </section>
