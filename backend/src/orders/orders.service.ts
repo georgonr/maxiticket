@@ -131,7 +131,7 @@ export class OrdersService {
     return order;
   }
 
-  async initiateCheckout(orderId: string, user: JwtPayload): Promise<{ url: string }> {
+  async initiateCheckout(orderId: string, user: JwtPayload, clientOrigin?: string): Promise<{ url: string }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: { include: { ticketType: true } } },
@@ -142,7 +142,7 @@ export class OrdersService {
       throw new BadRequestException(`Order is not pending (status: ${order.status})`);
     }
 
-    const appBaseUrl = this.config.get('APP_BASE_URL', 'https://maxiticket.africa');
+    const appBaseUrl = clientOrigin ?? this.config.get('APP_BASE_URL', 'https://ticketall.eu');
     const successUrl = `${appBaseUrl}/checkout/success/${orderId}`;
     const cancelUrl = `${appBaseUrl}/checkout/cancel`;
 

@@ -177,8 +177,8 @@ export class AuthService {
     // Route to correct frontend domain based on role
     const isCustomer = user.role === UserRole.CUSTOMER;
     const frontendBase = isCustomer
-      ? (this.config.get('APP_BASE_URL') ?? 'https://maxiticket.africa')
-      : (this.config.get('ADMIN_BASE_URL') ?? 'https://admin.maxiticket.africa');
+      ? (this.config.get('EMAIL_BASE_URL') ?? 'https://ticketall.eu')
+      : (this.config.get('EMAIL_ADMIN_BASE_URL') ?? 'https://admin.ticketall.eu');
     const resetLink = `${frontendBase}/reset-password?token=${rawToken}`;
 
     await this.mail.sendPasswordReset({

@@ -49,10 +49,10 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'https://maxiticket.africa',
-      'https://www.maxiticket.africa',
-      'https://admin.maxiticket.africa',
-      'https://skener.maxiticket.africa',
+      'https://ticketall.eu',
+      'https://www.ticketall.eu',
+      'https://admin.ticketall.eu',
+      'https://skener.ticketall.eu',
       'http://localhost:3000',
     ],
     credentials: true,

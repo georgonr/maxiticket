@@ -55,7 +55,7 @@ export class MailService {
   }
 
   async sendTickets(data: TicketEmailData): Promise<void> {
-    const from = this.config.get('MAIL_FROM', 'noreply@maxiticket.africa');
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
 
     // Generate QR PNGs and PDFs for each ticket
     const attachments: nodemailer.SendMailOptions['attachments'] = [];
@@ -104,7 +104,7 @@ export class MailService {
 </body></html>`;
 
     await this.transporter.sendMail({
-      from: `Maxiticket <${from}>`,
+      from,
       to: data.to,
       subject: `Vaše vstupenky – ${data.showName}`,
       html,
@@ -157,7 +157,7 @@ export class MailService {
   }
 
   async sendPasswordReset(data: { to: string; firstName?: string; resetLink: string }): Promise<void> {
-    const from = this.config.get('MAIL_FROM', 'noreply@maxiticket.africa');
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
     const name = data.firstName ? `, ${data.firstName}` : '';
     const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
@@ -176,22 +176,22 @@ export class MailService {
   </div>
   <p style="color:#6b7280;font-size:13px;">Ak ste o reset nepožiadali, tento e-mail ignorujte. Vaše heslo zostane nezmenené.</p>
   <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">
-    Maxiticket · <a href="${data.resetLink}" style="color:#9ca3af;">${data.resetLink}</a>
+    TicketAll · <a href="${data.resetLink}" style="color:#9ca3af;">${data.resetLink}</a>
   </p>
 </body></html>`;
 
     await this.transporter.sendMail({
-      from: `Maxiticket <${from}>`,
+      from,
       to: data.to,
-      subject: 'Reset hesla – Maxiticket',
+      subject: 'Reset hesla – TicketAll',
       html,
     });
     this.logger.log(`Password reset email sent to ${data.to}`);
   }
 
   async sendContactEmail(data: { meno: string; email: string; predmet: string; sprava: string }): Promise<void> {
-    const from = this.config.get('MAIL_FROM', 'noreply@maxiticket.africa');
-    const to = this.config.get('CONTACT_EMAIL', 'info@maxiticket.sk');
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const to = this.config.get('CONTACT_EMAIL', 'info@ticketall.eu');
     const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
 <body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
@@ -204,7 +204,7 @@ export class MailService {
   <div style="margin-top:16px;padding:16px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;white-space:pre-wrap;">${data.sprava}</div>
 </body></html>`;
     await this.transporter.sendMail({
-      from: `Maxiticket Kontakt <${from}>`,
+      from,
       to,
       replyTo: data.email,
       subject: `[Kontakt] ${data.predmet} – ${data.meno}`,
