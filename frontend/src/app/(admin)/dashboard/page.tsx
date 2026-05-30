@@ -60,10 +60,23 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <span className="font-bold text-lg text-brand">Maxiticket</span>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">{claims?.email}</span>
+      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between gap-4">
+        <span className="font-bold text-lg text-brand flex-shrink-0">Maxiticket</span>
+        {/* Main nav – Hero visible only to SUPERADMIN */}
+        <nav className="hidden sm:flex items-center gap-1 text-sm flex-1">
+          {(role === 'SUPERADMIN' || role === 'STAFF') && (
+            <Link href="/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+              Podujatia
+            </Link>
+          )}
+          {role === 'SUPERADMIN' && (
+            <Link href="/hero" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+              Hero slider
+            </Link>
+          )}
+        </nav>
+        <div className="flex items-center gap-4 flex-shrink-0">
+          <span className="text-sm text-gray-600 hidden md:block">{claims?.email}</span>
           <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand">
             {ROLE_LABELS[role] ?? role}
           </span>
@@ -83,6 +96,11 @@ export default function DashboardPage() {
               <DashCard title="Organizátori" desc="Správa tenantov a schvaľovanie" />
               <DashCard title="Používatelia" desc="Všetci používatelia platformy" />
               <DashCard title="Štatistiky" desc="Predaje a analytika" />
+              {role === 'SUPERADMIN' && (
+                <Link href="/hero">
+                  <DashCard title="Hero slider" desc="Titulný slider – bannery a promoted podujatia" />
+                </Link>
+              )}
             </>
           ) : role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' ? (
             <>
