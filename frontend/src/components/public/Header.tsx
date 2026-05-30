@@ -8,7 +8,7 @@ import { TicketCheck, Ticket, LogOut, LogIn, Menu, X, UserCircle2, ChevronDown, 
 const NAV_LINKS = [
   { href: '/events', label: 'Podujatia' },
   { href: '/faq', label: 'FAQ' },
-  { href: '/ako-to-funguje', label: 'Ako to funguje' },
+  { href: '/pre-organizatorov', label: 'Pre organizátorov' },
 ];
 
 export function PublicHeader() {
@@ -38,19 +38,27 @@ export function PublicHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 h-16">
 
         {/* Logo */}
-        <Link href="/events" className="flex items-center gap-2 flex-shrink-0 group">
-          <TicketCheck
-            size={22}
-            className="text-purple-600 group-hover:text-purple-700 transition-colors flex-shrink-0"
-            strokeWidth={2.2}
-          />
-          <span
-            className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent"
-            style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <Link href="/events" className="flex items-center gap-2 group">
+            <TicketCheck
+              size={22}
+              className="text-purple-600 group-hover:text-purple-700 transition-colors flex-shrink-0"
+              strokeWidth={2.2}
+            />
+            <span
+              className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent"
+              style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
+            >
+              Maxiticket
+            </span>
+          </Link>
+          <a
+            href="https://admin.maxiticket.africa"
+            className="hidden lg:inline text-xs text-slate-400 hover:text-slate-600 transition-colors"
           >
-            Maxiticket
-          </span>
-        </Link>
+            Som organizátor?
+          </a>
+        </div>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-0.5">
@@ -110,7 +118,7 @@ export function PublicHeader() {
                 Prihlásiť sa
               </Link>
               <Link
-                href="/account/register"
+                href="/register"
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl shadow-sm hover:shadow transition-all"
               >
                 Registrácia
@@ -170,12 +178,19 @@ export function PublicHeader() {
                   <LogIn size={15} /> Prihlásiť sa
                 </Link>
                 <Link
-                  href="/account/register"
+                  href="/register"
                   onClick={() => setMobileOpen(false)}
                   className="block px-3 py-2.5 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl text-center transition-colors"
                 >
                   Registrácia
                 </Link>
+                <a
+                  href="https://admin.maxiticket.africa"
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-3 py-2 text-sm text-slate-500 text-center"
+                >
+                  Som organizátor? →
+                </a>
               </>
             )}
           </div>

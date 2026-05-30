@@ -61,8 +61,16 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between gap-4">
-        <span className="font-bold text-lg text-brand flex-shrink-0">Maxiticket</span>
-        {/* Main nav – Hero visible only to SUPERADMIN */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className="font-bold text-lg text-brand">Maxiticket</span>
+          <a
+            href="https://maxiticket.africa"
+            className="hidden sm:inline text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Som zákazník?
+          </a>
+        </div>
+        {/* Main nav */}
         <nav className="hidden sm:flex items-center gap-1 text-sm flex-1">
           {(role === 'SUPERADMIN' || role === 'STAFF') && (
             <Link href="/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
@@ -73,6 +81,25 @@ export default function DashboardPage() {
             <Link href="/hero" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
               Hero slider
             </Link>
+          )}
+          {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
+            <Link href="/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+              Podujatia
+            </Link>
+          )}
+          {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
+            <a
+              href="https://skener.maxiticket.africa"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+              </svg>
+              Skenovať
+            </a>
           )}
         </nav>
         <div className="flex items-center gap-4 flex-shrink-0">
@@ -109,9 +136,14 @@ export default function DashboardPage() {
               </Link>
               <DashCard title="Objednávky" desc="Prehľad predajov a lístkov" />
               <DashCard title="Tím" desc="Pozývajte členov a skenerov" />
+              <a href="https://skener.maxiticket.africa" target="_blank" rel="noopener noreferrer">
+                <ScanCard />
+              </a>
             </>
           ) : (
-            <DashCard title="Skenovanie" desc="Spustite skener vstupeniek" />
+            <a href="https://skener.maxiticket.africa" target="_blank" rel="noopener noreferrer">
+              <ScanCard />
+            </a>
           )}
         </div>
       </main>
@@ -124,6 +156,22 @@ function DashCard({ title, desc }: { title: string; desc: string }) {
     <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
       <h3 className="font-semibold text-gray-900">{title}</h3>
       <p className="mt-1 text-sm text-gray-500">{desc}</p>
+    </div>
+  );
+}
+
+function ScanCard() {
+  return (
+    <div className="rounded-lg border-2 border-brand/30 bg-brand/5 p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+      <div className="flex items-center gap-2 mb-1">
+        <svg className="h-5 w-5 text-brand flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+        </svg>
+        <h3 className="font-semibold text-brand">Skenovať vstupenky</h3>
+      </div>
+      <p className="text-sm text-gray-600">Otvorí mobilný skener pre kontrolu QR kódov na vstupe.</p>
+      <p className="mt-2 text-xs text-brand font-medium">Otvoriť skener →</p>
     </div>
   );
 }

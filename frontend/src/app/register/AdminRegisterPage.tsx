@@ -1,7 +1,9 @@
+'use client';
+
 import { RegisterForm } from '@/components/auth/register-form';
 import Link from 'next/link';
 
-export default function RegisterPage() {
+export function AdminRegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
@@ -17,6 +19,11 @@ export default function RegisterPage() {
           <Link href="/login" className="text-brand hover:underline">
             Prihláste sa
           </Link>
+        </p>
+        <p className="mt-3 text-center text-xs text-gray-400">
+          <a href="https://maxiticket.africa" className="hover:underline">
+            Som zákazník?
+          </a>
         </p>
       </div>
     </div>
