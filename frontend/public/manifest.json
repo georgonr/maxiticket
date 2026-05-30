@@ -1,7 +1,7 @@
 {
-  "name": "Maxiticket Skener",
-  "short_name": "MT Skener",
-  "description": "Skener vstupeniek Maxiticket",
+  "name": "TicketAll Skener",
+  "short_name": "TicketAll",
+  "description": "Skener vstupeniek TicketAll",
   "start_url": "/scan",
   "display": "standalone",
   "orientation": "portrait",

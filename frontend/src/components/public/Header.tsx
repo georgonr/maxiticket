@@ -49,11 +49,11 @@ export function PublicHeader() {
               className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent"
               style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
             >
-              Maxiticket
+              TicketAll
             </span>
           </Link>
           <a
-            href="https://admin.maxiticket.africa"
+            href="https://admin.ticketall.eu"
             className="hidden lg:inline text-xs text-slate-400 hover:text-slate-600 transition-colors"
           >
             Som organizátor?
@@ -185,7 +185,7 @@ export function PublicHeader() {
                   Registrácia
                 </Link>
                 <a
-                  href="https://admin.maxiticket.africa"
+                  href="https://admin.ticketall.eu"
                   onClick={() => setMobileOpen(false)}
                   className="block px-3 py-2 text-sm text-slate-500 text-center"
                 >

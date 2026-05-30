@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Maxiticket',
+  title: 'TicketAll',
   description: 'Predaj vstupeniek online',
 };
 

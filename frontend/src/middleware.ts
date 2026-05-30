@@ -7,8 +7,8 @@ function getArea(req: NextRequest): Area {
   // Strip port for local dev
   const hostname = host.split(':')[0];
 
-  if (hostname === 'admin.maxiticket.africa') return 'admin';
-  if (hostname === 'skener.maxiticket.africa') return 'scanner';
+  if (hostname === 'admin.ticketall.eu') return 'admin';
+  if (hostname === 'skener.ticketall.eu') return 'scanner';
   // localhost dev: use ?area= query param or x-area header
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     const param = req.nextUrl.searchParams.get('area');

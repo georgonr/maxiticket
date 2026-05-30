@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { TicketCheck, QrCode, BarChart3, CreditCard, Users, Zap } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Pre organizátorov – Maxiticket',
-  description: 'Predávajte vstupenky na vaše podujatia jednoducho a bezpečne cez Maxiticket.',
+  title: 'Pre organizátorov – TicketAll',
+  description: 'Predávajte vstupenky na vaše podujatia jednoducho a bezpečne cez TicketAll.',
 };
 
 const BENEFITS = [
@@ -50,7 +50,7 @@ export default function PreOrganizatorovPage() {
         </div>
         <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl leading-tight">
           Predávajte vstupenky<br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent"> s Maxiticket</span>
+          <span className="bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent"> s TicketAll</span>
         </h1>
         <p className="mt-5 text-lg text-slate-500 max-w-xl mx-auto">
           Platforma pre organizátorov podujatí. Online predaj, QR skener na vstupe,
@@ -58,7 +58,7 @@ export default function PreOrganizatorovPage() {
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="https://admin.maxiticket.africa/register"
+            href="https://admin.ticketall.eu/register"
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-xl bg-rose-500 px-8 py-3.5 text-base font-semibold text-white hover:bg-rose-600 shadow-sm hover:shadow transition-all"
@@ -102,7 +102,7 @@ export default function PreOrganizatorovPage() {
             Registrácia trvá menej ako 5 minút. Prvé podujatie môžete spustiť ešte dnes.
           </p>
           <a
-            href="https://admin.maxiticket.africa/register"
+            href="https://admin.ticketall.eu/register"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block rounded-xl bg-white px-8 py-3 text-base font-semibold text-purple-700 hover:bg-purple-50 transition-colors"

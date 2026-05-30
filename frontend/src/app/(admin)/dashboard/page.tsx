@@ -62,9 +62,9 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-shrink-0">
-          <span className="font-bold text-lg text-brand">Maxiticket</span>
+          <span className="font-bold text-lg text-brand">TicketAll</span>
           <a
-            href="https://maxiticket.africa"
+            href="https://ticketall.eu"
             className="hidden sm:inline text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
             Som zákazník?
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           )}
           {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
             <a
-              href="https://skener.maxiticket.africa"
+              href="https://skener.ticketall.eu"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors"
@@ -136,12 +136,12 @@ export default function DashboardPage() {
               </Link>
               <DashCard title="Objednávky" desc="Prehľad predajov a lístkov" />
               <DashCard title="Tím" desc="Pozývajte členov a skenerov" />
-              <a href="https://skener.maxiticket.africa" target="_blank" rel="noopener noreferrer">
+              <a href="https://skener.ticketall.eu" target="_blank" rel="noopener noreferrer">
                 <ScanCard />
               </a>
             </>
           ) : (
-            <a href="https://skener.maxiticket.africa" target="_blank" rel="noopener noreferrer">
+            <a href="https://skener.ticketall.eu" target="_blank" rel="noopener noreferrer">
               <ScanCard />
             </a>
           )}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Maxiticket Admin',
+  title: 'TicketAll Admin',
   description: 'Portál pre organizátorov a správcov',
 };
 

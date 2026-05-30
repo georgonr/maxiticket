@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Mail, MapPin, Send, CheckCircle, AlertCircle } from 'lucide-react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.maxiticket.africa';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 
 type Status = 'idle' | 'sending' | 'ok' | 'error';
 
@@ -171,8 +171,8 @@ export default function KontaktPage() {
                 <Mail size={16} className="mt-0.5 flex-shrink-0 text-purple-500" />
                 <div>
                   <p className="text-xs font-medium text-slate-500">E-mail</p>
-                  <a href="mailto:info@maxiticket.sk" className="text-sm text-slate-800 hover:text-purple-600 transition-colors">
-                    info@maxiticket.sk
+                  <a href="mailto:info@ticketall.eu" className="text-sm text-slate-800 hover:text-purple-600 transition-colors">
+                    info@ticketall.eu
                   </a>
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function KontaktPage() {
                 <MapPin size={16} className="mt-0.5 flex-shrink-0 text-purple-500" />
                 <div>
                   <p className="text-xs font-medium text-slate-500">Adresa</p>
-                  <p className="text-sm text-slate-800">Maxiticket, s.r.o.<br />Slovenská republika</p>
+                  <p className="text-sm text-slate-800">MaceT s.r.o.<br />Slovenská republika</p>
                 </div>
               </div>
             </div>
@@ -189,7 +189,7 @@ export default function KontaktPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-2 text-base font-semibold text-slate-800">Prevádzkovateľ</h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Maxiticket, s.r.o. je prevádzkovateľom platformy maxiticket.sk a je zodpovedný za spracúvanie osobných
+              MaceT s.r.o. je prevádzkovateľom platformy TicketAll a je zodpovedný za spracúvanie osobných
               údajov v súlade s nariadením GDPR.
             </p>
           </div>

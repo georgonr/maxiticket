@@ -21,7 +21,7 @@ export function AdminRegisterPage() {
           </Link>
         </p>
         <p className="mt-3 text-center text-xs text-gray-400">
-          <a href="https://maxiticket.africa" className="hover:underline">
+          <a href="https://ticketall.eu" className="hover:underline">
             Som zákazník?
           </a>
         </p>

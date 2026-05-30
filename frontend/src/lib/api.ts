@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.maxiticket.africa';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 
 type FetchOptions = RequestInit & { token?: string };
 

@@ -9,8 +9,8 @@ export default function GdprPage() {
         <section>
           <h2 className="mb-2 text-lg font-semibold text-slate-800">Prevádzkovateľ</h2>
           <p>
-            Prevádzkovateľom osobných údajov je spoločnosť <strong>Maxiticket, s.r.o.</strong>, so sídlom na Slovensku
-            (presná adresa bude doplnená). Kontakt: <a href="mailto:info@maxiticket.sk" className="text-purple-600 hover:underline">info@maxiticket.sk</a>.
+            Prevádzkovateľom osobných údajov je spoločnosť <strong>MaceT s.r.o.</strong>, so sídlom na Slovensku
+            (presná adresa bude doplnená). Kontakt: <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">info@ticketall.eu</a>.
           </p>
         </section>
 
@@ -54,8 +54,8 @@ export default function GdprPage() {
           </ul>
           <p className="mt-2">
             Žiadosť o uplatnenie práv zasielajte na{' '}
-            <a href="mailto:info@maxiticket.sk" className="text-purple-600 hover:underline">
-              info@maxiticket.sk
+            <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">
+              info@ticketall.eu
             </a>
             . Odpovieme do 30 dní.
           </p>

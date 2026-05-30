@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Maxiticket Skener',
+  title: 'TicketAll Skener',
   description: 'Skener vstupeniek – inštalovateľná aplikácia',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'MT Skener',
+    title: 'TicketAll Skener',
   },
 };
 

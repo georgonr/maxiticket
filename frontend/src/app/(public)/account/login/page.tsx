@@ -59,7 +59,7 @@ function LoginContent() {
             <span className="text-lg font-extrabold text-white">MT</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Prihlásenie</h1>
-          <p className="mt-1 text-sm text-slate-500">Váš zákaznícky účet Maxiticket</p>
+          <p className="mt-1 text-sm text-slate-500">Váš zákaznícky účet TicketAll</p>
         </div>
 
         {/* Card */}

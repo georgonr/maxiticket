@@ -9,7 +9,7 @@ export function PublicRegisterPage() {
           <TicketCheck size={28} className="text-white" strokeWidth={2.2} />
         </div>
         <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-          Vitajte v Maxiticket
+          Vitajte v TicketAll
         </h1>
         <p className="mt-3 text-lg text-slate-500">
           Vyberte si, čo vás priviedlo:
@@ -56,7 +56,7 @@ export function PublicRegisterPage() {
             <li className="flex items-start gap-2"><span className="mt-0.5 text-rose-500">✓</span>Štatistiky predaja a výplata výnosov</li>
           </ul>
           <a
-            href="https://admin.maxiticket.africa/register"
+            href="https://admin.ticketall.eu/register"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 block rounded-xl bg-rose-500 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-rose-600 transition-colors"

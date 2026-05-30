@@ -61,7 +61,7 @@ export default function ScanLoginPage() {
         <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-white text-2xl font-bold shadow-lg">
           MT
         </div>
-        <h1 className="text-xl font-bold text-white">Maxiticket Skener</h1>
+        <h1 className="text-xl font-bold text-white">TicketAll Skener</h1>
         <p className="mt-1 text-sm text-gray-400">Prihlásenie pre skenovanie vstupeniek</p>
       </div>
 
@@ -156,7 +156,7 @@ export default function ScanLoginPage() {
         </div>
       </form>
 
-      <p className="mt-6 text-xs text-gray-600">Maxiticket Scanner v1.0</p>
+      <p className="mt-6 text-xs text-gray-600">TicketAll Scanner v1.0</p>
     </div>
   );
 }

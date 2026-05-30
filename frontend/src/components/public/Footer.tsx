@@ -37,7 +37,7 @@ const FOOTER_COLS = [
 
 const SOCIAL_LINKS = [
   {
-    href: 'https://instagram.com/maxiticket',
+    href: 'https://instagram.com/ticketall',
     label: 'Instagram',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -46,7 +46,7 @@ const SOCIAL_LINKS = [
     ),
   },
   {
-    href: 'https://facebook.com/maxiticket',
+    href: 'https://facebook.com/ticketall',
     label: 'Facebook',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -55,7 +55,7 @@ const SOCIAL_LINKS = [
     ),
   },
   {
-    href: 'https://linkedin.com/company/maxiticket',
+    href: 'https://linkedin.com/company/ticketall',
     label: 'LinkedIn',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -64,7 +64,7 @@ const SOCIAL_LINKS = [
     ),
   },
   {
-    href: 'https://tiktok.com/@maxiticket',
+    href: 'https://tiktok.com/@ticketall',
     label: 'TikTok',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -89,7 +89,7 @@ export function PublicFooter() {
                 className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-purple-400 to-rose-400 bg-clip-text text-transparent"
                 style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
               >
-                Maxiticket
+                TicketAll
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
@@ -137,13 +137,13 @@ export function PublicFooter() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500">
-            © {new Date().getFullYear()} Maxiticket. Všetky práva vyhradené.
+            © {new Date().getFullYear()} TicketAll. Všetky práva vyhradené.
           </p>
           <a
-            href="mailto:info@maxiticket.sk"
+            href="mailto:info@ticketall.eu"
             className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
           >
-            info@maxiticket.sk
+            info@ticketall.eu
           </a>
         </div>
       </div>

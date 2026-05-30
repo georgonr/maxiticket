@@ -516,7 +516,7 @@ function ShowCard({ show }: { show: PublicShow }) {
 
   const eventUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/events/${show.slug}`
-    : `https://maxiticket.africa/events/${show.slug}`;
+    : `https://ticketall.eu/events/${show.slug}`;
 
   useEffect(() => {
     if (!shareOpen) return;

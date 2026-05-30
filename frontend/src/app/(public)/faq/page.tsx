@@ -12,7 +12,7 @@ const FAQS = [
   {
     question: 'Musím sa zaregistrovať, aby som mohol kúpiť lístok?',
     answer:
-      'Áno, na dokončenie nákupu je potrebné mať účet v systéme Maxiticket. Registrácia je bezplatná a trvá menej ako minútu.',
+      'Áno, na dokončenie nákupu je potrebné mať účet v systéme TicketAll. Registrácia je bezplatná a trvá menej ako minútu.',
   },
   {
     question: 'Kde nájdem zakúpené lístky?',
@@ -22,12 +22,12 @@ const FAQS = [
   {
     question: 'Ako prebieha skenovanie lístka na vstupe?',
     answer:
-      'Organizátor podujatia alebo pracovník vstupu naskenuje QR kód vášho lístka pomocou aplikácie Maxiticket Scanner. Lístok môžete zobraziť priamo v mobilnom prehliadači — tlač nie je nutná.',
+      'Organizátor podujatia alebo pracovník vstupu naskenuje QR kód vášho lístka pomocou aplikácie TicketAll Scanner. Lístok môžete zobraziť priamo v mobilnom prehliadači — tlač nie je nutná.',
   },
   {
     question: 'Môžem lístok vrátiť alebo vymeniť?',
     answer:
-      'Podmienky vrátenia lístkov sa riadia pravidlami konkrétneho organizátora. Kontaktujte nás na info@maxiticket.sk a my vám pomôžeme situáciu riešiť.',
+      'Podmienky vrátenia lístkov sa riadia pravidlami konkrétneho organizátora. Kontaktujte nás na info@ticketall.eu a my vám pomôžeme situáciu riešiť.',
   },
   {
     question: 'Ako mi bude doručený lístok?',
@@ -37,12 +37,12 @@ const FAQS = [
   {
     question: 'Čo ak môj lístok nefunguje na vstupe?',
     answer:
-      'Uistite sa, že obrazovka je dostatočne jasná a QR kód nie je poškodený. V prípade problémov kontaktujte priamo obsluhu vstupu alebo nás na info@maxiticket.sk.',
+      'Uistite sa, že obrazovka je dostatočne jasná a QR kód nie je poškodený. V prípade problémov kontaktujte priamo obsluhu vstupu alebo nás na info@ticketall.eu.',
   },
   {
     question: 'Sú moje platobné údaje v bezpečí?',
     answer:
-      'Platby sú spracovávané prostredníctvom certifikovaného platobného systému. Maxiticket neukladá čísla platobných kariet — všetky transakcie prebiehajú šifrovaným spojením.',
+      'Platby sú spracovávané prostredníctvom certifikovaného platobného systému. TicketAll neukladá čísla platobných kariet — všetky transakcie prebiehajú šifrovaným spojením.',
   },
 ];
 
@@ -76,8 +76,8 @@ export default function FaqPage() {
       </h1>
       <p className="mb-10 text-slate-500">
         Nenašli ste odpoveď? Napíšte nám na{' '}
-        <a href="mailto:info@maxiticket.sk" className="text-purple-600 hover:underline">
-          info@maxiticket.sk
+        <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">
+          info@ticketall.eu
         </a>
         .
       </p>

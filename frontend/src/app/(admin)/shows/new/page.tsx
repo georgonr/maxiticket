@@ -56,7 +56,7 @@ export default function NewShowPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="font-bold text-lg text-brand">Maxiticket</Link>
+        <Link href="/dashboard" className="font-bold text-lg text-brand">TicketAll</Link>
         <Link href="/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
       </header>
 

@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.maxiticket.africa';
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 
 const schema = z.object({
   newPassword: z.string()
@@ -86,7 +86,7 @@ function ResetForm({ isAdmin }: Props) {
 
 export function ResetPasswordForm({ isAdmin }: Props) {
   const backHref = isAdmin ? '/login' : '/account/login';
-  const subtitle = isAdmin ? 'Maxiticket Admin portál' : 'Zákaznícky účet Maxiticket';
+  const subtitle = isAdmin ? 'TicketAll Admin portál' : 'Zákaznícky účet TicketAll';
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">

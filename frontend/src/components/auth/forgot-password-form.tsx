@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.maxiticket.africa';
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 const schema = z.object({ email: z.string().email('Neplatný e-mail') });
 type Fields = z.infer<typeof schema>;
 
@@ -35,7 +35,7 @@ export function ForgotPasswordForm({ isAdmin }: Props) {
   }
 
   const backHref = isAdmin ? '/login' : '/account/login';
-  const subtitle = isAdmin ? 'Maxiticket Admin portál' : 'Zákaznícky účet Maxiticket';
+  const subtitle = isAdmin ? 'TicketAll Admin portál' : 'Zákaznícky účet TicketAll';
   const description = isAdmin
     ? 'Zadajte e-mail k vášmu Admin účtu.'
     : 'Zadajte e-mail k vášmu zákazníckemu účtu.';

@@ -54,8 +54,8 @@ export default function CookiesPage() {
           <h2 className="mb-2 text-lg font-semibold text-slate-800">Kontakt</h2>
           <p>
             Otázky ohľadom cookies zasielajte na{' '}
-            <a href="mailto:info@maxiticket.sk" className="text-purple-600 hover:underline">
-              info@maxiticket.sk
+            <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">
+              info@ticketall.eu
             </a>
             .
           </p>

@@ -21,7 +21,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold">Prihlásenie</h1>
-          <p className="mt-1 text-sm text-gray-500">Maxiticket Admin portál</p>
+          <p className="mt-1 text-sm text-gray-500">TicketAll Admin portál</p>
         </div>
         <Suspense><SuccessBanner /></Suspense>
         <LoginForm />
