@@ -20,4 +20,5 @@ export class UpdateHeroBannerDto extends PartialType(CreateHeroBannerDto) {}
 
 export class PromoteShowDto {
   @IsBoolean() isPromoted: boolean;
+  @IsOptional() @IsString() sliderImageId?: string | null;
 }

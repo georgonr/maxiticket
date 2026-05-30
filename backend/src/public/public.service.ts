@@ -40,6 +40,7 @@ export class PublicService {
         termins: { some: { status: { in: SALE_STATUSES }, visible: true } },
       },
       include: {
+        sliderImage: { select: { squareUrl: true } },
         images: { where: { isCover: true }, take: 1 },
         termins: {
           where: { status: { in: SALE_STATUSES }, visible: true },
@@ -71,7 +72,7 @@ export class PublicService {
           id: s.id,
           slug: s.slug,
           name: s.name,
-          imageUrl: (s.images[0] as any)?.squareUrl ?? null,
+          imageUrl: (s.sliderImage as any)?.squareUrl ?? (s.images[0] as any)?.squareUrl ?? null,
           startsAt: t.startsAt,
           timezone: t.timezone,
           city: (t.venue as any)?.city ?? null,

@@ -237,7 +237,9 @@ model Show {
   // Ticket template override for this show (overrides organizer-level template)
   ticketTemplate Json?
 
-  isPromoted    Boolean     @default(false)
+  isPromoted      Boolean     @default(false)
+  sliderImageId   String?
+  sliderImage     ShowImage?  @relation("ShowSliderImage", fields: [sliderImageId], references: [id])
 
   status        EventStatus @default(DRAFT)
   createdAt     DateTime    @default(now())
@@ -260,6 +262,7 @@ model ShowImage {
   id          String   @id @default(cuid())
   showId      String
   show        Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  usedAsSliderIn Show[] @relation("ShowSliderImage")
 
   url         String   // main ~1200px wide WebP
   thumbUrl    String   // 600×400 crop WebP

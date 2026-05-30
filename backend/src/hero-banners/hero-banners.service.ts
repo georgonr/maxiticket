@@ -71,10 +71,16 @@ export class HeroBannersService {
     return { imageUrl: stored.squareUrl };
   }
 
-  async setPromoted(showId: string, isPromoted: boolean) {
+  async setPromoted(showId: string, isPromoted: boolean, sliderImageId?: string | null) {
     const show = await this.prisma.show.findUnique({ where: { id: showId }, select: { id: true } });
     if (!show) throw new NotFoundException('Show not found');
-    return this.prisma.show.update({ where: { id: showId }, data: { isPromoted } });
+    return this.prisma.show.update({
+      where: { id: showId },
+      data: {
+        isPromoted,
+        ...(sliderImageId !== undefined && { sliderImageId: sliderImageId ?? null }),
+      },
+    });
   }
 
   listShowsForAdmin() {
@@ -85,8 +91,9 @@ export class HeroBannersService {
         slug: true,
         status: true,
         isPromoted: true,
+        sliderImageId: true,
         category: true,
-        images: { where: { isCover: true }, take: 1, select: { squareUrl: true } },
+        images: { where: { isCover: true }, take: 1, select: { id: true, squareUrl: true } },
         termins: {
           orderBy: { startsAt: 'asc' },
           take: 1,

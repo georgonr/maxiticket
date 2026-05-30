@@ -411,8 +411,9 @@ export interface AdminShow {
   slug: string;
   status: string;
   isPromoted: boolean;
+  sliderImageId: string | null;
   category: string | null;
-  images: { squareUrl: string }[];
+  images: { id: string; squareUrl: string }[];
   termins: { startsAt: string; status: string }[];
 }
 
@@ -436,4 +437,8 @@ export const heroAdminApi = {
     apiFetch<AdminShow[]>('/v1/admin/shows', { token }),
   promoteShow: (id: string, isPromoted: boolean, token: string) =>
     apiFetch<AdminShow>('/v1/admin/shows/' + id + '/promote', { method: 'PATCH', body: JSON.stringify({ isPromoted }), token }),
+  setSliderImage: (id: string, sliderImageId: string | null, token: string) =>
+    apiFetch<AdminShow>('/v1/admin/shows/' + id + '/promote', { method: 'PATCH', body: JSON.stringify({ isPromoted: true, sliderImageId }), token }),
+  listShowImages: (showId: string, token: string) =>
+    apiFetch<ShowImage[]>('/v1/shows/' + showId + '/images', { token }),
 };

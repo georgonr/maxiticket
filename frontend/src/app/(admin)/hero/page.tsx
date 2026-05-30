@@ -4,13 +4,13 @@ import { useEffect, useState, useRef, ChangeEvent, FormEvent, useCallback } from
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
-import { heroAdminApi, HeroBanner, AdminShow } from '@/lib/api';
+import { heroAdminApi, HeroBanner, AdminShow, ShowImage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   ChevronUp, ChevronDown, Pencil, Trash2, Plus, Check, X as XIcon,
-  ImageIcon, LayoutDashboard,
+  ImageIcon, LayoutDashboard, Images,
 } from 'lucide-react';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -96,6 +96,11 @@ export default function HeroAdminPage() {
   const [showsLoading, setShowsLoading] = useState(true);
   const [showFilter, setShowFilter] = useState<ShowFilter>('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Slider image modal state
+  const [sliderImgModal, setSliderImgModal] = useState<{ show: AdminShow; images: ShowImage[] } | null>(null);
+  const [sliderImgLoading, setSliderImgLoading] = useState(false);
+  const [sliderImgSaving, setSliderImgSaving] = useState(false);
 
   // ── Auth gate ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -267,6 +272,35 @@ export default function HeroAdminPage() {
       loadShows(token);
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  // ── Slider image modal ───────────────────────────────────────────────────────
+  async function openSliderImgModal(show: AdminShow) {
+    if (!token) return;
+    setSliderImgLoading(true);
+    setSliderImgModal({ show, images: [] });
+    try {
+      const imgs = await heroAdminApi.listShowImages(show.id, token);
+      setSliderImgModal({ show, images: imgs });
+    } catch {
+      setSliderImgModal(null);
+    } finally {
+      setSliderImgLoading(false);
+    }
+  }
+
+  async function selectSliderImage(showId: string, imageId: string | null) {
+    if (!token || sliderImgSaving) return;
+    setSliderImgSaving(true);
+    setShows((prev) => prev.map((s) => s.id === showId ? { ...s, sliderImageId: imageId } : s));
+    try {
+      await heroAdminApi.setSliderImage(showId, imageId, token);
+    } catch {
+      loadShows(token);
+    } finally {
+      setSliderImgSaving(false);
+      setSliderImgModal(null);
     }
   }
 
@@ -450,6 +484,7 @@ export default function HeroAdminPage() {
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-gray-500">Podujatie</th>
                     <th className="w-24 px-4 py-3 text-center font-medium text-gray-500">Stav</th>
+                    <th className="w-36 px-4 py-3 text-center font-medium text-gray-500">Slider obrázok</th>
                     <th className="w-28 px-4 py-3 text-center font-medium text-gray-500">Promoted</th>
                   </tr>
                 </thead>
@@ -480,6 +515,16 @@ export default function HeroAdminPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
+                          onClick={() => openSliderImgModal(s)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-brand/30 hover:text-brand hover:bg-brand/5 transition-colors"
+                          title="Vybrať slider obrázok"
+                        >
+                          <Images size={12} />
+                          {s.sliderImageId ? 'Vlastný' : 'Titulka'}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
                           onClick={() => togglePromote(s)}
                           disabled={togglingId === s.id}
                           className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${s.isPromoted ? 'bg-brand' : 'bg-gray-200'}`}
@@ -498,6 +543,78 @@ export default function HeroAdminPage() {
           )}
         </section>
       </main>
+
+      {/* ── Slider Image Modal ──────────────────────────────────────────────── */}
+      {sliderImgModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Slider obrázok</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{sliderImgModal.show.name}</p>
+              </div>
+              <button onClick={() => setSliderImgModal(null)} className="rounded-lg p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+                <XIcon size={16} />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 flex-1">
+              {sliderImgLoading ? (
+                <div className="grid grid-cols-3 gap-3">
+                  {[1,2,3,4,5,6].map(i => <div key={i} className="aspect-square rounded-xl bg-gray-100 animate-pulse" />)}
+                </div>
+              ) : (
+                <>
+                  {/* Use cover option */}
+                  <button
+                    onClick={() => selectSliderImage(sliderImgModal.show.id, null)}
+                    disabled={sliderImgSaving}
+                    className={`w-full mb-4 flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors ${
+                      sliderImgModal.show.sliderImageId === null
+                        ? 'border-brand bg-brand/5 text-brand'
+                        : 'border-gray-200 text-gray-600 hover:border-brand/30 hover:text-brand'
+                    }`}
+                  >
+                    <ImageIcon size={16} />
+                    <span>Použiť titulku (cover) – predvolené</span>
+                    {sliderImgModal.show.sliderImageId === null && <Check size={14} className="ml-auto" />}
+                  </button>
+
+                  {sliderImgModal.images.length === 0 ? (
+                    <p className="text-sm text-center text-gray-400 py-6">Toto podujatie nemá žiadne obrázky v galérii.</p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-3">
+                      {sliderImgModal.images.map((img) => {
+                        const selected = sliderImgModal.show.sliderImageId === img.id;
+                        return (
+                          <button
+                            key={img.id}
+                            onClick={() => selectSliderImage(sliderImgModal.show.id, img.id)}
+                            disabled={sliderImgSaving}
+                            className={`relative aspect-square overflow-hidden rounded-xl border-2 transition-all disabled:opacity-50 ${
+                              selected ? 'border-brand ring-2 ring-brand/30' : 'border-transparent hover:border-brand/40'
+                            }`}
+                            title="Nastaviť ako slider obrázok"
+                          >
+                            <img src={img.squareUrl} alt="" className="h-full w-full object-cover" />
+                            {selected && (
+                              <div className="absolute inset-0 bg-brand/20 flex items-center justify-center">
+                                <div className="rounded-full bg-brand p-1"><Check size={12} className="text-white" /></div>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+              <Button variant="outline" size="sm" onClick={() => setSliderImgModal(null)}>Zavrieť</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Banner Form Modal ────────────────────────────────────────────────── */}
       {showForm && (

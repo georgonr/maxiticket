@@ -62,6 +62,6 @@ export class AdminShowsController {
 
   @Patch(':id/promote')
   promote(@Param('id') id: string, @Body() dto: PromoteShowDto) {
-    return this.svc.setPromoted(id, dto.isPromoted);
+    return this.svc.setPromoted(id, dto.isPromoted, dto.sliderImageId);
   }
 }
