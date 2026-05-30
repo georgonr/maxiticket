@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { mkdir, unlink, writeFile } from 'fs/promises';
+import { mkdir, unlink } from 'fs/promises';
 import { join } from 'path';
 import * as sharp from 'sharp';
 import { StorageService, StoredFile } from './storage.interface';
@@ -10,11 +10,16 @@ import { StorageService, StoredFile } from './storage.interface';
 export class LocalStorageService implements StorageService {
   private readonly logger = new Logger(LocalStorageService.name);
   private readonly uploadsDir: string;
-  private readonly baseUrl: string;
 
-  constructor(config: ConfigService) {
+  constructor(private readonly config: ConfigService) {
     this.uploadsDir = config.get('UPLOADS_DIR', '/app/uploads');
-    this.baseUrl = config.get('UPLOADS_BASE_URL', 'https://api.maxiticket.africa/v1/uploads/images');
+  }
+
+  resolveUrl(path: string): string {
+    if (!path) return path;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const base = this.config.get('PUBLIC_API_URL', 'https://api.ticketall.eu');
+    return `${base}${path}`;
   }
 
   async saveImage(buffer: Buffer, originalName: string, mimeType: string): Promise<StoredFile> {
@@ -53,9 +58,9 @@ export class LocalStorageService implements StorageService {
     const { size } = await import('fs/promises').then((m) => m.stat(mainPath));
     return {
       filename,
-      url: `${this.baseUrl}/${filename}`,
-      thumbnailUrl: `${this.baseUrl}/thumbs/${thumbFilename}`,
-      squareUrl: `${this.baseUrl}/squares/${squareFilename}`,
+      url: `/v1/uploads/images/${filename}`,
+      thumbnailUrl: `/v1/uploads/images/thumbs/${thumbFilename}`,
+      squareUrl: `/v1/uploads/images/squares/${squareFilename}`,
       size,
       mimeType: 'image/webp',
     };

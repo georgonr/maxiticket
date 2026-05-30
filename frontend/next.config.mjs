@@ -3,7 +3,7 @@ const nextConfig = {
   output: 'standalone',
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'api.maxiticket.africa' },
+      { protocol: 'https', hostname: 'api.ticketall.eu' },
     ],
   },
 };

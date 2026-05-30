@@ -44,16 +44,16 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       UPLOADS_DIR: /app/uploads
-      UPLOADS_BASE_URL: https://api.maxiticket.africa/v1/uploads/images
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-https://api.ticketall.eu}
       MAIL_TRANSPORT: ${MAIL_TRANSPORT:-mailpit}
       SMTP_HOST: ${SMTP_HOST:-mailpit}
       SMTP_PORT: ${SMTP_PORT:-1025}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      MAIL_FROM: ${MAIL_FROM:-noreply@maxiticket.africa}
-      APP_BASE_URL: ${APP_BASE_URL:-https://maxiticket.africa}
-      ADMIN_BASE_URL: ${ADMIN_BASE_URL:-https://admin.maxiticket.africa}
+      MAIL_FROM: ${MAIL_FROM:-noreply@ticketall.eu}
+      APP_BASE_URL: ${APP_BASE_URL:-https://ticketall.eu}
+      ADMIN_BASE_URL: ${ADMIN_BASE_URL:-https://admin.ticketall.eu}
       QR_HMAC_SECRET: ${QR_HMAC_SECRET:-${JWT_SECRET}}
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
@@ -76,10 +76,10 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.maxiticket.africa}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ticketall.eu}
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.maxiticket.africa}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ticketall.eu}
       NODE_ENV: ${NODE_ENV:-production}
     depends_on:
       - backend

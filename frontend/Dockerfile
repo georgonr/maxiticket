@@ -7,7 +7,7 @@ RUN npm install --legacy-peer-deps
 
 FROM deps AS builder
 COPY . .
-ARG NEXT_PUBLIC_API_URL=https://api.maxiticket.africa
+ARG NEXT_PUBLIC_API_URL=https://api.ticketall.eu
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
