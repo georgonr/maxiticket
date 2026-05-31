@@ -7,9 +7,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
 import { MailService } from '../mail/mail.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CompOrderDto } from './dto/comp-order.dto';
 import { OrderStatus, TerminStatus, TicketStatus } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
+import { sendTicketsForOrder } from './orders-mail.helper';
 
 @Injectable()
 export class OrdersService {
@@ -239,25 +241,103 @@ export class OrdersService {
     const show = termin?.show;
     const venue = termin?.venue;
 
-    if (show && termin && venue) {
-      this.mail
-        .sendTickets({
-          to: order.buyerEmail,
-          buyerName: order.buyerName ?? undefined,
-          orderNumber: order.orderNumber,
-          showName: show.name,
-          startsAt: termin.startsAt,
-          timezone: termin.timezone,
-          venueName: venue.name,
-          venueCity: venue.city ?? undefined,
-          tickets: tickets.map((t) => ({
-            id: t.id,
-            typeName: t.ticketType?.name ?? 'Vstupenka',
-            qrToken: t.qrToken,
-          })),
-        })
-        .catch((e) => this.logger.error(`Email failed for order ${orderId}: ${e.message}`));
+    sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger)
+      .catch((e) => this.logger.error(`Email failed for order ${orderId}: ${e.message}`));
+  }
+
+  async compOrder(dto: CompOrderDto): Promise<{ orderId: string; ticketCount: number }> {
+    const termin = await this.prisma.termin.findFirst({
+      where: {
+        id: dto.terminId,
+        showId: dto.showId,
+        status: { in: [TerminStatus.ON_SALE, TerminStatus.COMING_SOON, TerminStatus.SOLD_OUT] },
+      },
+      include: { show: true },
+    });
+    if (!termin) throw new NotFoundException('Termin not found or not active');
+
+    const tt = await this.prisma.ticketType.findFirst({
+      where: { id: dto.ticketTypeId, terminId: dto.terminId, isActive: true },
+    });
+    if (!tt) throw new NotFoundException('TicketType not found or inactive');
+
+    const hmacSecret =
+      this.config.get<string>('QR_HMAC_SECRET') ?? this.config.get<string>('JWT_SECRET')!;
+
+    const year = new Date().getFullYear();
+    const count = await this.prisma.order.count();
+    const orderNumber = `MT-${year}-${String(count + 1).padStart(5, '0')}`;
+
+    const orderId = await this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          orderNumber,
+          organizerId: termin.show.organizerId,
+          userId: null,
+          buyerEmail: dto.buyerEmail,
+          buyerName: dto.buyerName,
+          currency: tt.currency,
+          totalAmount: 0,
+          status: OrderStatus.PAID,
+          paidAt: new Date(),
+          paymentProvider: 'comp',
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          items: {
+            create: [{
+              ticketTypeId: tt.id,
+              terminId: termin.id,
+              quantity: dto.quantity,
+              unitPrice: 0,
+              currency: tt.currency,
+              priceSnapshot: {
+                name: tt.name,
+                price: 0,
+                currency: tt.currency,
+                showName: termin.show.name,
+                terminId: termin.id,
+                startsAt: termin.startsAt,
+              },
+            }],
+          },
+        },
+        include: { items: true },
+      });
+
+      const itemId = order.items[0].id;
+      for (let i = 0; i < dto.quantity; i++) {
+        const ticketId = randomUUID();
+        const nonce = randomUUID();
+        const qrToken = this.signQrToken(ticketId, termin.id, nonce, hmacSecret);
+        await tx.ticket.create({
+          data: {
+            id: ticketId,
+            orderId: order.id,
+            orderItemId: itemId,
+            ticketTypeId: tt.id,
+            terminId: termin.id,
+            nonce,
+            qrToken,
+            status: TicketStatus.VALID,
+          },
+        });
+      }
+      return order.id;
+    });
+
+    sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger)
+      .catch((e) => this.logger.error(`Comp order email failed for ${orderId}: ${e.message}`));
+
+    return { orderId, ticketCount: dto.quantity };
+  }
+
+  async resendTickets(orderId: string): Promise<{ orderId: string; message: string }> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.status !== OrderStatus.PAID) {
+      throw new BadRequestException(`Order status is ${order.status}, expected PAID`);
     }
+    await sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger);
+    return { orderId, message: 'Tickets resent successfully' };
   }
 
   /**
