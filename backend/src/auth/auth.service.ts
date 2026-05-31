@@ -142,6 +142,12 @@ export class AuthService {
           data: { termsVersionId: activeTerms.id, userId: u.id, ipAddress, userAgent },
         });
       }
+      // Claim any prior guest/comp orders made with this email so they appear
+      // in the new account's /account/tickets.
+      await tx.order.updateMany({
+        where: { buyerEmail: u.email, userId: null },
+        data: { userId: u.id },
+      });
       return u;
     });
 
@@ -174,11 +180,9 @@ export class AuthService {
       data: { userId: user.id, tokenHash, expiresAt },
     });
 
-    // Route to correct frontend domain based on role
-    const isCustomer = user.role === UserRole.CUSTOMER;
-    const frontendBase = isCustomer
-      ? (this.config.get('EMAIL_BASE_URL') ?? 'https://ticketall.eu')
-      : (this.config.get('EMAIL_ADMIN_BASE_URL') ?? 'https://admin.ticketall.eu');
+    // Úloha 11: /reset-password is now top-level on the main domain for every role
+    // (after reset the user logs in at /login and is role-redirected). Unified link.
+    const frontendBase = this.config.get('EMAIL_BASE_URL') ?? 'https://ticketall.eu';
     const resetLink = `${frontendBase}/reset-password?token=${rawToken}`;
 
     await this.mail.sendPasswordReset({
