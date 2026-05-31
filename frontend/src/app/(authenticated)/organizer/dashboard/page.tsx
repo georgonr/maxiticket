@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Ticket } from 'lucide-react';
 import { logout } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,11 @@ export default function DashboardPage() {
               Údaje firmy
             </Link>
           )}
+          {/* Visible to every signed-in user: an organizer/admin is also a ticket buyer */}
+          <Link href="/account/tickets" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+            <Ticket className="h-4 w-4" />
+            Moje lístky
+          </Link>
           {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
             <a
               href="https://skener.ticketall.eu"
