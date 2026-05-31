@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
-import { UserRole, ScanResult, TicketStatus, Prisma } from '@prisma/client';
+import { UserRole, ScanResult, TicketStatus, TerminStatus, Prisma } from '@prisma/client';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 @Injectable()
@@ -187,7 +187,7 @@ export class ScanService {
       where: {
         ...orgFilter,
         ...windowFilter,
-        tickets: { some: { status: { in: [TicketStatus.VALID, TicketStatus.USED] } } },
+        status: { in: [TerminStatus.ON_SALE, TerminStatus.SOLD_OUT] },
       },
       select: {
         id: true,

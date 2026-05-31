@@ -9,10 +9,11 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
     res.cookies.set('refresh_token', tokens.refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       path: '/api/auth',
       maxAge: 60 * 60 * 24 * 7,
+      domain: process.env.NODE_ENV === 'production' ? '.ticketall.eu' : undefined,
     });
     return res;
   } catch (err: any) {
