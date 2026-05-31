@@ -1,4 +1,4 @@
-# Maxiticket – Architecture Overview
+# TicketAll – Architecture Overview
 
 ## System overview
 
@@ -46,12 +46,12 @@ Multi-tenant SaaS ticketing platform. Three actor types:
 │   │   ├── app/
 │   │   │   ├── layout.tsx      # root layout + globals.css (Tailwind)
 │   │   │   ├── page.tsx        # root "/" – area-aware redirect / public homepage
-│   │   │   ├── (public)/       # maxiticket.africa / www – event pages, checkout
-│   │   │   ├── (admin)/        # admin.maxiticket.africa – login, register, dashboard
+│   │   │   ├── (public)/       # ticketall.eu / www – event pages, checkout
+│   │   │   ├── (admin)/        # admin.ticketall.eu – login, register, dashboard
 │   │   │   │   ├── login/
 │   │   │   │   ├── register/   # self-reg with acceptTerms
 │   │   │   │   └── dashboard/  # role-aware placeholder
-│   │   │   ├── (scanner)/      # skener.maxiticket.africa – PWA scanner
+│   │   │   ├── (scanner)/      # skener.ticketall.eu – PWA scanner
 │   │   │   │   └── scan/
 │   │   │   └── api/auth/       # route handlers: login, register, refresh, logout
 │   │   ├── lib/
@@ -94,7 +94,7 @@ Multi-tenant SaaS ticketing platform. Three actor types:
 ### Password reset flow
 1. `POST /v1/auth/password/forgot { email }` – always returns 200 (no email enumeration).  
    - If user exists and is active: generates 32-byte cryptographically random token, stores **SHA-256 hash** in `PasswordResetToken` table (1-hour TTL), sends email via Mailpit/SMTP.  
-   - Reset link domain is role-aware: `admin.maxiticket.africa` for ORGANIZER_*/STAFF/SUPERADMIN, `maxiticket.africa` for CUSTOMER.
+   - Reset link domain is role-aware: `admin.ticketall.eu` for ORGANIZER_*/STAFF/SUPERADMIN, `ticketall.eu` for CUSTOMER.
 2. `POST /v1/auth/password/reset { token, newPassword }` – verifies token (unhashed raw token → SHA-256 → lookup), sets new bcrypt-12 hash, marks token `usedAt` (one-time use), revokes all refresh tokens for the user.
 3. Frontend: `/forgot-password` and `/reset-password?token=...` pages live at **root level** (not in route groups) to avoid Next.js path conflicts; Server Component reads `x-area` header to pass `isAdmin` prop to the client form.
 
@@ -187,7 +187,7 @@ One Next.js app serves all three subdomains. `src/middleware.ts` reads the `Host
 - Refresh token: stored in `httpOnly; Secure; SameSite=Strict` cookie under the `/api/auth` path, managed by Next.js route handlers. Never exposed to client JS.
 - `/api/auth/refresh` rotates the refresh token on every call (single-use tokens).
 
-**PWA (skener.maxiticket.africa):**
+**PWA (skener.ticketall.eu):**
 - `public/manifest.json` declares standalone display mode, start_url `/scan`.
 - `public/sw.js` cache-first service worker for offline support.
 - Camera scanning deferred to next milestone.
@@ -214,18 +214,27 @@ Backend and postgres/redis are **not exposed** to the host — only Caddy has ex
 - `unattended-upgrades` for automatic security patches.
 - UFW: only ports 22, 80, 443 open.
 
+## Doména a brand
+
+| | |
+|---|---|
+| **Brand** | TicketAll (predtým Maxiticket – migrácia dokončená 2026-05-30) |
+| **Prevádzkovateľ** | MaceT s.r.o. (IČO + sídlo TODO pre ostrú prevádzku) |
+| **Live Stripe** | od 2026-05-30 |
+| **Migračné commity** | `15d3965` storage · `496313f` caddy · `3a01aca` backend · `b6c0363` frontend · `992fa84` seed+homepage · `3af5f40` logo · `39f433f` toggle+nav |
+
 ## Domain setup
 
-DNS is live: `maxiticket.africa` + wildcard `*.maxiticket.africa` → this server.
+DNS is live: `ticketall.eu` + wildcard `*.ticketall.eu` → this server.
 
 | Subdomain | Routes to | Purpose |
 |---|---|---|
-| `api.maxiticket.africa` | `backend:3001` | REST API |
-| `maxiticket.africa`, `www` | `frontend:3000` | Public event pages + checkout |
-| `admin.maxiticket.africa` | `frontend:3000` | Organizer + superadmin portal |
-| `skener.maxiticket.africa` | `frontend:3000` | Scanner PWA |
+| `api.ticketall.eu` | `backend:3001` | REST API |
+| `ticketall.eu`, `www.ticketall.eu` | `frontend:3000` | Public event pages + checkout |
+| `admin.ticketall.eu` | `frontend:3000` | Organizer + superadmin portal |
+| `skener.ticketall.eu` | `frontend:3000` | Scanner PWA |
 
-ACME email: `info@maxiticket.sk`. TLS issued automatically by Caddy on first request.
+ACME email: `info@ticketall.eu`. TLS issued automatically by Caddy on first request.
 
 ## Email (MailService)
 
@@ -239,9 +248,9 @@ ACME email: `info@maxiticket.sk`. TLS issued automatically by Caddy on first req
 **Notes:**
 - Port 465 (SMTPS/SSL) is blocked by Hetzner; use **587 with STARTTLS** (`SMTP_SECURE=false`).
 - SPF: ✅ `v=spf1 a mx include:_spf.hostcreators.sk -all` covers `smtp.hostcreators.sk` IP range.
-- DKIM: ❌ not yet configured – enable in HostCreators control panel (Email → DKIM) for `info@maxiticket.africa`.
+- DKIM: ❌ not yet configured – enable in HostCreators control panel (Email → DKIM) for `info@ticketall.eu`.
 - DMARC: ✅ `p=reject; aspf=r; adkim=r` – currently relies on SPF only; add DKIM for full coverage.
-- `MAIL_FROM` supports RFC 5322 format: `"Maxiticket <info@maxiticket.africa>"`.
+- `MAIL_FROM` supports RFC 5322 format: `"TicketAll <info@ticketall.eu>"`.
 
 ## Backup
 

@@ -1,8 +1,18 @@
-# Maxiticket – Claude Code Instructions
+# TicketAll – Claude Code Instructions
 
 ## Project
 
 Multi-tenant SaaS ticketing platform. Backend: NestJS 10 + Fastify 4 + Prisma 5 + PostgreSQL 16. Frontend: Next.js 14 App Router + Tailwind. Infra: Docker Compose at `/opt/maxiticket/infra/`, `.env` at `/opt/maxiticket/.env`.
+
+## Doména a brand
+
+| | |
+|---|---|
+| **Brand** | TicketAll (predtým Maxiticket – migrácia dokončená 2026-05-30) |
+| **Domény** | `ticketall.eu` (apex + www) · `admin.ticketall.eu` · `api.ticketall.eu` · `skener.ticketall.eu` |
+| **Prevádzkovateľ** | MaceT s.r.o. (IČO + sídlo TODO pre ostrú prevádzku) |
+| **Live Stripe** | od 2026-05-30 |
+| **Migračné commity** | `15d3965` storage · `496313f` caddy · `3a01aca` backend · `b6c0363` frontend · `992fa84` seed+homepage · `3af5f40` logo · `39f433f` toggle+nav |
 
 ---
 
