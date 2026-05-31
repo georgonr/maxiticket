@@ -264,6 +264,11 @@ export class OrdersService {
     const hmacSecret =
       this.config.get<string>('QR_HMAC_SECRET') ?? this.config.get<string>('JWT_SECRET')!;
 
+    // Auto-link to an existing account so the tickets show up in /account/tickets
+    // (getMyTickets filters by Order.userId). If no account yet, stays null and
+    // gets linked on customer registration (see registerCustomer).
+    const buyerUser = await this.prisma.user.findUnique({ where: { email: dto.buyerEmail } });
+
     const year = new Date().getFullYear();
     const count = await this.prisma.order.count();
     const orderNumber = `MT-${year}-${String(count + 1).padStart(5, '0')}`;
@@ -273,7 +278,7 @@ export class OrdersService {
         data: {
           orderNumber,
           organizerId: termin.show.organizerId,
-          userId: null,
+          userId: buyerUser?.id ?? null,
           buyerEmail: dto.buyerEmail,
           buyerName: dto.buyerName,
           currency: tt.currency,
