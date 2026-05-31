@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="TicketAll">
+  <!-- Rounded square: 22% of 32 ≈ rx=7 -->
+  <rect width="32" height="32" rx="7" ry="7" fill="#10B981"/>
+  <!-- Ticket icon scaled to ~20×20, centered (6px inset) -->
+  <g transform="translate(6,6) scale(0.833)">
+    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2Z"
+          stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="9"  cy="12" r="1.2" fill="white"/>
+    <circle cx="12" cy="12" r="1.2" fill="white"/>
+    <circle cx="15" cy="12" r="1.2" fill="white"/>
+  </g>
+</svg>

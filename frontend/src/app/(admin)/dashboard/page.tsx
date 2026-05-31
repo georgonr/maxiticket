@@ -62,7 +62,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-shrink-0">
-          <span className="font-bold text-lg text-brand">TicketAll</span>
+          <img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" />
           <a
             href="https://ticketall.eu"
             className="hidden sm:inline text-xs text-gray-400 hover:text-gray-600 transition-colors"

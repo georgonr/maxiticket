@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TicketCheck } from 'lucide-react';
+import Image from 'next/image';
 
 const FOOTER_COLS = [
   {
@@ -83,14 +83,14 @@ export function PublicFooter() {
 
           {/* Brand column */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <TicketCheck size={20} className="text-purple-400 flex-shrink-0" strokeWidth={2.2} />
-              <span
-                className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-purple-400 to-rose-400 bg-clip-text text-transparent"
-                style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
-              >
-                TicketAll
-              </span>
+            <div className="mb-4">
+              <Image
+                src="/logo-horizontal.svg"
+                alt="TicketAll"
+                width={120}
+                height={30}
+                className="h-6 w-auto brightness-0 invert"
+              />
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               Medzinárodná vstupenková platforma pre každé podujatie. Rýchlo, bezpečne, moderne.

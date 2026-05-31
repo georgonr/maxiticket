@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePublicAuth } from '@/lib/public-auth';
-import { TicketCheck, Ticket, LogOut, LogIn, Menu, X, UserCircle2, ChevronDown, ShoppingBag } from 'lucide-react';
+import { Ticket, LogOut, LogIn, Menu, X, UserCircle2, ChevronDown, ShoppingBag } from 'lucide-react';
 
 const NAV_LINKS = [
   { href: '/events', label: 'Podujatia' },
@@ -39,18 +40,15 @@ export function PublicHeader() {
 
         {/* Logo */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Link href="/" className="flex items-center gap-2 group">
-            <TicketCheck
-              size={22}
-              className="text-purple-600 group-hover:text-purple-700 transition-colors flex-shrink-0"
-              strokeWidth={2.2}
+          <Link href="/" aria-label="TicketAll – domov">
+            <Image
+              src="/logo-horizontal.svg"
+              alt="TicketAll"
+              width={160}
+              height={40}
+              priority
+              className="h-8 md:h-10 w-auto"
             />
-            <span
-              className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent"
-              style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
-            >
-              TicketAll
-            </span>
           </Link>
           <a
             href="https://admin.ticketall.eu"

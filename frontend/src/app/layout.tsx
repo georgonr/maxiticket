@@ -11,6 +11,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'TicketAll',
   description: 'Predaj vstupeniek online',
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" fill="none" role="img" aria-label="TicketAll">
+  <!-- Rounded square background: 22% border-radius of 192 ≈ rx/ry=42 -->
+  <rect width="192" height="192" rx="42" ry="42" fill="#10B981"/>
+  <!-- Ticket icon: Lucide path scaled to ~112×112, centered (40px inset each side) -->
+  <g transform="translate(40,40) scale(4.667)">
+    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2Z"
+          stroke="white" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="9"  cy="12" r="1" fill="white"/>
+    <circle cx="12" cy="12" r="1" fill="white"/>
+    <circle cx="15" cy="12" r="1" fill="white"/>
+  </g>
+</svg>

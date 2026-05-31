@@ -324,7 +324,7 @@ export default function HeroAdminPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="font-bold text-lg text-brand">TicketAll</Link>
+        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <nav className="flex items-center gap-4 text-sm">
           <Link href="/shows" className="text-gray-600 hover:text-brand transition-colors">Podujatia</Link>
           <Link href="/hero" className="font-medium text-brand underline underline-offset-2">Hero slider</Link>
