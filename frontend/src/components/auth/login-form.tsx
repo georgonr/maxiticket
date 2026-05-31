@@ -44,18 +44,24 @@ export function LoginForm() {
       }
       setAccessToken(json.accessToken);
 
-      // Honour ?next= if present, otherwise route by role.
-      if (next) {
-        router.push(next);
-        return;
-      }
+      // Role decides the area; ?next= is honoured only when compatible with the role.
       const role = parseJwt(json.accessToken)?.role;
-      if (role === 'CUSTOMER') {
-        router.push('/account');
-      } else if (role === 'SUPERADMIN' || role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER') {
-        router.push('/organizer/dashboard');
+      const isStaff =
+        role === 'SUPERADMIN' || role === 'ORGANIZER_OWNER' ||
+        role === 'ORGANIZER_MEMBER' || role === 'STAFF';
+
+      if (isStaff) {
+        // Ignore a customer-area next (e.g. /account/tickets from the public login link);
+        // honour only organizer/admin deep-links.
+        router.push(
+          next && (next.startsWith('/organizer') || next.startsWith('/admin'))
+            ? next
+            : '/organizer/dashboard',
+        );
+      } else if (role === 'CUSTOMER') {
+        router.push(next ?? '/account/tickets');
       } else {
-        router.push('/');
+        router.push(next ?? '/');
       }
     } catch {
       setServerError(getReadableError({ endpoint: 'login' }));
