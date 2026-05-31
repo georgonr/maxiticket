@@ -76,14 +76,14 @@ export default function ShowsPage() {
       )}
 
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
+        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
       </header>
 
       <main className="mx-auto max-w-5xl p-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Podujatia</h1>
-          <Button onClick={() => router.push('/shows/new')}>Nové podujatie</Button>
+          <Button onClick={() => router.push('/organizer/shows/new')}>Nové podujatie</Button>
         </div>
 
         {error && (
@@ -95,7 +95,7 @@ export default function ShowsPage() {
         {shows.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-300 bg-white p-12 text-center">
             <p className="text-gray-500 mb-4">Zatiaľ nemáte žiadne podujatia.</p>
-            <Button onClick={() => router.push('/shows/new')}>Vytvoriť prvé podujatie</Button>
+            <Button onClick={() => router.push('/organizer/shows/new')}>Vytvoriť prvé podujatie</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -163,7 +163,7 @@ export default function ShowsPage() {
                       variant="outline"
                       size="sm"
                       className="w-full"
-                      onClick={() => router.push(`/shows/${show.id}`)}
+                      onClick={() => router.push(`/organizer/shows/${show.id}`)}
                     >
                       Spravovať
                     </Button>

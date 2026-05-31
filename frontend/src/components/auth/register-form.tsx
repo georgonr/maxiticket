@@ -47,7 +47,7 @@ export function RegisterForm() {
         return;
       }
       setAccessToken(json.accessToken);
-      router.push('/dashboard');
+      router.push('/organizer/dashboard');
     } catch {
       setServerError(getReadableError({ endpoint: 'register-organizer' }));
     }

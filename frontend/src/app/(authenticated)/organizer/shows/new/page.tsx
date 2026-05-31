@@ -46,7 +46,7 @@ export default function NewShowPage() {
       const token = await getValidToken();
       if (!token) { router.replace('/login'); return; }
       const show = await showsApi.create(form, token);
-      router.push(`/shows/${show.id}`);
+      router.push(`/organizer/shows/${show.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nepodarilo sa vytvoriť podujatie');
       setLoading(false);
@@ -56,8 +56,8 @@ export default function NewShowPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
+        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-8">
@@ -101,7 +101,7 @@ export default function NewShowPage() {
             rows={2}
           />
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => router.push('/shows')}>Zrušiť</Button>
+            <Button type="button" variant="outline" onClick={() => router.push('/organizer/shows')}>Zrušiť</Button>
             <Button type="submit" loading={loading}>Vytvoriť podujatie</Button>
           </div>
         </form>

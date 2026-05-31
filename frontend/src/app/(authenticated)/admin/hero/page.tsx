@@ -107,7 +107,7 @@ export default function HeroAdminPage() {
     getValidToken().then((t) => {
       if (!t) { router.replace('/login'); return; }
       const claims = parseJwt(t);
-      if (claims?.role !== 'SUPERADMIN') { router.replace('/dashboard'); return; }
+      if (claims?.role !== 'SUPERADMIN') { router.replace('/organizer/dashboard'); return; }
       setToken(t);
     });
   }, [router]);
@@ -324,11 +324,11 @@ export default function HeroAdminPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <nav className="flex items-center gap-4 text-sm">
-          <Link href="/shows" className="text-gray-600 hover:text-brand transition-colors">Podujatia</Link>
-          <Link href="/hero" className="font-medium text-brand underline underline-offset-2">Hero slider</Link>
-          <Link href="/dashboard" className="text-gray-500 hover:text-brand transition-colors flex items-center gap-1">
+          <Link href="/organizer/shows" className="text-gray-600 hover:text-brand transition-colors">Podujatia</Link>
+          <Link href="/admin/hero" className="font-medium text-brand underline underline-offset-2">Hero slider</Link>
+          <Link href="/organizer/dashboard" className="text-gray-500 hover:text-brand transition-colors flex items-center gap-1">
             <LayoutDashboard size={14} />
             Dashboard
           </Link>

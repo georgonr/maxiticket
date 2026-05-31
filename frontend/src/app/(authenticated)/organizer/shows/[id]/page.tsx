@@ -119,8 +119,8 @@ export default function ShowDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
+        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
       </header>
 
       <main className="mx-auto max-w-4xl p-8 space-y-6">
@@ -146,7 +146,7 @@ export default function ShowDetailPage() {
                 {show.description && <p className="mt-1 text-sm text-gray-700">{show.description}</p>}
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => router.push(`/shows/${id}/edit`)}>Editovať</Button>
+            <Button variant="outline" size="sm" onClick={() => router.push(`/organizer/shows/${id}/edit`)}>Editovať</Button>
           </div>
         </div>
 
@@ -246,7 +246,7 @@ export default function ShowDetailPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Termíny</h2>
-            <Button size="sm" onClick={() => router.push(`/shows/${id}/termins/new`)}>+ Pridať termín</Button>
+            <Button size="sm" onClick={() => router.push(`/organizer/shows/${id}/termins/new`)}>+ Pridať termín</Button>
           </div>
 
           {(!show.termins || show.termins.length === 0) ? (
@@ -260,7 +260,7 @@ export default function ShowDetailPage() {
                   showId={id}
                   onDelete={() => handleDeleteTermin(termin.id)}
                   onDeleteTicketType={(ttId) => handleDeleteTicketType(termin.id, ttId)}
-                  onAddTicketType={() => router.push(`/shows/${id}/termins/${termin.id}/ticket-types`)}
+                  onAddTicketType={() => router.push(`/organizer/shows/${id}/termins/${termin.id}/ticket-types`)}
                 />
               ))}
             </div>

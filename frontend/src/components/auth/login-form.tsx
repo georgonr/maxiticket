@@ -4,12 +4,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { setAccessToken } from '@/lib/auth';
+import { parseJwt } from '@/hooks/useAuth';
 import { getReadableError } from '@/lib/api-errors';
 
 const schema = z.object({
@@ -21,6 +22,8 @@ type Fields = z.infer<typeof schema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const next = params.get('next');
   const [serverError, setServerError] = useState('');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Fields>({
     resolver: zodResolver(schema),
@@ -40,7 +43,20 @@ export function LoginForm() {
         return;
       }
       setAccessToken(json.accessToken);
-      router.push('/dashboard');
+
+      // Honour ?next= if present, otherwise route by role.
+      if (next) {
+        router.push(next);
+        return;
+      }
+      const role = parseJwt(json.accessToken)?.role;
+      if (role === 'CUSTOMER') {
+        router.push('/account');
+      } else if (role === 'SUPERADMIN' || role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER') {
+        router.push('/organizer/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch {
       setServerError(getReadableError({ endpoint: 'login' }));
     }

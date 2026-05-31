@@ -1,25 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getValidToken, logout } from '@/lib/auth';
+import { logout } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-
-interface JwtClaims {
-  sub: string;
-  email: string;
-  role: string;
-  organizerId?: string;
-}
-
-function parseJwt(token: string): JwtClaims | null {
-  try {
-    return JSON.parse(atob(token.split('.')[1]));
-  } catch {
-    return null;
-  }
-}
 
 const ROLE_LABELS: Record<string, string> = {
   SUPERADMIN: 'Superadmin',
@@ -32,23 +17,14 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [claims, setClaims] = useState<JwtClaims | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getValidToken().then((token) => {
-      if (!token) { router.replace('/login'); return; }
-      setClaims(parseJwt(token));
-      setLoading(false);
-    });
-  }, [router]);
+  const { user, isLoading } = useAuth();
 
   async function handleLogout() {
     await logout();
     router.replace('/login');
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
@@ -56,7 +32,7 @@ export default function DashboardPage() {
     );
   }
 
-  const role = claims?.role ?? 'UNKNOWN';
+  const role = user?.role ?? 'UNKNOWN';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,12 +49,12 @@ export default function DashboardPage() {
         {/* Main nav */}
         <nav className="hidden sm:flex items-center gap-1 text-sm flex-1">
           {(role === 'SUPERADMIN' || role === 'STAFF') && (
-            <Link href="/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+            <Link href="/organizer/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
               Podujatia
             </Link>
           )}
           {role === 'SUPERADMIN' && (
-            <Link href="/hero" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+            <Link href="/admin/hero" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
               Hero slider
             </Link>
           )}
@@ -88,7 +64,7 @@ export default function DashboardPage() {
             </Link>
           )}
           {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
-            <Link href="/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+            <Link href="/organizer/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
               Podujatia
             </Link>
           )}
@@ -113,7 +89,7 @@ export default function DashboardPage() {
           )}
         </nav>
         <div className="flex items-center gap-4 flex-shrink-0">
-          <span className="text-sm text-gray-600 hidden md:block">{claims?.email}</span>
+          <span className="text-sm text-gray-600 hidden md:block">{user?.email}</span>
           <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand">
             {ROLE_LABELS[role] ?? role}
           </span>
@@ -134,14 +110,14 @@ export default function DashboardPage() {
               <DashCard title="Používatelia" desc="Všetci používatelia platformy" />
               <DashCard title="Štatistiky" desc="Predaje a analytika" />
               {role === 'SUPERADMIN' && (
-                <Link href="/hero">
+                <Link href="/admin/hero">
                   <DashCard title="Hero slider" desc="Titulný slider – bannery a promoted podujatia" />
                 </Link>
               )}
             </>
           ) : role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' ? (
             <>
-              <Link href="/shows">
+              <Link href="/organizer/shows">
                 <DashCard title="Podujatia" desc="Vytvorte a spravujte show" />
               </Link>
               <DashCard title="Objednávky" desc="Prehľad predajov a lístkov" />

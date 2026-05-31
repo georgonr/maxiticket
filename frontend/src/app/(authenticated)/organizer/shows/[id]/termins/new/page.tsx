@@ -83,7 +83,7 @@ export default function NewTerminPage() {
         capacity: form.capacity ? Number(form.capacity) : undefined,
       };
       await terminsApi.create(id, body, token);
-      router.push(`/shows/${id}`);
+      router.push(`/organizer/shows/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nepodarilo sa vytvoriť termín');
       setLoading(false);
@@ -95,8 +95,8 @@ export default function NewTerminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href={`/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
+        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-8">
@@ -183,7 +183,7 @@ export default function NewTerminPage() {
           </label>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => router.push(`/shows/${id}`)}>Zrušiť</Button>
+            <Button type="button" variant="outline" onClick={() => router.push(`/organizer/shows/${id}`)}>Zrušiť</Button>
             <Button type="submit" loading={loading}>Vytvoriť termín</Button>
           </div>
         </form>

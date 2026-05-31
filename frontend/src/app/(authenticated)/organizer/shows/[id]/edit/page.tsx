@@ -56,7 +56,7 @@ export default function EditShowPage() {
       const token = await getValidToken();
       if (!token) { router.replace('/login'); return; }
       await showsApi.update(id, form, token);
-      router.push(`/shows/${id}`);
+      router.push(`/organizer/shows/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nepodarilo sa uložiť zmeny');
       setSaving(false);
@@ -74,8 +74,8 @@ export default function EditShowPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href={`/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
+        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-8">
@@ -119,7 +119,7 @@ export default function EditShowPage() {
             rows={2}
           />
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => router.push(`/shows/${id}`)}>Zrušiť</Button>
+            <Button type="button" variant="outline" onClick={() => router.push(`/organizer/shows/${id}`)}>Zrušiť</Button>
             <Button type="submit" loading={saving}>Uložiť zmeny</Button>
           </div>
         </form>

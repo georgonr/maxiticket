@@ -133,7 +133,7 @@ export default function PlatformInfoPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Prístup zamietnutý</h1>
         <p className="text-gray-500 mb-6">Táto sekcia je dostupná len pre správcu platformy.</p>
-        <Link href="/shows"><Button variant="outline">Späť na podujatia</Button></Link>
+        <Link href="/organizer/shows"><Button variant="outline">Späť na podujatia</Button></Link>
       </div>
     );
   }
@@ -147,8 +147,8 @@ export default function PlatformInfoPage() {
       )}
 
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
-        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
+        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-6 sm:p-8">
