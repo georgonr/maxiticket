@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAccessToken, getValidToken } from '@/lib/auth';
 import Link from 'next/link';
+import { getReadableError } from '@/lib/api-errors';
 
 export default function ScanLoginPage() {
   const router = useRouter();
@@ -34,13 +35,13 @@ export default function ScanLoginPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.message ?? 'Nesprávny e-mail alebo heslo');
+        setError(getReadableError({ endpoint: 'login', status: res.status, code: json.message }));
         return;
       }
       setAccessToken(json.accessToken);
       router.replace('/scan/terminy');
     } catch {
-      setError('Nepodarilo sa spojiť so serverom');
+      setError(getReadableError({ endpoint: 'login' }));
     } finally {
       setLoading(false);
     }

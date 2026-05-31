@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { setAccessToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
+import { getReadableError } from '@/lib/api-errors';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
@@ -41,12 +42,15 @@ function RegisterContent() {
         body: JSON.stringify(data),
       });
       const json = await res.json();
-      if (!res.ok) { setServerError(json.message ?? 'Chyba registrácie'); return; }
+      if (!res.ok) {
+        setServerError(getReadableError({ endpoint: 'register-customer', status: res.status, code: json.message }));
+        return;
+      }
       setAccessToken(json.accessToken);
       await refresh();
       router.push(next);
     } catch {
-      setServerError('Nepodarilo sa spojiť so serverom');
+      setServerError(getReadableError({ endpoint: 'register-customer' }));
     }
   }
 

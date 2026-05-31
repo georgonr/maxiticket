@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2 } from 'lucide-react';
+import { getReadableError } from '@/lib/api-errors';
 
 const schema = z.object({
   email: z.string().email('Neplatný e-mail'),
@@ -38,12 +39,15 @@ function LoginContent() {
         body: JSON.stringify(data),
       });
       const json = await res.json();
-      if (!res.ok) { setServerError(json.message ?? 'Chyba prihlásenia'); return; }
+      if (!res.ok) {
+        setServerError(getReadableError({ endpoint: 'login', status: res.status, code: json.message }));
+        return;
+      }
       setAccessToken(json.accessToken);
       await refresh();
       router.push(next);
     } catch {
-      setServerError('Nepodarilo sa spojiť so serverom');
+      setServerError(getReadableError({ endpoint: 'login' }));
     }
   }
 

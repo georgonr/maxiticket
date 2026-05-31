@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { setAccessToken } from '@/lib/auth';
+import { getReadableError } from '@/lib/api-errors';
 
 const schema = z.object({
   firstName: z.string().min(2, 'Min 2 znaky'),
@@ -41,11 +42,14 @@ export function RegisterForm() {
         body: JSON.stringify(data),
       });
       const json = await res.json();
-      if (!res.ok) { setServerError(json.message ?? 'Chyba registrácie'); return; }
+      if (!res.ok) {
+        setServerError(getReadableError({ endpoint: 'register-organizer', status: res.status, code: json.message }));
+        return;
+      }
       setAccessToken(json.accessToken);
       router.push('/dashboard');
     } catch {
-      setServerError('Nepodarilo sa spojiť so serverom');
+      setServerError(getReadableError({ endpoint: 'register-organizer' }));
     }
   }
 

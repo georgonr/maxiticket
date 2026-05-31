@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
+import { getReadableError } from '@/lib/api-errors';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 
@@ -58,13 +59,13 @@ function ResetForm({ isAdmin }: Props) {
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        setServerError(json.message ?? 'Token je neplatný alebo expirovaný');
+        setServerError(getReadableError({ endpoint: 'password-reset', status: res.status, code: json.message }));
         setLoading(false);
         return;
       }
       router.push(loginHref);
     } catch {
-      setServerError('Nepodarilo sa spojiť so serverom');
+      setServerError(getReadableError({ endpoint: 'password-reset' }));
       setLoading(false);
     }
   }
