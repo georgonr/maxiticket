@@ -51,7 +51,7 @@ async function bootstrap() {
     origin: [
       'https://ticketall.eu',
       'https://www.ticketall.eu',
-      'https://admin.ticketall.eu',
+      // admin.ticketall.eu removed (Úloha 11/3): už nesservíruje frontend, len 301 redirect na apex
       'https://skener.ticketall.eu',
       'http://localhost:3000',
     ],

@@ -38,18 +38,33 @@ ticketall.eu, www.ticketall.eu {
   encode zstd gzip
 }
 
-# ── Admin + Organizer portal ───────────────────────────
+# ── Admin (legacy) → 301 redirect na hlavnú doménu (Úloha 11/3) ──────────
+# admin.ticketall.eu už NEsservíruje frontend; len 301 redirectuje staré cesty.
+# DNS zostáva (admin. rezolvuje na server), zruší sa po 3-6 mes. pri 0 hits.
 admin.ticketall.eu {
-  reverse_proxy frontend:3000
-
   header {
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
     X-Content-Type-Options nosniff
-    X-Frame-Options SAMEORIGIN
     Referrer-Policy strict-origin-when-cross-origin
   }
 
-  encode zstd gzip
+  # Remapped: /shows a /shows/* → /organizer/shows[/*] (zachová suffix cez regex)
+  @shows path_regexp shows ^/shows(/.*)?$
+  redir @shows https://ticketall.eu/organizer/shows{re.shows.1} 301
+
+  # Remapped: jednotlivé cesty s iným prefixom
+  @dashboard path /dashboard
+  redir @dashboard https://ticketall.eu/organizer/dashboard 301
+
+  @hero path /hero
+  redir @hero https://ticketall.eu/admin/hero 301
+
+  # Same-path: host swap so zachovaním celej URI + query
+  @samepath path /login /register /register/* /reset-password /reset-password/* /organizer/settings /admin/platform-info
+  redir @samepath https://ticketall.eu{uri} 301
+
+  # Fallback: čokoľvek iné → root hlavnej domény
+  redir https://ticketall.eu/ 301
 }
 
 # ── Scanner PWA ────────────────────────────────────────
