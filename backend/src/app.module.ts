@@ -23,6 +23,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { HeroBannersModule } from './hero-banners/hero-banners.module';
 import { ScanModule } from './scan/scan.module';
+import { PlatformInfoModule } from './platform-info/platform-info.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -49,6 +50,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     PaymentsModule,
     HeroBannersModule,
     ScanModule,
+    PlatformInfoModule,
   ],
   controllers: [HealthController],
   providers: [

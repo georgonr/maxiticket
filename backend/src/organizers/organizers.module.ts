@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { OrganizersService } from './organizers.service';
-import { OrganizersController } from './organizers.controller';
+import { OrganizersController, OrganizerBusinessController } from './organizers.controller';
 import { CaslModule } from '../casl/casl.module';
 
 @Module({
   imports: [CaslModule],
-  controllers: [OrganizersController],
+  controllers: [OrganizersController, OrganizerBusinessController],
   providers: [OrganizersService],
   exports: [OrganizersService],
 })

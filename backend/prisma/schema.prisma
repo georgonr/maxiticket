@@ -103,6 +103,17 @@ model Organizer {
   iban             String?
   bankName         String?
 
+  // Extended business info (KROK F)
+  companyName      String?         // legal company name, e.g. "Acme s.r.o."
+  icDph            String?         // IČ DPH, e.g. "SK1234567890"
+  vatPayer         Boolean         @default(false)
+  vatRate          Decimal?        @db.Decimal(5, 2)
+  addressStreet    String?
+  addressCity      String?
+  addressZip       String?
+  addressCountry   String?         @default("SK")
+  bankAccount      String?         // IBAN for display on receipts
+
   // Payout / commission
   commissionPct    Decimal         @default(5.00) @db.Decimal(5, 2)
   payoutEmail      String?
@@ -585,4 +596,23 @@ model TermsAcceptance {
 
   @@unique([termsVersionId, userId])
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// PLATFORM INFO (singleton – 1 row only)
+// ─────────────────────────────────────────────
+
+model PlatformInfo {
+  id                  String   @id @default(cuid())
+  legalName           String   @default("TicketAll s.r.o.")
+  ico                 String?
+  icDph               String?
+  addressStreet       String?
+  addressCity         String?
+  addressZip          String?
+  addressCountry      String?  @default("SK")
+  defaultVatRateSk    Decimal  @default(20.00) @db.Decimal(5, 2)
+  defaultVatRateCz    Decimal  @default(21.00) @db.Decimal(5, 2)
+  updatedAt           DateTime @updatedAt
+  createdAt           DateTime @default(now())
 }
