@@ -1,0 +1,242 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { getValidToken } from '@/lib/auth';
+import { organizerBusinessApi, UpdateOrganizerBusinessBody } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+type FormState = {
+  companyName: string;
+  ico: string;
+  icDph: string;
+  vatPayer: boolean;
+  vatRate: string;
+  addressStreet: string;
+  addressCity: string;
+  addressZip: string;
+  addressCountry: string;
+  bankAccount: string;
+};
+
+const EMPTY: FormState = {
+  companyName: '', ico: '', icDph: '', vatPayer: false, vatRate: '',
+  addressStreet: '', addressCity: '', addressZip: '', addressCountry: 'SK', bankAccount: '',
+};
+
+export default function OrganizerSettingsPage() {
+  const router = useRouter();
+  const [form, setForm] = useState<FormState>(EMPTY);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    getValidToken().then(async (token) => {
+      if (!token) { router.replace('/login'); return; }
+      try {
+        const data = await organizerBusinessApi.get(token);
+        setForm({
+          companyName: data.companyName ?? '',
+          ico: data.ico ?? '',
+          icDph: data.icDph ?? '',
+          vatPayer: data.vatPayer ?? false,
+          vatRate: data.vatRate ?? '',
+          addressStreet: data.addressStreet ?? '',
+          addressCity: data.addressCity ?? '',
+          addressZip: data.addressZip ?? '',
+          addressCountry: data.addressCountry ?? 'SK',
+          bankAccount: data.bankAccount ?? '',
+        });
+      } catch (e) {
+        if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+          router.replace('/login');
+          return;
+        }
+        setError('Nepodarilo sa načítať údaje firmy.');
+      } finally {
+        setLoading(false);
+      }
+    });
+  }, [router]);
+
+  function set<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setFieldErrors((fe) => ({ ...fe, [key]: '' }));
+  }
+
+  function validate(): boolean {
+    const errs: Record<string, string> = {};
+    if (form.vatPayer && !form.ico.trim()) {
+      errs.ico = 'IČO je povinné pre platcu DPH.';
+    }
+    if (form.ico && (form.addressCountry === 'SK' || !form.addressCountry) && !/^\d{8}$/.test(form.ico.trim())) {
+      errs.ico = 'IČO musí mať 8 číslic.';
+    }
+    if (form.icDph && !/^[A-Z]{2}\d{8,12}$/.test(form.icDph.trim())) {
+      errs.icDph = 'IČ DPH musí byť v tvare napr. SK1234567890.';
+    }
+    if (form.addressZip && (form.addressCountry === 'SK' || !form.addressCountry) && !/^\d{5}$/.test(form.addressZip.trim())) {
+      errs.addressZip = 'PSČ musí mať 5 číslic.';
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  async function handleSave() {
+    setError('');
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      const token = await getValidToken();
+      if (!token) { router.replace('/login'); return; }
+      const body: UpdateOrganizerBusinessBody = {
+        companyName: form.companyName || undefined,
+        ico: form.ico || undefined,
+        icDph: form.icDph || undefined,
+        vatPayer: form.vatPayer,
+        vatRate: form.vatPayer && form.vatRate ? form.vatRate : undefined,
+        addressStreet: form.addressStreet || undefined,
+        addressCity: form.addressCity || undefined,
+        addressZip: form.addressZip || undefined,
+        addressCountry: form.addressCountry || undefined,
+        bankAccount: form.bankAccount || undefined,
+      };
+      await organizerBusinessApi.update(body, token);
+      setToast({ msg: 'Údaje firmy uložené', ok: true });
+    } catch (e) {
+      const msg = e instanceof ApiError
+        ? (e.status === 400 ? 'Skontrolujte zadané údaje – niektoré pole je neplatné.' : 'Údaje sa nepodarilo uložiť.')
+        : 'Údaje sa nepodarilo uložiť.';
+      setToast({ msg, ok: false });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-lg transition-all ${toast.ok ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+        <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
+        <Link href="/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
+      </header>
+
+      <main className="mx-auto max-w-2xl p-6 sm:p-8">
+        <h1 className="text-2xl font-bold mb-1">Údaje firmy</h1>
+        <p className="text-gray-500 mb-6 text-sm">
+          Tieto údaje sa zobrazujú na vstupenkách a daňových dokladoch podľa zákona.
+        </p>
+
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+        )}
+
+        <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <Input
+            id="companyName" label="Právny názov firmy"
+            placeholder="Napr. Acme s.r.o."
+            value={form.companyName} onChange={(e) => set('companyName', e.target.value)}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              id="ico" label="IČO"
+              placeholder="8 číslic"
+              value={form.ico} onChange={(e) => set('ico', e.target.value)}
+              error={fieldErrors.ico}
+            />
+            <Input
+              id="icDph" label="IČ DPH"
+              placeholder="SK1234567890"
+              value={form.icDph} onChange={(e) => set('icDph', e.target.value)}
+              error={fieldErrors.icDph}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+            <input
+              id="vatPayer" type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
+              checked={form.vatPayer} onChange={(e) => set('vatPayer', e.target.checked)}
+            />
+            <label htmlFor="vatPayer" className="text-sm font-medium text-gray-700">Sme platca DPH</label>
+          </div>
+
+          {form.vatPayer && (
+            <Input
+              id="vatRate" label="Sadzba DPH (%)" type="number" step="0.01"
+              placeholder="Ponechajte prázdne pre štandardnú sadzbu krajiny"
+              value={form.vatRate} onChange={(e) => set('vatRate', e.target.value)}
+            />
+          )}
+
+          <div className="border-t border-gray-100 pt-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Sídlo firmy</h2>
+            <div className="space-y-4">
+              <Input
+                id="addressStreet" label="Ulica a číslo"
+                placeholder="Napr. Hlavná 1"
+                value={form.addressStreet} onChange={(e) => set('addressStreet', e.target.value)}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input
+                  id="addressZip" label="PSČ"
+                  placeholder="81101"
+                  value={form.addressZip} onChange={(e) => set('addressZip', e.target.value)}
+                  error={fieldErrors.addressZip}
+                />
+                <Input
+                  id="addressCity" label="Mesto"
+                  placeholder="Bratislava"
+                  value={form.addressCity} onChange={(e) => set('addressCity', e.target.value)}
+                />
+                <Input
+                  id="addressCountry" label="Krajina"
+                  placeholder="SK"
+                  value={form.addressCountry} onChange={(e) => set('addressCountry', e.target.value.toUpperCase())}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Input
+            id="bankAccount" label="IBAN (voliteľné)"
+            placeholder="SK00 0000 0000 0000 0000 0000"
+            value={form.bankAccount} onChange={(e) => set('bankAccount', e.target.value)}
+          />
+
+          <div className="flex justify-end pt-2">
+            <Button onClick={handleSave} loading={saving} disabled={saving}>
+              Uložiť údaje
+            </Button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

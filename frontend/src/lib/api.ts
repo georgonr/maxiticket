@@ -485,3 +485,74 @@ export const scanApi = {
   validate: (body: { qrToken: string; terminId: string }, token: string) =>
     apiFetch<ScanValidateOk>('/v1/scan/validate', { method: 'POST', body: JSON.stringify(body), token }),
 };
+
+// ── Organizer business údaje (KROK F) ──────────────────────────────────────────
+
+export interface OrganizerBusiness {
+  id: string;
+  name: string;
+  companyName: string | null;
+  ico: string | null;
+  icDph: string | null;
+  vatPayer: boolean;
+  vatRate: string | null;
+  addressStreet: string | null;
+  addressCity: string | null;
+  addressZip: string | null;
+  addressCountry: string | null;
+  bankAccount: string | null;
+}
+
+export type UpdateOrganizerBusinessBody = Partial<{
+  companyName: string;
+  ico: string;
+  icDph: string;
+  vatPayer: boolean;
+  vatRate: string;
+  addressStreet: string;
+  addressCity: string;
+  addressZip: string;
+  addressCountry: string;
+  bankAccount: string;
+}>;
+
+export const organizerBusinessApi = {
+  get: (token: string) =>
+    apiFetch<OrganizerBusiness>('/v1/organizer/business', { token }),
+  update: (body: UpdateOrganizerBusinessBody, token: string) =>
+    apiFetch<OrganizerBusiness>('/v1/organizer/business', { method: 'PATCH', body: JSON.stringify(body), token }),
+};
+
+// ── Platform info (SUPERADMIN, KROK F) ──────────────────────────────────────────
+
+export interface PlatformInfo {
+  id: string;
+  legalName: string;
+  ico: string | null;
+  icDph: string | null;
+  addressStreet: string | null;
+  addressCity: string | null;
+  addressZip: string | null;
+  addressCountry: string | null;
+  defaultVatRateSk: string;
+  defaultVatRateCz: string;
+}
+
+export type UpdatePlatformInfoBody = Partial<{
+  legalName: string;
+  ico: string;
+  icDph: string;
+  addressStreet: string;
+  addressCity: string;
+  addressZip: string;
+  addressCountry: string;
+  defaultVatRateSk: string;
+  defaultVatRateCz: string;
+}>;
+
+export const platformInfoApi = {
+  get: (token: string) =>
+    apiFetch<PlatformInfo>('/v1/admin/platform-info', { token }),
+  update: (body: UpdatePlatformInfoBody, token: string) =>
+    apiFetch<PlatformInfo>('/v1/admin/platform-info', { method: 'PATCH', body: JSON.stringify(body), token }),
+};

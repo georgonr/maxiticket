@@ -82,9 +82,19 @@ export default function DashboardPage() {
               Hero slider
             </Link>
           )}
+          {role === 'SUPERADMIN' && (
+            <Link href="/admin/platform-info" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+              Platforma
+            </Link>
+          )}
           {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
             <Link href="/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
               Podujatia
+            </Link>
+          )}
+          {(role === 'ORGANIZER_OWNER' || role === 'SUPERADMIN') && (
+            <Link href="/organizer/settings" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
+              Údaje firmy
             </Link>
           )}
           {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
