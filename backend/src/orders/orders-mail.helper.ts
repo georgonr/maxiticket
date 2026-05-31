@@ -16,9 +16,10 @@ export async function sendTicketsForOrder(
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
+      organizer: true,
       tickets: {
         where: { status: TicketStatus.VALID },
-        include: { ticketType: { select: { name: true } } },
+        include: { ticketType: { select: { name: true, price: true, currency: true } } },
       },
       items: {
         include: {
@@ -49,6 +50,22 @@ export async function sendTicketsForOrder(
     return;
   }
 
+  // Platform singleton (legal footer + VAT defaults)
+  const platform = await prisma.platformInfo.findFirst();
+  const org = order.organizer;
+
+  // Effective VAT rate for this organizer (0 if not a VAT payer)
+  let effectiveVat = 0;
+  if (org?.vatPayer) {
+    if (org.vatRate != null) {
+      effectiveVat = Number(org.vatRate);
+    } else {
+      const country = org.addressCountry ?? 'SK';
+      if (country === 'CZ') effectiveVat = Number(platform?.defaultVatRateCz ?? 21);
+      else if (country === 'SK') effectiveVat = Number(platform?.defaultVatRateSk ?? 20);
+    }
+  }
+
   await mail.sendTickets({
     to: order.buyerEmail,
     buyerName: order.buyerName ?? undefined,
@@ -58,10 +75,29 @@ export async function sendTicketsForOrder(
     timezone: termin.timezone,
     venueName: venue.name,
     venueCity: venue.city ?? undefined,
+    organizer: org
+      ? {
+          companyName: org.companyName,
+          ico: org.ico,
+          icDph: org.icDph,
+          addressStreet: org.addressStreet,
+          addressCity: org.addressCity,
+          addressZip: org.addressZip,
+          addressCountry: org.addressCountry,
+          vatPayer: org.vatPayer,
+          // pre-resolved effective rate so the PDF prints the correct %
+          vatRate: org.vatPayer ? effectiveVat : null,
+        }
+      : undefined,
+    platform: platform
+      ? { legalName: platform.legalName, ico: platform.ico }
+      : { legalName: 'TicketAll s.r.o.' },
     tickets: order.tickets.map((t) => ({
       id: t.id,
       typeName: t.ticketType?.name ?? 'Vstupenka',
       qrToken: t.qrToken,
+      price: t.ticketType?.price != null ? Number(t.ticketType.price) : undefined,
+      currency: t.ticketType?.currency ?? 'EUR',
     })),
   });
 

@@ -2,8 +2,26 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as QRCode from 'qrcode';
+import * as path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
+
+export interface OrganizerPdfInfo {
+  companyName?: string | null;
+  ico?: string | null;
+  icDph?: string | null;
+  addressStreet?: string | null;
+  addressCity?: string | null;
+  addressZip?: string | null;
+  addressCountry?: string | null;
+  vatPayer: boolean;
+  vatRate?: number | null;
+}
+
+export interface PlatformPdfInfo {
+  legalName: string;
+  ico?: string | null;
+}
 
 export interface TicketEmailData {
   to: string;
@@ -14,10 +32,14 @@ export interface TicketEmailData {
   timezone: string;
   venueName: string;
   venueCity?: string;
+  organizer?: OrganizerPdfInfo;
+  platform?: PlatformPdfInfo;
   tickets: {
     id: string;
     typeName: string;
     qrToken: string;
+    price?: number;
+    currency?: string;
   }[];
 }
 
@@ -26,12 +48,14 @@ export class MailService {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(MailService.name);
 
+  // nest-cli copies src/assets/** → dist/assets/**; __dirname here is dist/mail
+  private readonly fontPath = path.join(__dirname, '..', 'assets', 'fonts');
+
   constructor(private config: ConfigService) {
     const transport = this.config.get<string>('MAIL_TRANSPORT', 'mailpit');
     const secure = this.config.get<string>('SMTP_SECURE', 'false') === 'true';
 
     if (transport === 'smtp') {
-      // Production SMTP (e.g. SSL on port 465)
       this.transporter = nodemailer.createTransport({
         host: this.config.get<string>('SMTP_HOST'),
         port: Number(this.config.get<string>('SMTP_PORT', '465')),
@@ -43,7 +67,6 @@ export class MailService {
         tls: { rejectUnauthorized: true },
       });
     } else {
-      // Dev fallback: Mailpit (no auth, no TLS)
       this.transporter = nodemailer.createTransport({
         host: this.config.get<string>('SMTP_HOST', 'mailpit'),
         port: Number(this.config.get<string>('SMTP_PORT', '1025')),
@@ -57,13 +80,11 @@ export class MailService {
   async sendTickets(data: TicketEmailData): Promise<void> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
 
-    // Generate QR PNGs and PDFs for each ticket
     const attachments: nodemailer.SendMailOptions['attachments'] = [];
     const ticketHtmlParts: string[] = [];
 
     for (const ticket of data.tickets) {
       const qrPng = await QRCode.toBuffer(ticket.qrToken, { width: 300, margin: 2 });
-      const qrBase64 = qrPng.toString('base64');
       const cidKey = `qr_${ticket.id}`;
 
       attachments.push({ filename: `qr_${ticket.id}.png`, content: qrPng, cid: cidKey });
@@ -75,7 +96,6 @@ export class MailService {
         contentType: 'application/pdf',
       });
 
-      const dateStr = this.formatDate(data.startsAt, data.timezone);
       ticketHtmlParts.push(`
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:16px 0;text-align:center;">
           <p style="font-size:14px;color:#6b7280;margin:0 0 4px;">${ticket.typeName}</p>
@@ -88,7 +108,7 @@ export class MailService {
     const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
   <div style="text-align:center;margin-bottom:24px;">
-    <div style="display:inline-block;background:#6366f1;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">MT</div>
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
     <h1 style="font-size:22px;margin:12px 0 4px;">Vaše vstupenky</h1>
     <p style="color:#6b7280;margin:0;">Objednávka <strong>${data.orderNumber}</strong></p>
   </div>
@@ -114,43 +134,146 @@ export class MailService {
     this.logger.log(`Sent ${data.tickets.length} ticket(s) to ${data.to}`);
   }
 
-  private async generateTicketPdf(data: TicketEmailData & { ticket: TicketEmailData['tickets'][0]; qrPng: Buffer }): Promise<Buffer> {
+  private async generateTicketPdf(
+    data: TicketEmailData & {
+      ticket: TicketEmailData['tickets'][0];
+      qrPng: Buffer;
+    },
+  ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ size: 'A6', margin: 20 });
+      // A6 landscape: 420 × 298 pt (≈148×105mm)
+      const W = 420;
+      const H = 298;
+      const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: true });
       const chunks: Buffer[] = [];
       doc.on('data', (c: Buffer) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // Header band
-      doc.rect(0, 0, doc.page.width, 40).fill('#6366f1');
-      doc.fillColor('#ffffff').fontSize(14).font('Helvetica-Bold')
-        .text('VSTUPENKA / TICKET', 20, 12, { align: 'center' });
+      // Register fonts (embedded TTF → full Unicode incl. ľ š č ť ž ý á ä ô ú)
+      const geistReg = path.join(this.fontPath, 'Geist-Regular.ttf');
+      const geistBold = path.join(this.fontPath, 'Geist-Bold.ttf');
+      const bebasReg = path.join(this.fontPath, 'BebasNeue-Regular.ttf');
+      doc.registerFont('Geist', geistReg);
+      doc.registerFont('GeistBold', geistBold);
+      doc.registerFont('Bebas', bebasReg);
+
+      const TEAL = '#10B981';
+      const BLACK = '#111827';
+      const GRAY = '#6B7280';
+      const LGRAY = '#9CA3AF';
+      const WHITE = '#FFFFFF';
+
+      // ── Left stub (teal band) ────────────────────────────────────────────
+      const STUB_W = 110;
+      doc.rect(0, 0, STUB_W, H).fill(TEAL);
+
+      // "VSTUPENKA" rotated 90° in stub
+      doc.save();
+      doc.translate(STUB_W / 2, H / 2);
+      doc.rotate(-90);
+      doc.fillColor(WHITE).font('Bebas').fontSize(26)
+        .text('VSTUPENKA', -70, -13, { width: 140, align: 'center' });
+      doc.restore();
+
+      // TicketAll logo text in stub bottom
+      doc.fillColor(WHITE).font('GeistBold').fontSize(8)
+        .text('ticketall.eu', 0, H - 22, { width: STUB_W, align: 'center' });
+
+      // ── Perforated divider ───────────────────────────────────────────────
+      const perfX = STUB_W + 1;
+      doc.save();
+      doc.dash(4, { space: 4 });
+      doc.moveTo(perfX, 10).lineTo(perfX, H - 10)
+        .strokeColor('#D1D5DB').lineWidth(1).stroke();
+      doc.undash();
+      doc.restore();
+
+      // ── Right body ───────────────────────────────────────────────────────
+      const BODY_X = STUB_W + 12;
+      const BODY_W = W - BODY_X - 12;
+      const QR_W = 130;
+      const QR_X = W - QR_W - 16;
+      const TEXT_W = QR_X - BODY_X - 8;
 
       // Show name
-      doc.fillColor('#111827').fontSize(12).font('Helvetica-Bold')
-        .text(data.showName, 20, 50, { align: 'center', width: doc.page.width - 40 });
+      doc.fillColor(BLACK).font('Bebas').fontSize(22)
+        .text(data.showName, BODY_X, 16, { width: TEXT_W, lineGap: -2 });
 
       // Date + venue
-      doc.fontSize(9).font('Helvetica').fillColor('#374151')
-        .text(this.formatDate(data.startsAt, data.timezone), 20, 70, { align: 'center', width: doc.page.width - 40 })
-        .text(`${data.venueName}${data.venueCity ? `, ${data.venueCity}` : ''}`, 20, 82, { align: 'center', width: doc.page.width - 40 });
+      const dateStr = this.formatDate(data.startsAt, data.timezone);
+      doc.fillColor(TEAL).font('GeistBold').fontSize(9)
+        .text(dateStr, BODY_X, 68, { width: TEXT_W });
 
-      // Ticket type
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#6366f1')
-        .text(data.ticket.typeName, 20, 98, { align: 'center', width: doc.page.width - 40 });
+      const venue = `${data.venueName}${data.venueCity ? `, ${data.venueCity}` : ''}`;
+      doc.fillColor(GRAY).font('Geist').fontSize(9)
+        .text(venue, BODY_X, 82, { width: TEXT_W });
 
-      // QR code (centered)
-      const qrSize = 140;
-      const qrX = (doc.page.width - qrSize) / 2;
-      doc.image(data.qrPng, qrX, 114, { width: qrSize, height: qrSize });
+      // Ticket type + price
+      const priceStr = data.ticket.price != null
+        ? this.formatPrice(data.ticket.price, data.ticket.currency ?? 'EUR')
+        : '';
+      doc.fillColor(BLACK).font('GeistBold').fontSize(11)
+        .text(data.ticket.typeName + (priceStr ? `  ${priceStr}` : ''), BODY_X, 100, { width: TEXT_W });
 
-      // Ticket ID
-      doc.fontSize(7).font('Helvetica').fillColor('#9ca3af')
-        .text(data.ticket.id.slice(-12).toUpperCase(), 20, 260, { align: 'center', width: doc.page.width - 40 });
+      // Divider line
+      doc.moveTo(BODY_X, 118).lineTo(W - 16, 118)
+        .strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+
+      // QR code (right side)
+      doc.rect(QR_X - 4, 14, QR_W + 8, QR_W + 8).fill('#FFFFFF');
+      doc.image(data.qrPng, QR_X, 16, { width: QR_W, height: QR_W });
+
+      // Ticket unique code under QR
+      doc.fillColor(LGRAY).font('Geist').fontSize(7)
+        .text(data.ticket.id.slice(-12).toUpperCase(), QR_X - 4, 16 + QR_W + 2, { width: QR_W + 8, align: 'center' });
 
       // Order number
-      doc.fontSize(7).text(`Obj: ${data.orderNumber}`, 20, 270, { align: 'center', width: doc.page.width - 40 });
+      doc.fillColor(LGRAY).font('Geist').fontSize(7)
+        .text(`Obj: ${data.orderNumber}`, QR_X - 4, 16 + QR_W + 14, { width: QR_W + 8, align: 'center' });
+
+      // ── Legal footer ─────────────────────────────────────────────────────
+      const FOOTER_Y = H - 62;
+      doc.moveTo(STUB_W + 2, FOOTER_Y).lineTo(W - 4, FOOTER_Y)
+        .strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+
+      const org = data.organizer;
+      const plat = data.platform;
+      const effectiveVat = this.computeVatRate(org);
+
+      // Line 1: organizer identity
+      if (org?.companyName) {
+        let orgLine = `Organizátor: ${org.companyName}`;
+        if (org.ico) orgLine += ` | IČO: ${org.ico}`;
+        if (org.icDph) orgLine += ` | IČ DPH: ${org.icDph}`;
+        doc.fillColor(LGRAY).font('Geist').fontSize(7)
+          .text(orgLine, BODY_X, FOOTER_Y + 4, { width: BODY_W });
+      }
+
+      // Line 2: organizer address
+      if (org?.addressStreet && org?.addressCity) {
+        const addrLine = `Adresa: ${org.addressStreet}, ${org.addressZip ?? ''} ${org.addressCity}, ${org.addressCountry ?? 'SK'}`;
+        doc.fillColor(LGRAY).font('Geist').fontSize(7)
+          .text(addrLine, BODY_X, FOOTER_Y + 14, { width: BODY_W });
+      }
+
+      // Line 3: price + VAT
+      if (data.ticket.price != null) {
+        const vatNote = effectiveVat > 0
+          ? `zahŕňa DPH ${effectiveVat} %`
+          : 'neplatca DPH';
+        const priceLine = `Cena: ${this.formatPrice(data.ticket.price, data.ticket.currency ?? 'EUR')} (${vatNote})`;
+        doc.fillColor(LGRAY).font('Geist').fontSize(7)
+          .text(priceLine, BODY_X, FOOTER_Y + 24, { width: BODY_W });
+      }
+
+      // Line 4: platform
+      if (plat?.legalName) {
+        let platLine = `Predaj v mene a na účet organizátora: ${plat.legalName}`;
+        if (plat.ico) platLine += ` | IČO: ${plat.ico}`;
+        doc.fillColor(LGRAY).font('Geist').fontSize(7)
+          .text(platLine, BODY_X, FOOTER_Y + 34, { width: BODY_W });
+      }
 
       doc.end();
     });
@@ -163,14 +286,14 @@ export class MailService {
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
 <body style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
   <div style="text-align:center;margin-bottom:24px;">
-    <div style="display:inline-block;background:#e63946;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">MT</div>
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
   </div>
   <h2 style="font-size:20px;margin:0 0 12px;">Reset hesla</h2>
   <p style="color:#374151;">Dobrý deň${name},</p>
   <p style="color:#374151;">Dostali sme žiadosť o reset hesla pre váš účet. Kliknite na tlačidlo nižšie – link je platný <strong>1 hodinu</strong>.</p>
   <div style="text-align:center;margin:28px 0;">
     <a href="${data.resetLink}"
-       style="background:#e63946;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+       style="background:#10B981;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
       Nastaviť nové heslo
     </a>
   </div>
@@ -213,7 +336,13 @@ export class MailService {
     this.logger.log(`Contact email from ${data.email} sent to ${to}`);
   }
 
-  private formatDate(date: Date, timezone: string): string {
+  private computeVatRate(org?: OrganizerPdfInfo | null): number {
+    if (!org || !org.vatPayer) return 0;
+    if (org.vatRate != null) return org.vatRate;
+    return 20; // SK default – platform default not available here (used pre-computed value)
+  }
+
+  formatDate(date: Date, timezone: string): string {
     try {
       return new Intl.DateTimeFormat('sk-SK', {
         timeZone: timezone,
@@ -226,6 +355,14 @@ export class MailService {
       }).format(date);
     } catch {
       return date.toISOString();
+    }
+  }
+
+  private formatPrice(amount: number, currency: string): string {
+    try {
+      return new Intl.NumberFormat('sk-SK', { style: 'currency', currency }).format(amount);
+    } catch {
+      return `${amount} ${currency}`;
     }
   }
 }

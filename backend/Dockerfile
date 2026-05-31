@@ -24,3 +24,5 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
 EXPOSE 3001
 CMD ["node", "dist/main.js"]
+
+# Note: font assets are bundled via nest-cli assets into dist/assets/fonts/
