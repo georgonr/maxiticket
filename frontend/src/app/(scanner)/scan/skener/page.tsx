@@ -13,9 +13,12 @@ type ScanState =
   | { kind: 'loading' }
   | { kind: 'ok'; data: ScanValidateOk }
   | { kind: 'wrong_termin'; correctTermin: ScanError['correctTermin'] }
+  | { kind: 'wrong_show'; correctShow: ScanError['correctShow'] }
   | { kind: 'already_used'; usedAt: string | null; scannedBy: string | null }
   | { kind: 'error'; code: string }
   | { kind: 'manual' };
+
+type HistoryEntry = { kind: 'ok' | 'error'; label: string; at: string };
 
 const SESSION_COUNT_KEY = 'scanSessionCount';
 
@@ -81,6 +84,8 @@ export default function SkenerPage() {
   const [termin, setTermin] = useState<SelectedTermin | null>(null);
   const [scanState, setScanState] = useState<ScanState>({ kind: 'scanning' });
   const [sessionCount, setSessionCount] = useState(0);
+  const [scanHistory, setScanHistory] = useState<HistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [manualInput, setManualInput] = useState('');
   const [cameraError, setCameraError] = useState('');
 
@@ -152,8 +157,9 @@ export default function SkenerPage() {
       const newCount = sessionCount + 1;
       setSessionCount(newCount);
       localStorage.setItem(SESSION_COUNT_KEY, String(newCount));
+      setScanHistory((h) => [{ kind: 'ok', label: result.ticketTypeName, at: new Date().toISOString() }, ...h.slice(0, 19)]);
       setScanState({ kind: 'ok', data: result });
-      navigator.vibrate?.(200);
+      navigator.vibrate?.(150);
       beep();
       // Auto-continue after 2s
       setTimeout(() => { setScanState({ kind: 'scanning' }); pausedRef.current = false; startScanLoop(); }, 2000);
@@ -165,14 +171,20 @@ export default function SkenerPage() {
           ? (errBody.message as ScanError)
           : (errBody as ScanError);
       const code: string = payload.code ?? err.message ?? 'UNKNOWN';
+      setScanHistory((h) => [{ kind: 'error', label: code, at: new Date().toISOString() }, ...h.slice(0, 19)]);
       if (code === 'WRONG_TERMIN') {
         setScanState({ kind: 'wrong_termin', correctTermin: payload.correctTermin });
+        navigator.vibrate?.([100, 50, 100]);
+      } else if (code === 'WRONG_SHOW') {
+        setScanState({ kind: 'wrong_show', correctShow: payload.correctShow });
+        navigator.vibrate?.([100, 50, 100]);
       } else if (code === 'ALREADY_USED') {
         setScanState({ kind: 'already_used', usedAt: payload.usedAt ?? null, scannedBy: payload.scannedBy ?? null });
+        navigator.vibrate?.([100, 50, 100]);
       } else {
         setScanState({ kind: 'error', code });
+        navigator.vibrate?.([200, 100, 200, 100, 200]);
       }
-      navigator.vibrate?.([100, 50, 100]);
     }
   }, [termin, token, sessionCount, startCamera]);  // eslint-disable-line
 
@@ -281,12 +293,22 @@ export default function SkenerPage() {
               {sessionCount}
             </span>
           </div>
-          <button
-            onClick={logout}
-            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-gray-300 active:bg-white/10"
-          >
-            Odhlásiť
-          </button>
+          <div className="flex items-center gap-2">
+            {scanHistory.length > 0 && (
+              <button
+                onClick={() => setShowHistory(true)}
+                className="rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-gray-300 active:bg-white/20"
+              >
+                História ({scanHistory.length})
+              </button>
+            )}
+            <button
+              onClick={logout}
+              className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-gray-300 active:bg-white/10"
+            >
+              Odhlásiť
+            </button>
+          </div>
         </div>
 
         {/* Active termin badge */}
@@ -417,45 +439,55 @@ export default function SkenerPage() {
       )}
 
       {scanState.kind === 'already_used' && (
-        <ResultOverlay color="red" onDismiss={handleDismiss}>
-          <div className="text-5xl mb-3">🚫</div>
-          <p className="text-xl font-bold">Už použité</p>
+        <ResultOverlay color="blue" onDismiss={handleDismiss}>
+          <div className="text-5xl mb-3">🕐</div>
+          <p className="text-xl font-bold">Vstupenka už použitá</p>
           {scanState.usedAt && (
             <p className="mt-2 text-sm text-white/80">{formatTime(scanState.usedAt)}</p>
           )}
           {scanState.scannedBy && (
             <p className="text-sm text-white/60">Skenoval: {scanState.scannedBy}</p>
           )}
-          <button
-            onClick={handleDismiss}
-            className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30"
-          >
+          <button onClick={handleDismiss} className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30">
+            Pokračovať
+          </button>
+        </ResultOverlay>
+      )}
+
+      {scanState.kind === 'wrong_show' && (
+        <ResultOverlay color="red" onDismiss={handleDismiss}>
+          <div className="text-5xl mb-3">🎫</div>
+          <p className="text-xl font-bold">Vstupenka pre iné podujatie</p>
+          {scanState.correctShow && (
+            <p className="mt-2 text-sm text-white/80">Patrí na: <span className="font-semibold">{scanState.correctShow.name}</span></p>
+          )}
+          <button onClick={handleDismiss} className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30">
             Pokračovať
           </button>
         </ResultOverlay>
       )}
 
       {scanState.kind === 'error' && (
-        <ResultOverlay color="red" onDismiss={handleDismiss}>
-          <div className="text-5xl mb-3">❌</div>
+        <ResultOverlay
+          color={scanState.code === 'NOT_FOUND' || scanState.code === 'INVALID_SIGNATURE' ? 'darkred' : 'red'}
+          onDismiss={handleDismiss}
+        >
+          <div className="text-5xl mb-3">🚫</div>
           <p className="text-xl font-bold">
             {scanState.code === 'NOT_FOUND' || scanState.code === 'INVALID_SIGNATURE'
-              ? 'Neplatný lístok'
+              ? 'Neplatná vstupenka'
               : scanState.code === 'CANCELLED'
-              ? 'Lístok bol zrušený'
+              ? 'Vstupenka bola zrušená'
               : scanState.code === 'REFUNDED'
-              ? 'Lístok bol refundovaný'
+              ? 'Vstupenka bola refundovaná'
               : 'Chyba skenovania'}
           </p>
-          <p className="mt-1 text-sm text-white/60">{scanState.code}</p>
-          <button
-            onClick={handleDismiss}
-            className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30"
-          >
+          <button onClick={handleDismiss} className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30">
             Pokračovať
           </button>
         </ResultOverlay>
       )}
+      {showHistory && <HistoryOverlay history={scanHistory} onClose={() => setShowHistory(false)} />}
     </div>
   );
 }
@@ -467,19 +499,57 @@ function ResultOverlay({
   children,
   onDismiss,
   autoClose,
+  autoCloseDelay = 3000,
 }: {
-  color: 'green' | 'orange' | 'red';
+  color: 'green' | 'blue' | 'orange' | 'red' | 'darkred';
   children: React.ReactNode;
   onDismiss: () => void;
   autoClose?: boolean;
+  autoCloseDelay?: number;
 }) {
-  const bg = color === 'green' ? 'bg-green-600' : color === 'orange' ? 'bg-orange-500' : 'bg-red-600';
+  useEffect(() => {
+    if (!autoClose) return;
+    const t = setTimeout(onDismiss, autoCloseDelay);
+    return () => clearTimeout(t);
+  }, [autoClose, autoCloseDelay, onDismiss]);
+
+  const bg: Record<typeof color, string> = {
+    green: 'bg-green-500',
+    blue: 'bg-blue-500',
+    orange: 'bg-orange-500',
+    red: 'bg-red-500',
+    darkred: 'bg-red-700',
+  };
   return (
     <div
-      className={`absolute inset-0 z-20 flex flex-col items-center justify-center px-8 text-center text-white animate-fade-in ${bg}`}
-      onClick={autoClose ? onDismiss : undefined}
+      className={`absolute inset-0 z-20 flex flex-col items-center justify-center px-8 text-center text-white animate-fade-in ${bg[color]}`}
+      onClick={onDismiss}
     >
       {children}
+    </div>
+  );
+}
+
+// ─── History overlay ──────────────────────────────────────────────────────────
+
+function HistoryOverlay({ history, onClose }: { history: HistoryEntry[]; onClose: () => void }) {
+  return (
+    <div className="absolute inset-0 z-30 flex flex-col bg-gray-950/98 text-white" onClick={onClose}>
+      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+        <p className="font-semibold">História scanov</p>
+        <button onClick={onClose} className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm active:bg-gray-700">Zavrieť</button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+        {history.length === 0 && <p className="text-center text-gray-500 py-8">Zatiaľ žiadne skeny</p>}
+        {history.map((h, i) => (
+          <div key={i} className={`flex items-center justify-between rounded-xl px-4 py-2.5 ${h.kind === 'ok' ? 'bg-green-900/40' : 'bg-red-900/30'}`}>
+            <div>
+              <p className="text-sm font-medium">{h.kind === 'ok' ? '✅' : '❌'} {h.label}</p>
+              <p className="text-xs text-gray-400">{new Date(h.at).toLocaleTimeString('sk-SK')}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

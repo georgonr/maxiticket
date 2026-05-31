@@ -459,6 +459,7 @@ export interface ScanTermin {
 
 export interface ScanValidateOk {
   ticketId: string;
+  ticketCode?: string;
   showName: string;
   terminStartsAt: string;
   ticketTypeName: string;
@@ -466,13 +467,16 @@ export interface ScanValidateOk {
   seatSection: string | null;
   seatRow: string | null;
   seatNumber: string | null;
+  message?: string;
 }
 
 export interface ScanError {
-  code: 'NOT_FOUND' | 'INVALID_SIGNATURE' | 'WRONG_TERMIN' | 'ALREADY_USED' | 'CANCELLED' | 'REFUNDED';
+  code: 'NOT_FOUND' | 'INVALID_SIGNATURE' | 'WRONG_TERMIN' | 'WRONG_SHOW' | 'ALREADY_USED' | 'CANCELLED' | 'REFUNDED';
+  message?: string;
   usedAt?: string | null;
   scannedBy?: string | null;
   correctTermin?: { id: string; startsAt: string; showName: string };
+  correctShow?: { id: string; name: string; slug: string };
 }
 
 export const scanApi = {

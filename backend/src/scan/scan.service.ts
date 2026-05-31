@@ -77,14 +77,33 @@ export class ScanService {
 
     // Step 4: cross-tenant – generic 404, no tenant details leaked
     if (!this.isSameTenant(ticket, user)) {
-      throw new NotFoundException({ code: 'NOT_FOUND' });
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Neplatná vstupenka.' });
     }
 
-    // Step 5: wrong termin (before status checks – knowing it's a different day is more useful)
+    // Step 5: wrong termin/show (before status checks – knowing it's a different day is more useful)
     if (ticket.terminId !== terminId) {
+      // Load request terminId's showId to distinguish WRONG_SHOW vs WRONG_TERMIN
+      const reqTermin = await this.prisma.termin.findUnique({
+        where: { id: terminId },
+        select: { showId: true },
+      });
+      if (reqTermin && ticket.termin.show.id !== reqTermin.showId) {
+        // Ticket belongs to a different show (same organizer)
+        await this.createScanLog(ticket.id, terminId, user.sub, ScanResult.WRONG_EVENT, ipAddress);
+        throw new ConflictException({
+          code: 'WRONG_SHOW',
+          message: 'Vstupenka platí na iné podujatie.',
+          correctShow: {
+            id: ticket.termin.show.id,
+            name: ticket.termin.show.name,
+            slug: (ticket.termin.show as any).slug ?? '',
+          },
+        });
+      }
       await this.createScanLog(ticket.id, ticket.terminId, user.sub, ScanResult.WRONG_TERMIN, ipAddress);
       throw new ConflictException({
         code: 'WRONG_TERMIN',
+        message: 'Vstupenka platí na iný termín tohto podujatia.',
         correctTermin: {
           id: ticket.termin.id,
           startsAt: ticket.termin.startsAt,
@@ -99,6 +118,7 @@ export class ScanService {
       await this.createScanLog(ticket.id, terminId, user.sub, ScanResult.ALREADY_USED, ipAddress);
       throw new ConflictException({
         code: 'ALREADY_USED',
+        message: 'Vstupenka už bola použitá.',
         usedAt: ticket.usedAt,
         scannedBy: lastScan?.scannedById
           ? await this.scannerName(lastScan.scannedById)
@@ -108,12 +128,12 @@ export class ScanService {
 
     if (ticket.status === TicketStatus.CANCELLED) {
       await this.createScanLog(ticket.id, terminId, user.sub, ScanResult.CANCELLED, ipAddress);
-      throw new ConflictException({ code: 'CANCELLED' });
+      throw new ConflictException({ code: 'CANCELLED', message: 'Vstupenka bola zrušená.' });
     }
 
     if (ticket.status === TicketStatus.REFUNDED) {
       await this.createScanLog(ticket.id, terminId, user.sub, ScanResult.REFUNDED, ipAddress);
-      throw new ConflictException({ code: 'REFUNDED' });
+      throw new ConflictException({ code: 'REFUNDED', message: 'Vstupenka bola refundovaná.' });
     }
 
     // Step 7: atomic update – WHERE status=VALID guards against race condition (callback form)
@@ -156,6 +176,7 @@ export class ScanService {
 
     return {
       ticketId: ticket.id,
+      ticketCode: ticket.id.slice(-12).toUpperCase(),
       showName: ticket.termin.show.name,
       terminStartsAt: ticket.termin.startsAt,
       ticketTypeName: ticket.ticketType.name,
@@ -163,6 +184,7 @@ export class ScanService {
       seatSection: ticket.seatSection,
       seatRow: ticket.seatRow,
       seatNumber: ticket.seatNumber,
+      message: 'Vstupenka platná, vstup povolený.',
     };
   }
 
