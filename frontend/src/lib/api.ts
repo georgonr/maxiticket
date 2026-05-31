@@ -94,6 +94,7 @@ export const showsApi = {
   get: (id: string, token: string) => apiFetch<ShowDetail>('/v1/shows/' + id, { token }),
   create: (body: CreateShowBody, token: string) => apiFetch<Show>('/v1/shows', { method: 'POST', body: JSON.stringify(body), token }),
   update: (id: string, body: Partial<CreateShowBody>, token: string) => apiFetch<Show>('/v1/shows/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
+  updateStatus: (id: string, status: string, token: string) => apiFetch<Show>('/v1/shows/' + id + '/status', { method: 'PATCH', body: JSON.stringify({ status }), token }),
   delete: (id: string, token: string) => apiFetch<void>('/v1/shows/' + id, { method: 'DELETE', token }),
 };
 

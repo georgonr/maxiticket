@@ -58,19 +58,17 @@ export default function PreOrganizatorovPage() {
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="https://admin.ticketall.eu/register"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="https://admin.ticketall.eu/login"
             className="rounded-xl bg-rose-500 px-8 py-3.5 text-base font-semibold text-white hover:bg-rose-600 shadow-sm hover:shadow transition-all"
           >
-            Začať zadarmo
+            Prihlásiť sa do organizátorského portálu
           </a>
-          <Link
-            href="/kontakt"
+          <a
+            href="https://admin.ticketall.eu/register"
             className="rounded-xl border border-slate-200 bg-white px-8 py-3.5 text-base font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
           >
-            Kontaktujte nás
-          </Link>
+            Zaregistrovať sa ako organizátor
+          </a>
         </div>
         <p className="mt-4 text-sm text-slate-400">Bez záväzkov. Platíte len percento z predaných lístkov.</p>
       </section>

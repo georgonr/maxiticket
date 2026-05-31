@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
-import { UserRole } from '@prisma/client';
+import { UserRole, EventStatus } from '@prisma/client';
 import { CreateShowDto, UpdateShowDto } from './dto/show.dto';
 
 @Injectable()
@@ -69,6 +69,13 @@ export class ShowsService {
       if (conflict) throw new ConflictException('Slug already in use');
     }
     return this.prisma.show.update({ where: { id }, data: dto as any });
+  }
+
+  async updateStatus(id: string, status: EventStatus, user: JwtPayload) {
+    const show = await this.prisma.show.findUnique({ where: { id } });
+    if (!show) throw new NotFoundException();
+    this.assertAccess(show.organizerId, user);
+    return this.prisma.show.update({ where: { id }, data: { status } });
   }
 
   async remove(id: string, user: JwtPayload) {

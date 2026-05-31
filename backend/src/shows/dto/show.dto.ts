@@ -14,3 +14,7 @@ export class CreateShowDto {
 }
 
 export class UpdateShowDto extends PartialType(CreateShowDto) {}
+
+export class UpdateShowStatusDto {
+  @IsEnum(EventStatus) status: EventStatus;
+}

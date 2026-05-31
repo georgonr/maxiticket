@@ -3,27 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff, Archive } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { showsApi, Show, ShowImage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-
-const STATUS_STYLES: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-600',
-  PUBLISHED: 'bg-green-100 text-green-700',
-  ARCHIVED: 'bg-yellow-100 text-yellow-700',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Koncept',
-  PUBLISHED: 'Zverejnené',
-  ARCHIVED: 'Archivované',
-};
 
 export default function ShowsPage() {
   const router = useRouter();
   const [shows, setShows] = useState<Show[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     getValidToken().then(async (token) => {
@@ -39,6 +36,28 @@ export default function ShowsPage() {
     });
   }, [router]);
 
+  async function toggleStatus(id: string, next: 'PUBLISHED' | 'DRAFT') {
+    const prev = shows.find((s) => s.id === id)?.status ?? 'DRAFT';
+    setTogglingId(id);
+    setShows((cur) => cur.map((s) => s.id === id ? { ...s, status: next } : s));
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      await showsApi.updateStatus(id, next, token);
+      setToast({
+        msg: next === 'PUBLISHED'
+          ? 'Podujatie publikované – už je viditeľné na ticketall.eu/events'
+          : 'Podujatie skryté – už nie je viditeľné',
+        ok: true,
+      });
+    } catch {
+      setShows((cur) => cur.map((s) => s.id === id ? { ...s, status: prev } : s));
+      setToast({ msg: 'Nepodarilo sa zmeniť stav podujatia', ok: false });
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -49,6 +68,13 @@ export default function ShowsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-lg transition-all ${toast.ok ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+          {toast.msg}
+        </div>
+      )}
+
       <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
         <Link href="/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href="/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
@@ -73,34 +99,78 @@ export default function ShowsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {shows.map((show) => (
-              <div key={show.id} className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-                {(() => { const cover = show.images?.find((i: ShowImage) => i.isCover); return cover ? (
-                  <img src={cover.squareUrl} alt={show.name} className="w-full h-40 object-cover" />
-                ) : (
-                  <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Bez obrázka</div>
-                ); })()}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-semibold text-gray-900 leading-tight">{show.name}</h3>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${STATUS_STYLES[show.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {STATUS_LABELS[show.status] ?? show.status}
-                    </span>
+            {shows.map((show) => {
+              const cover = show.images?.find((i: ShowImage) => i.isCover);
+              const isDraft = show.status === 'DRAFT';
+              const isArchived = show.status === 'ARCHIVED';
+              const coverOpacity = isArchived ? 'opacity-40' : isDraft ? 'opacity-60' : '';
+              return (
+                <div key={show.id} className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  {/* Cover */}
+                  <div className={`relative ${coverOpacity}`}>
+                    {cover ? (
+                      <img src={cover.squareUrl} alt={show.name} className="w-full h-40 object-cover" />
+                    ) : (
+                      <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Bez obrázka</div>
+                    )}
                   </div>
-                  {show.category && (
-                    <p className="text-xs text-gray-500 mb-3">{show.category}</p>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => router.push(`/shows/${show.id}`)}
-                  >
-                    Spravovať
-                  </Button>
+
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3 className="font-semibold text-gray-900 leading-tight">{show.name}</h3>
+                      {/* Status toggle button */}
+                      {isArchived ? (
+                        <button title="Archivované" disabled className="flex-shrink-0 rounded p-1 text-slate-400 cursor-not-allowed">
+                          <Archive size={16} />
+                        </button>
+                      ) : show.status === 'PUBLISHED' ? (
+                        <button
+                          title="Skryť z verejnej ponuky"
+                          disabled={togglingId === show.id}
+                          onClick={() => toggleStatus(show.id, 'DRAFT')}
+                          className="flex-shrink-0 rounded p-1 text-green-600 hover:text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-50"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      ) : (
+                        <button
+                          title="Publikovať (zverejniť)"
+                          disabled={togglingId === show.id}
+                          onClick={() => toggleStatus(show.id, 'PUBLISHED')}
+                          className="flex-shrink-0 rounded p-1 text-slate-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
+                        >
+                          <EyeOff size={16} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Status badge for non-published */}
+                    {isDraft && (
+                      <span className="inline-block mb-2 rounded-full px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-600">
+                        Koncept – nezobrazuje sa verejne
+                      </span>
+                    )}
+                    {isArchived && (
+                      <span className="inline-block mb-2 rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
+                        Archivované
+                      </span>
+                    )}
+
+                    {show.category && (
+                      <p className="text-xs text-gray-500 mb-3">{show.category}</p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => router.push(`/shows/${show.id}`)}
+                    >
+                      Spravovať
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>

@@ -7,12 +7,17 @@ import Link from 'next/link';
 
 function SuccessBanner() {
   const params = useSearchParams();
-  if (!params.get('reset')) return null;
-  return (
+  if (params.get('reset')) return (
     <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
       Heslo bolo úspešne zmenené. Prihláste sa novým heslom.
     </div>
   );
+  if (params.get('registered')) return (
+    <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+      Účet vytvorený – prihláste sa.
+    </div>
+  );
+  return null;
 }
 
 export default function LoginPage() {

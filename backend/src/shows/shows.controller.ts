@@ -3,7 +3,7 @@ import {
   HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ShowsService } from './shows.service';
-import { CreateShowDto, UpdateShowDto } from './dto/show.dto';
+import { CreateShowDto, UpdateShowDto, UpdateShowStatusDto } from './dto/show.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -30,6 +30,12 @@ export class ShowsController {
   @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER)
   update(@Param('id') id: string, @Body() dto: UpdateShowDto, @CurrentUser() u: JwtPayload) {
     return this.svc.update(id, dto, u);
+  }
+
+  @Patch(':id/status')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER)
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateShowStatusDto, @CurrentUser() u: JwtPayload) {
+    return this.svc.updateStatus(id, dto.status, u);
   }
 
   @Delete(':id')
