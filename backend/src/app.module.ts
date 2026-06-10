@@ -25,6 +25,7 @@ import { HeroBannersModule } from './hero-banners/hero-banners.module';
 import { ScanModule } from './scan/scan.module';
 import { PlatformInfoModule } from './platform-info/platform-info.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { CouponsModule } from './coupons/coupons.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -53,6 +54,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     ScanModule,
     PlatformInfoModule,
     MetricsModule,
+    CouponsModule,
   ],
   controllers: [HealthController],
   providers: [

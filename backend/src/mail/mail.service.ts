@@ -336,6 +336,52 @@ export class MailService {
     this.logger.log(`Contact email from ${data.email} sent to ${to}`);
   }
 
+  /** Bulk zľavové kupóny – PDF zoznam kódov organizátorovi (NIE zákazníkom). */
+  async sendCouponBatch(data: {
+    to: string;
+    count: number;
+    batchId: string;
+    typeLabel: string;
+    valueLabel: string;
+    scopeLabel: string;
+    validityLabel: string;
+    pdf: Buffer;
+  }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+    <h1 style="font-size:22px;margin:12px 0 4px;">Vaše zľavové kupóny</h1>
+    <p style="color:#6b7280;margin:0;">Vygenerovaných <strong>${data.count}</strong> kódov</p>
+  </div>
+  <div style="background:#f9fafb;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#374151;">
+    <p style="margin:4px 0;"><strong>Batch ID:</strong> ${data.batchId}</p>
+    <p style="margin:4px 0;"><strong>Typ zľavy:</strong> ${data.typeLabel} (${data.valueLabel})</p>
+    <p style="margin:4px 0;"><strong>Rozsah:</strong> ${data.scopeLabel}</p>
+    <p style="margin:4px 0;"><strong>Platnosť:</strong> ${data.validityLabel}</p>
+  </div>
+  <p style="color:#374151;font-size:14px;">Kompletný zoznam kódov nájdete v priloženom PDF. Kódy distribuujte podľa vlastného uváženia.</p>
+  <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">Tento e-mail je určený organizátorovi, nie koncovým zákazníkom.</p>
+</body></html>`;
+
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `Vaše zľavové kupóny (${data.count} ks)`,
+      html,
+      attachments: [
+        {
+          filename: `kupony_${data.batchId}.pdf`,
+          content: data.pdf,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
+    this.logger.log(`Sent coupon batch ${data.batchId} (${data.count} codes) to ${data.to}`);
+  }
+
   private computeVatRate(org?: OrganizerPdfInfo | null): number {
     if (!org || !org.vatPayer) return 0;
     if (org.vatRate != null) return org.vatRate;
