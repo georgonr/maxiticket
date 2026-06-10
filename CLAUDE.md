@@ -33,3 +33,5 @@ Multi-tenant SaaS ticketing platform. Backend: NestJS 10 + Fastify 4 + Prisma 5 
 4. NEMEN HESLÁ existujúcich users v DB pri debugu. Ak treba otestovať auth, vytvor dočasného test usera a po teste ho zmaž.
 
 5. Pri každej regresii najprv diagnostikuj REÁLNE z logov / odpovede / git diff, NEHÁDAJ. Ak môže byť príčin viac, vymenuj ich a navrhni overenie, pred aplikáciou opravy.
+
+6. Pred git commit VŽDY over `git diff --stat --cached` – musí ukazovať skutočné súbory zodpovedajúce commit message. NIKDY necommituj iba commit message bez implementácie (incident acac2a6: commit s popisom 9 metrics endpointov obsahoval iba .gitignore – false success, ktorý mátol Geo a vyžadoval celú novú implementáciu).
