@@ -24,6 +24,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { HeroBannersModule } from './hero-banners/hero-banners.module';
 import { ScanModule } from './scan/scan.module';
 import { PlatformInfoModule } from './platform-info/platform-info.module';
+import { MetricsModule } from './metrics/metrics.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -51,6 +52,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     HeroBannersModule,
     ScanModule,
     PlatformInfoModule,
+    MetricsModule,
   ],
   controllers: [HealthController],
   providers: [
