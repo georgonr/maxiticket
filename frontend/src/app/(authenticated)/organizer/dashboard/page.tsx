@@ -1,169 +1,278 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Ticket } from 'lucide-react';
-import { logout } from '@/lib/auth';
+import {
+  TrendingUp,
+  Ticket,
+  Calendar,
+  CalendarClock,
+  Wallet,
+  Users,
+  RefreshCw,
+  Plus,
+} from 'lucide-react';
+import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
+import { ApiError } from '@/lib/api';
+import { formatPrice } from '@/lib/format';
+import {
+  organizerMetricsApi,
+  adminMetricsApi,
+  OrganizerOverview,
+  SalesTrendPoint,
+  TopShow,
+  RecentOrder,
+  OrganizerRow,
+} from '@/lib/api/metrics';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { SalesTrendChart } from '@/components/dashboard/SalesTrendChart';
+import { TopShowsChart } from '@/components/dashboard/TopShowsChart';
+import { RecentOrdersList } from '@/components/dashboard/RecentOrdersList';
+import {
+  KpiCard,
+  SectionCard,
+  Skeleton,
+  ErrorState,
+  greeting,
+} from '@/components/dashboard/parts';
+import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
-const ROLE_LABELS: Record<string, string> = {
-  SUPERADMIN: 'Superadmin',
-  STAFF: 'Interný operátor',
-  ORGANIZER_OWNER: 'Organizátor (vlastník)',
-  ORGANIZER_MEMBER: 'Organizátor (člen)',
-  SCANNER: 'Skener',
-  CUSTOMER: 'Zákazník',
-};
+function readableError(e: unknown): string {
+  if (e instanceof ApiError) {
+    if (e.status === 401 || e.status === 403) return 'Nemáte oprávnenie zobraziť tieto dáta.';
+    if (e.status === 400) return 'Pre zobrazenie metrík vyberte organizátora.';
+    if (e.status >= 500) return 'Nastala chyba na strane servera. Skúste neskôr.';
+    return e.message || 'Niečo sa pokazilo.';
+  }
+  return 'Nemôžeme sa pripojiť k serveru. Skontrolujte pripojenie.';
+}
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const { user, isLoading } = useAuth();
+export default function OrganizerDashboardPage() {
+  const { user, isSuperAdmin } = useAuth();
 
-  async function handleLogout() {
-    await logout();
-    router.replace('/login');
+  // SUPERADMIN cross-cutting: switcher organizátora
+  const [orgList, setOrgList] = useState<OrganizerRow[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<string | undefined>(undefined);
+
+  const [overview, setOverview] = useState<OrganizerOverview | null>(null);
+  const [trend, setTrend] = useState<SalesTrendPoint[]>([]);
+  const [topShows, setTopShows] = useState<TopShow[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  /** organizerId pošleme len pre SUPERADMIN; organizer roly scopuje backend z tokenu. */
+  const load = useCallback(async (organizerId?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await getValidToken();
+      if (!token) throw new ApiError(401, 'No token');
+      const p = organizerId ? { organizerId } : {};
+      const [ov, tr, ts, ro] = await Promise.all([
+        organizerMetricsApi.getOverview(token, p),
+        organizerMetricsApi.getSalesTrend(token, { days: 7, ...p }),
+        organizerMetricsApi.getTopShows(token, { limit: 5, ...p }),
+        organizerMetricsApi.getRecentOrders(token, { limit: 10, ...p }),
+      ]);
+      setOverview(ov);
+      setTrend(tr);
+      setTopShows(ts);
+      setRecentOrders(ro);
+    } catch (e) {
+      setError(readableError(e));
+      setOverview(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Inicializácia: SUPERADMIN najprv načíta zoznam organizátorov a auto-vyberie prvého.
+  useEffect(() => {
+    if (user === null) return; // čaká na resolúciu tokenu
+    let active = true;
+    (async () => {
+      if (isSuperAdmin) {
+        try {
+          const token = await getValidToken();
+          if (!token) return;
+          const orgs = await adminMetricsApi.getOrganizers(token, { limit: 100, sort: 'name' });
+          if (!active) return;
+          setOrgList(orgs);
+          const first = orgs[0]?.organizerId;
+          setSelectedOrg(first);
+          if (first) {
+            await load(first);
+          } else {
+            setLoading(false);
+          }
+        } catch (e) {
+          if (active) {
+            setError(readableError(e));
+            setLoading(false);
+          }
+        }
+      } else {
+        await load();
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user, isSuperAdmin, load]);
+
+  function onSwitchOrg(id: string) {
+    setSelectedOrg(id);
+    load(id);
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
-      </div>
-    );
-  }
-
-  const role = user?.role ?? 'UNKNOWN';
+  const capacityPct =
+    overview && overview.myCapacityTotal > 0
+      ? Math.round((overview.myCapacityFilled / overview.myCapacityTotal) * 100)
+      : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" />
-          <a
-            href="https://ticketall.eu"
-            className="hidden sm:inline text-xs text-gray-400 hover:text-gray-600 transition-colors"
+      <DashboardHeader />
+
+      <main className="mx-auto max-w-7xl space-y-6 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {greeting()}, {user?.email}
+            </h1>
+            <p className="text-sm text-gray-500">Prehľad vašich podujatí a predajov</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && orgList.length > 0 && (
+              <Select
+                value={selectedOrg ?? ''}
+                onChange={(e) => onSwitchOrg(e.target.value)}
+                className="py-1.5 text-sm"
+                options={orgList.map((o) => ({ value: o.organizerId, label: o.name }))}
+              />
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => load(isSuperAdmin ? selectedOrg : undefined)}
+              disabled={loading}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Obnoviť
+            </Button>
+          </div>
+        </div>
+
+        {error && <ErrorState message={error} />}
+
+        {/* KPI karty */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          {loading || !overview ? (
+            Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28" />)
+          ) : (
+            <>
+              <KpiCard
+                title="Moje podujatia"
+                value={String(overview.myShowsCount)}
+                icon={<Calendar className="h-5 w-5" />}
+                hint={`${overview.myPublishedShowsCount} publikované`}
+              />
+              <KpiCard
+                title="Dnešné tržby"
+                value={formatPrice(overview.myTodayRevenue)}
+                icon={<TrendingUp className="h-5 w-5" />}
+              />
+              <KpiCard
+                title="Predané dnes"
+                value={String(overview.myTicketsSoldToday)}
+                icon={<Ticket className="h-5 w-5" />}
+              />
+              <KpiCard
+                title="Celkové tržby"
+                value={formatPrice(overview.myTotalRevenue)}
+                icon={<Wallet className="h-5 w-5" />}
+                hint={`${overview.myTotalTicketsSold} vstupeniek celkovo`}
+              />
+              <KpiCard
+                title="Najbližšie termíny"
+                value={String(overview.myUpcomingTermins)}
+                icon={<CalendarClock className="h-5 w-5" />}
+              />
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Obsadenosť</span>
+                  <span className="text-brand">
+                    <Users className="h-5 w-5" />
+                  </span>
+                </div>
+                <div className="mt-2 text-2xl font-bold tabular-nums text-gray-900">
+                  {overview.myCapacityFilled} / {overview.myCapacityTotal}
+                </div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-brand transition-all"
+                    style={{ width: `${capacityPct}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-400">
+                  {capacityPct}% obsadené (najbližšie termíny)
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Graf + top podujatia */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <SectionCard title="Tržby za posledných 7 dní" className="lg:col-span-2">
+            {loading ? <Skeleton className="h-64" /> : <SalesTrendChart data={trend} />}
+          </SectionCard>
+          <SectionCard title="Najpredávanejšie podujatia">
+            {loading ? <Skeleton className="h-48" /> : <TopShowsChart data={topShows} />}
+          </SectionCard>
+        </div>
+
+        {/* Posledné objednávky */}
+        <SectionCard title="Posledné objednávky">
+          {loading ? <Skeleton className="h-32" /> : <RecentOrdersList orders={recentOrders} />}
+        </SectionCard>
+
+        {/* Rýchle akcie */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Link
+            href="/organizer/shows"
+            className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
           >
-            Som zákazník?
+            <span className="rounded-lg bg-brand/10 p-2 text-brand">
+              <Plus className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="font-semibold text-gray-900">Pridať podujatie</h3>
+              <p className="text-sm text-gray-500">Vytvorte a spravujte svoje show</p>
+            </div>
+          </Link>
+          <a
+            href="https://skener.ticketall.eu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl border-2 border-brand/30 bg-brand/5 p-5 shadow-sm transition-shadow hover:shadow-md"
+          >
+            <span className="rounded-lg bg-brand/10 p-2 text-brand">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+              </svg>
+            </span>
+            <div>
+              <h3 className="font-semibold text-brand">Skenovať vstupenky</h3>
+              <p className="text-sm text-gray-600">Otvorí mobilný skener pre kontrolu QR kódov</p>
+            </div>
           </a>
         </div>
-        {/* Main nav */}
-        <nav className="hidden sm:flex items-center gap-1 text-sm flex-1">
-          {(role === 'SUPERADMIN' || role === 'STAFF') && (
-            <Link href="/organizer/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
-              Podujatia
-            </Link>
-          )}
-          {role === 'SUPERADMIN' && (
-            <Link href="/admin/hero" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
-              Hero slider
-            </Link>
-          )}
-          {role === 'SUPERADMIN' && (
-            <Link href="/admin/platform-info" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
-              Platforma
-            </Link>
-          )}
-          {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
-            <Link href="/organizer/shows" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
-              Podujatia
-            </Link>
-          )}
-          {(role === 'ORGANIZER_OWNER' || role === 'SUPERADMIN') && (
-            <Link href="/organizer/settings" className="px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
-              Údaje firmy
-            </Link>
-          )}
-          {/* Visible to every signed-in user: an organizer/admin is also a ticket buyer */}
-          <Link href="/account/tickets" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 transition-colors">
-            <Ticket className="h-4 w-4" />
-            Moje lístky
-          </Link>
-          {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
-            <a
-              href="https://skener.ticketall.eu"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
-              </svg>
-              Skenovať
-            </a>
-          )}
-        </nav>
-        <div className="flex items-center gap-4 flex-shrink-0">
-          <span className="text-sm text-gray-600 hidden md:block">{user?.email}</span>
-          <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand">
-            {ROLE_LABELS[role] ?? role}
-          </span>
-          <Button variant="outline" size="sm" onClick={handleLogout}>Odhlásiť</Button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl p-8">
-        <h2 className="text-2xl font-bold mb-2">Vitajte späť</h2>
-        <p className="text-gray-500 mb-8">
-          Toto je placeholder dashboard – sekcie sa doplnia podľa roly.
-        </p>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {role === 'SUPERADMIN' || role === 'STAFF' ? (
-            <>
-              <DashCard title="Organizátori" desc="Správa tenantov a schvaľovanie" />
-              <DashCard title="Používatelia" desc="Všetci používatelia platformy" />
-              <DashCard title="Štatistiky" desc="Predaje a analytika" />
-              {role === 'SUPERADMIN' && (
-                <Link href="/admin/hero">
-                  <DashCard title="Hero slider" desc="Titulný slider – bannery a promoted podujatia" />
-                </Link>
-              )}
-            </>
-          ) : role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' ? (
-            <>
-              <Link href="/organizer/shows">
-                <DashCard title="Podujatia" desc="Vytvorte a spravujte show" />
-              </Link>
-              <DashCard title="Objednávky" desc="Prehľad predajov a lístkov" />
-              <DashCard title="Tím" desc="Pozývajte členov a skenerov" />
-              <a href="https://skener.ticketall.eu" target="_blank" rel="noopener noreferrer">
-                <ScanCard />
-              </a>
-            </>
-          ) : (
-            <a href="https://skener.ticketall.eu" target="_blank" rel="noopener noreferrer">
-              <ScanCard />
-            </a>
-          )}
-        </div>
       </main>
-    </div>
-  );
-}
-
-function DashCard({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-      <h3 className="font-semibold text-gray-900">{title}</h3>
-      <p className="mt-1 text-sm text-gray-500">{desc}</p>
-    </div>
-  );
-}
-
-function ScanCard() {
-  return (
-    <div className="rounded-lg border-2 border-brand/30 bg-brand/5 p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-      <div className="flex items-center gap-2 mb-1">
-        <svg className="h-5 w-5 text-brand flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
-        </svg>
-        <h3 className="font-semibold text-brand">Skenovať vstupenky</h3>
-      </div>
-      <p className="text-sm text-gray-600">Otvorí mobilný skener pre kontrolu QR kódov na vstupe.</p>
-      <p className="mt-2 text-xs text-brand font-medium">Otvoriť skener →</p>
     </div>
   );
 }
