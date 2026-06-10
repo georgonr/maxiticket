@@ -14,3 +14,19 @@ postgres-data/
 redis-data/
 caddy_data/
 caddy_config/
+
+# === Pridané po incidente 31.5.2026: nikdy necommitovať tieto ===
+# Backups (DB dumps, .env backups)
+.env.backup-*
+backups/
+*.dump
+*.sql.gz
+
+# Build artifacts
+frontend/tsconfig.tsbuildinfo
+backend/tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Náhodne vytvorené súbory zo shell errorov
+/0
+/NOW
