@@ -1,5 +1,6 @@
 'use client';
 
+import { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -40,6 +41,27 @@ export function DashboardHeader() {
         : 'text-gray-600 hover:text-brand hover:bg-brand/5',
     );
 
+  // Role-based navigácia (12-fix): SUPERADMIN nevidí 'Údaje firmy' ani 'Moje lístky'
+  // a 'Podujatia' ho smeruje na cross-organizer /admin/shows (nie na organizer-scoped stránku).
+  const navItems: { label: string; href: string; roles: string[]; icon?: ReactNode }[] = [
+    { label: 'Prehľad platformy', href: '/admin/dashboard', roles: ['SUPERADMIN'] },
+    {
+      label: 'Podujatia',
+      href: role === 'SUPERADMIN' ? '/admin/shows' : '/organizer/shows',
+      roles: ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER'],
+    },
+    { label: 'Hero slider', href: '/admin/hero', roles: ['SUPERADMIN'] },
+    { label: 'Platforma', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
+    { label: 'Údaje firmy', href: '/organizer/settings', roles: ['ORGANIZER_OWNER'] },
+    {
+      label: 'Moje lístky',
+      href: '/account/tickets',
+      roles: ['STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER', 'CUSTOMER'],
+      icon: <Ticket className="h-4 w-4" />,
+    },
+  ];
+  const visibleItems = navItems.filter((i) => i.roles.includes(role));
+
   return (
     <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 flex-shrink-0">
@@ -55,40 +77,16 @@ export function DashboardHeader() {
       </div>
 
       <nav className="hidden sm:flex items-center gap-1 text-sm flex-1">
-        {role === 'SUPERADMIN' && (
-          <Link href="/admin/dashboard" className={linkCls('/admin/dashboard')}>
-            Prehľad platformy
+        {visibleItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={clsx(item.icon && 'flex items-center gap-1.5', linkCls(item.href))}
+          >
+            {item.icon}
+            {item.label}
           </Link>
-        )}
-        {(role === 'SUPERADMIN' || role === 'STAFF') && (
-          <Link href="/organizer/shows" className={linkCls('/organizer/shows')}>
-            Podujatia
-          </Link>
-        )}
-        {role === 'SUPERADMIN' && (
-          <Link href="/admin/hero" className={linkCls('/admin/hero')}>
-            Hero slider
-          </Link>
-        )}
-        {role === 'SUPERADMIN' && (
-          <Link href="/admin/platform-info" className={linkCls('/admin/platform-info')}>
-            Platforma
-          </Link>
-        )}
-        {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
-          <Link href="/organizer/shows" className={linkCls('/organizer/shows')}>
-            Podujatia
-          </Link>
-        )}
-        {(role === 'ORGANIZER_OWNER' || role === 'SUPERADMIN') && (
-          <Link href="/organizer/settings" className={linkCls('/organizer/settings')}>
-            Údaje firmy
-          </Link>
-        )}
-        <Link href="/account/tickets" className={clsx('flex items-center gap-1.5', linkCls('/account/tickets'))}>
-          <Ticket className="h-4 w-4" />
-          Moje lístky
-        </Link>
+        ))}
         {(role === 'ORGANIZER_OWNER' || role === 'ORGANIZER_MEMBER' || role === 'SCANNER') && (
           <a
             href="https://skener.ticketall.eu"
