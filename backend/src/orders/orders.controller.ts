@@ -3,6 +3,7 @@ import {
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CheckoutDto } from './dto/checkout.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../casl/casl-ability.factory';
@@ -27,10 +28,15 @@ export class OrdersController {
   /** Initiate payment (Stripe or mock). Returns { url } to redirect to. */
   @Post('orders/:id/checkout')
   @HttpCode(HttpStatus.OK)
-  checkout(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Req() req: FastifyRequest) {
+  checkout(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Req() req: FastifyRequest,
+    @Body() dto?: CheckoutDto,
+  ) {
     const origin = (req.headers.origin as string | undefined)
       ?? (req.headers.host ? `https://${req.headers.host}` : undefined);
-    return this.svc.initiateCheckout(id, user, origin);
+    return this.svc.initiateCheckout(id, user, origin, dto?.couponCode);
   }
 
   /** Dev-only mock payment (PAYMENT_PROVIDER=mock). Kept for convenience. */

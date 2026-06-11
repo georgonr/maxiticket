@@ -1,29 +1,62 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCart, clearCart, cartTotal, Cart } from '@/lib/cart';
 import { ordersApi } from '@/lib/api';
+import { couponsApi } from '@/lib/api/coupons';
 import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
 import { formatDate, formatPrice } from '@/lib/format';
 import { Button } from '@/components/ui/button';
+import { CouponInput, AppliedCoupon } from '@/components/checkout/CouponInput';
 import { Calendar, MapPin, ShoppingBag, Loader2, Lock } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoggedIn, isLoading } = usePublicAuth();
   const [cart, setCartState] = useState<Cart | null>(null);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   useEffect(() => {
     const c = getCart();
     if (!c) { router.push('/events'); return; }
     setCartState(c);
   }, [router]);
+
+  // Auto-apply kupónu z URL ?coupon=CODE (tichý fail ak neplatný)
+  useEffect(() => {
+    const couponParam = searchParams.get('coupon');
+    if (!couponParam || !cart || appliedCoupon) return;
+    const subtotal = cartTotal(cart);
+    if (subtotal <= 0) return;
+    couponsApi
+      .validate({
+        code: couponParam,
+        subtotal,
+        items: cart.items.map((i) => ({ ticketTypeId: i.ticketTypeId, quantity: i.quantity })),
+      })
+      .then((res) => {
+        if (res.valid) {
+          setAppliedCoupon({
+            code: couponParam.toUpperCase(),
+            couponId: res.couponId,
+            type: res.type,
+            scope: res.scope,
+            discount: res.discount,
+            finalAmount: res.finalAmount,
+          });
+        }
+      })
+      .catch(() => {
+        /* tichý fail – neplatný URL kupón nezablokuje checkout */
+      });
+  }, [searchParams, cart, appliedCoupon]);
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -47,7 +80,8 @@ export default function CheckoutPage() {
       }, token);
 
       // 2. Initiate checkout – returns { url } (Stripe URL or direct success URL for mock)
-      const { url } = await ordersApi.checkout(order.id, token);
+      //    Kupón sa re-validuje server-side a zapíše Order.discountAmount/couponId.
+      const { url } = await ordersApi.checkout(order.id, token, appliedCoupon?.code);
 
       // 3. Clear cart and redirect
       clearCart();
@@ -68,6 +102,7 @@ export default function CheckoutPage() {
 
   const total = cartTotal(cart);
   const currency = cart.items[0]?.currency ?? 'EUR';
+  const finalTotal = appliedCoupon ? appliedCoupon.finalAmount : total;
 
   return (
     <div className="mx-auto max-w-lg">
@@ -99,9 +134,36 @@ export default function CheckoutPage() {
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t pt-3">
-          <span className="font-semibold text-gray-900">Celkom</span>
-          <span className="text-xl font-bold text-indigo-600">{formatPrice(total, currency)}</span>
+        {/* Kupón */}
+        <div className="mt-4 border-t pt-4">
+          <CouponInput
+            subtotal={total}
+            items={cart.items.map((i) => ({ ticketTypeId: i.ticketTypeId, quantity: i.quantity }))}
+            currency={currency}
+            appliedCoupon={appliedCoupon}
+            onApply={setAppliedCoupon}
+            onRemove={() => setAppliedCoupon(null)}
+          />
+        </div>
+
+        {/* Súčty */}
+        <div className="mt-4 space-y-1.5 border-t pt-3">
+          {appliedCoupon && (
+            <>
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>Medzisúčet</span>
+                <span>{formatPrice(total, currency)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-emerald-600">
+                <span>Zľava ({appliedCoupon.code})</span>
+                <span>−{formatPrice(appliedCoupon.discount, currency)}</span>
+              </div>
+            </>
+          )}
+          <div className="flex items-center justify-between pt-1">
+            <span className="font-semibold text-gray-900">Spolu</span>
+            <span className="text-xl font-bold text-indigo-600">{formatPrice(finalTotal, currency)}</span>
+          </div>
         </div>
       </div>
 
@@ -138,7 +200,7 @@ export default function CheckoutPage() {
         className="w-full gap-2"
       >
         <ShoppingBag size={16} />
-        {submitting ? 'Presmerovávam na platbu...' : `Zaplatiť ${formatPrice(total, currency)}`}
+        {submitting ? 'Presmerovávam na platbu...' : `Zaplatiť ${formatPrice(finalTotal, currency)}`}
       </Button>
 
       <p className="mt-3 text-center text-xs text-gray-400">

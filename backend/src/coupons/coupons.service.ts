@@ -511,6 +511,43 @@ export class CouponsService {
     return { redemptionId: redemption.id };
   }
 
+  /**
+   * Idempotentný redeem po PAID objednávke (volané z fulfillOrder po Stripe webhook / mock pay).
+   * No-op ak objednávka nemá kupón alebo už bola redeemnutá. discountAmount/totalAmount
+   * sú už zapísané pri initiateCheckout – tu len zaznamenáme použitie + zvýšime usedCount.
+   */
+  async redeemForPaidOrder(orderId: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { couponId: true, userId: true, discountAmount: true },
+    });
+    if (!order?.couponId) return;
+
+    const existing = await this.prisma.couponRedemption.findUnique({ where: { orderId } });
+    if (existing) return;
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.coupon.update({
+          where: { id: order.couponId! },
+          data: { usedCount: { increment: 1 } },
+        });
+        await tx.couponRedemption.create({
+          data: {
+            couponId: order.couponId!,
+            orderId,
+            userId: order.userId ?? null,
+            discountAmount: order.discountAmount,
+          },
+        });
+      });
+      this.logger.log(`Coupon redeemed for paid order ${orderId} (coupon ${order.couponId})`);
+    } catch (e) {
+      // Súbeh dvoch webhookov → unique(orderId) zlyhá na druhom; bezpečne ignorujeme.
+      this.logger.warn(`redeemForPaidOrder ${orderId} skipped: ${(e as Error).message}`);
+    }
+  }
+
   // ───────────────────────── shared ─────────────────────────
 
   private async assertCanManage(coupon: Coupon, user: JwtPayload) {

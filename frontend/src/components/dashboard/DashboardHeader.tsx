@@ -68,12 +68,14 @@ export function DashboardHeader() {
         <Link href="/organizer/dashboard">
           <img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" />
         </Link>
-        <a
-          href="https://ticketall.eu"
-          className="hidden sm:inline text-xs text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          Som zákazník?
-        </a>
+        {role === 'CUSTOMER' && (
+          <a
+            href="https://ticketall.eu"
+            className="hidden sm:inline text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Som zákazník?
+          </a>
+        )}
       </div>
 
       <nav className="hidden sm:flex items-center gap-1 text-sm flex-1">

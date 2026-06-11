@@ -446,6 +446,10 @@ model Order {
   refundedAt       DateTime?
   expiresAt        DateTime? // PENDING orders expire at this time
 
+  // Aplikovaný kupón (oddelená relácia od CouponRedemption – pre rýchly join + Stripe sumu)
+  couponId      String?
+  coupon        Coupon?     @relation(fields: [couponId], references: [id])
+
   notes         String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -458,6 +462,7 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([orderNumber])
+  @@index([couponId])
 }
 
 // ─────────────────────────────────────────────
@@ -678,6 +683,7 @@ model Coupon {
   bulkBatchId       String?
 
   redemptions       CouponRedemption[]
+  orders            Order[]
 
   @@index([code])
   @@index([scope, organizerId])

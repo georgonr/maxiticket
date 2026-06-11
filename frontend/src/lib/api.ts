@@ -360,8 +360,12 @@ export const ordersApi = {
   get: (id: string, token: string) =>
     apiFetch<Order>('/v1/orders/' + id, { token }),
   /** Initiate payment – returns { url } to redirect to (Stripe or success page for mock). */
-  checkout: (id: string, token: string) =>
-    apiFetch<{ url: string }>('/v1/orders/' + id + '/checkout', { method: 'POST', token }),
+  checkout: (id: string, token: string, couponCode?: string) =>
+    apiFetch<{ url: string }>('/v1/orders/' + id + '/checkout', {
+      method: 'POST',
+      token,
+      body: couponCode ? JSON.stringify({ couponCode }) : undefined,
+    }),
   /** Dev-only mock payment fallback. */
   pay: (id: string, token: string) =>
     apiFetch<Order>('/v1/orders/' + id + '/pay', { method: 'POST', token }),

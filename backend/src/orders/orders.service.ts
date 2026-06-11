@@ -12,6 +12,7 @@ import { OrderStatus, TerminStatus, TicketStatus } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { sendTicketsForOrder } from './orders-mail.helper';
+import { CouponsService } from '../coupons/coupons.service';
 
 @Injectable()
 export class OrdersService {
@@ -21,6 +22,7 @@ export class OrdersService {
     private prisma: PrismaService,
     private config: ConfigService,
     private mail: MailService,
+    private coupons: CouponsService,
     @Inject(PAYMENT_PROVIDER) private paymentProvider: PaymentProvider,
   ) {}
 
@@ -133,7 +135,12 @@ export class OrdersService {
     return order;
   }
 
-  async initiateCheckout(orderId: string, user: JwtPayload, clientOrigin?: string): Promise<{ url: string }> {
+  async initiateCheckout(
+    orderId: string,
+    user: JwtPayload,
+    clientOrigin?: string,
+    couponCode?: string,
+  ): Promise<{ url: string }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: { include: { ticketType: true } } },
@@ -148,15 +155,50 @@ export class OrdersService {
     const successUrl = `${appBaseUrl}/checkout/success/${orderId}`;
     const cancelUrl = `${appBaseUrl}/checkout/cancel`;
 
+    // Default: per-item line items (žiadna zmena pre objednávky bez kupónu)
+    let lineItems = order.items.map((item) => ({
+      name: (item.priceSnapshot as any)?.name ?? item.ticketType?.name ?? 'Vstupenka',
+      unitPrice: Number(item.unitPrice),
+      quantity: item.quantity,
+    }));
+
+    // Kupón (voliteľný): server-side RE-validácia (nedôverujeme klientovi)
+    if (couponCode) {
+      const subtotal = order.items.reduce((s, i) => s + Number(i.unitPrice) * i.quantity, 0);
+      const validation = await this.coupons.validate({
+        code: couponCode,
+        subtotal,
+        items: order.items
+          .filter((i) => i.ticketTypeId)
+          .map((i) => ({ ticketTypeId: i.ticketTypeId!, quantity: i.quantity })),
+        userId: order.userId ?? undefined,
+      });
+      if (!validation.valid) throw new BadRequestException(validation.reason);
+
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: {
+          couponId: validation.couponId,
+          discountAmount: validation.discount,
+          totalAmount: validation.finalAmount,
+        },
+      });
+
+      // Stripe vidí len finálnu sumu – jeden konsolidovaný riadok (per-item rozpis ostáva v našom Order)
+      lineItems = [
+        {
+          name: `Objednávka ${order.orderNumber} (zľava ${validation.discount} ${order.currency})`,
+          unitPrice: validation.finalAmount,
+          quantity: 1,
+        },
+      ];
+    }
+
     const result = await this.paymentProvider.createCheckoutSession({
       orderId: order.id,
       orderNumber: order.orderNumber,
       currency: order.currency,
-      items: order.items.map((item) => ({
-        name: (item.priceSnapshot as any)?.name ?? item.ticketType?.name ?? 'Vstupenka',
-        unitPrice: Number(item.unitPrice),
-        quantity: item.quantity,
-      })),
+      items: lineItems,
       successUrl,
       cancelUrl,
     });
@@ -243,6 +285,10 @@ export class OrdersService {
 
     sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger)
       .catch((e) => this.logger.error(`Email failed for order ${orderId}: ${e.message}`));
+
+    // Redeem kupónu po PAID (idempotentné – no-op ak bez kupónu alebo už redeemnuté)
+    this.coupons.redeemForPaidOrder(orderId)
+      .catch((e) => this.logger.error(`Coupon redeem failed for order ${orderId}: ${e.message}`));
   }
 
   async compOrder(dto: CompOrderDto): Promise<{ orderId: string; ticketCount: number }> {
