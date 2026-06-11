@@ -26,7 +26,7 @@ export class OrdersService {
     @Inject(PAYMENT_PROVIDER) private paymentProvider: PaymentProvider,
   ) {}
 
-  async createOrder(dto: CreateOrderDto, user: JwtPayload) {
+  async createOrder(dto: CreateOrderDto, user?: JwtPayload) {
     const termin = await this.prisma.termin.findUnique({
       where: { id: dto.terminId },
       include: { show: true, venue: true, ticketTypes: true },
@@ -78,10 +78,14 @@ export class OrdersService {
     const count = await this.prisma.order.count();
     const orderNumber = `MT-${year}-${String(count + 1).padStart(5, '0')}`;
 
-    const buyerEmail = dto.buyerEmail ?? user.email;
-    const dbUser = await this.prisma.user.findUnique({ where: { id: user.sub } });
+    // Guest checkout: bez prihlásenia musí DTO obsahovať buyerEmail + buyerName.
+    const dbUser = user ? await this.prisma.user.findUnique({ where: { id: user.sub } }) : null;
+    const buyerEmail = dto.buyerEmail ?? user?.email;
+    if (!buyerEmail) throw new BadRequestException('E-mail kupujúceho je povinný');
     const buyerName =
-      dto.buyerName ?? (dbUser ? `${dbUser.firstName ?? ''} ${dbUser.lastName ?? ''}`.trim() : undefined);
+      dto.buyerName?.trim() ||
+      (dbUser ? `${dbUser.firstName ?? ''} ${dbUser.lastName ?? ''}`.trim() : '');
+    if (!buyerName) throw new BadRequestException('Meno kupujúceho je povinné');
 
     const expiryMinutes = this.config.get<number>('ORDER_EXPIRY_MINUTES', 30);
     const expiresAt = new Date(Date.now() + Number(expiryMinutes) * 60 * 1000);
@@ -90,7 +94,7 @@ export class OrdersService {
       data: {
         orderNumber,
         organizerId: termin.show.organizerId,
-        userId: user.sub,
+        userId: user?.sub ?? null,
         buyerEmail,
         buyerName,
         buyerPhone: dto.buyerPhone,
@@ -122,7 +126,7 @@ export class OrdersService {
     return order;
   }
 
-  async getOrder(id: string, user: JwtPayload) {
+  async getOrder(id: string, user?: JwtPayload) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: {
@@ -131,13 +135,14 @@ export class OrdersService {
       },
     });
     if (!order) throw new NotFoundException();
-    if (order.userId !== user.sub) throw new ForbiddenException();
+    // Guest order (userId=null) → autorizácia cez cuid id; user order → musí sedieť vlastník.
+    if (order.userId && order.userId !== user?.sub) throw new ForbiddenException();
     return order;
   }
 
   async initiateCheckout(
     orderId: string,
-    user: JwtPayload,
+    user?: JwtPayload,
     clientOrigin?: string,
     couponCode?: string,
   ): Promise<{ url: string }> {
@@ -146,7 +151,8 @@ export class OrdersService {
       include: { items: { include: { ticketType: true } } },
     });
     if (!order) throw new NotFoundException();
-    if (order.userId !== user.sub) throw new ForbiddenException();
+    // Guest order (userId=null) → autorizácia cez cuid id; user order → musí sedieť vlastník.
+    if (order.userId && order.userId !== user?.sub) throw new ForbiddenException();
     if (order.status !== OrderStatus.PENDING) {
       throw new BadRequestException(`Order is not pending (status: ${order.status})`);
     }
@@ -173,7 +179,7 @@ export class OrdersService {
           .map((i) => ({ ticketTypeId: i.ticketTypeId!, quantity: i.quantity })),
         userId: order.userId ?? undefined,
       });
-      if (!validation.valid) throw new BadRequestException(validation.reason);
+      if ('reason' in validation) throw new BadRequestException(validation.reason);
 
       await this.prisma.order.update({
         where: { id: orderId },
@@ -199,6 +205,7 @@ export class OrdersService {
       orderNumber: order.orderNumber,
       currency: order.currency,
       items: lineItems,
+      customerEmail: order.buyerEmail,
       successUrl,
       cancelUrl,
     });

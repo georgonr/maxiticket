@@ -23,8 +23,9 @@ export default function SuccessPage({ params }: { params: { id: string } }) {
     let cancelled = false;
 
     async function fetchOrder() {
-      const token = await getValidToken();
-      if (!token || cancelled) return;
+      // token voliteľný – guest order je prístupný cez cuid id (OptionalJwtAuthGuard)
+      const token = (await getValidToken()) ?? undefined;
+      if (cancelled) return;
       try {
         const o = await ordersApi.get(id, token);
         if (cancelled) return;

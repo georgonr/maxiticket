@@ -22,7 +22,10 @@ function SuccessBanner() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+      <Link href="/" className="mb-6" aria-label="Domov">
+        <img src="/logo-horizontal.svg" alt="TicketAll" className="h-9 w-auto" />
+      </Link>
       <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold">Prihlásenie</h1>

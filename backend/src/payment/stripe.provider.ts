@@ -34,6 +34,7 @@ export class StripePaymentProvider implements PaymentProvider {
         quantity: item.quantity,
       })),
       metadata: { orderId: params.orderId, orderNumber: params.orderNumber },
+      ...(params.customerEmail ? { customer_email: params.customerEmail } : {}),
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
       expires_at: expiresAt,

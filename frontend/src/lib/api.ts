@@ -329,6 +329,10 @@ export interface CreateOrderPayload {
   terminId: string;
   items: { ticketTypeId: string; quantity: number }[];
   acceptTerms: true;
+  // Guest checkout (required ak nie je prihlásený)
+  buyerEmail?: string;
+  buyerName?: string;
+  buyerPhone?: string;
 }
 
 export interface OrderItem {
@@ -355,12 +359,13 @@ export interface Order {
 }
 
 export const ordersApi = {
-  create: (body: CreateOrderPayload, token: string) =>
+  // token voliteľný – guest checkout (OptionalJwtAuthGuard na backende)
+  create: (body: CreateOrderPayload, token?: string) =>
     apiFetch<Order>('/v1/orders', { method: 'POST', body: JSON.stringify(body), token }),
-  get: (id: string, token: string) =>
+  get: (id: string, token?: string) =>
     apiFetch<Order>('/v1/orders/' + id, { token }),
   /** Initiate payment – returns { url } to redirect to (Stripe or success page for mock). */
-  checkout: (id: string, token: string, couponCode?: string) =>
+  checkout: (id: string, token?: string, couponCode?: string) =>
     apiFetch<{ url: string }>('/v1/orders/' + id + '/checkout', {
       method: 'POST',
       token,

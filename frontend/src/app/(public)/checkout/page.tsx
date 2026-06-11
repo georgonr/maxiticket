@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCart, clearCart, cartTotal, Cart } from '@/lib/cart';
@@ -13,7 +13,22 @@ import { Button } from '@/components/ui/button';
 import { CouponInput, AppliedCoupon } from '@/components/checkout/CouponInput';
 import { Calendar, MapPin, ShoppingBag, Loader2, Lock } from 'lucide-react';
 
+// useSearchParams (?coupon=) musí byť v Suspense boundary (Next 14 CSR bailout).
 export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-20">
+          <Loader2 className="animate-spin text-indigo-600" size={32} />
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
+  );
+}
+
+function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, isLoading } = usePublicAuth();
@@ -22,6 +37,10 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  // Guest checkout – buyer údaje (pre prihlásených ich neukazujeme, server berie z účtu)
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerName, setBuyerName] = useState('');
+  const [buyerPhone, setBuyerPhone] = useState('');
 
   useEffect(() => {
     const c = getCart();
@@ -58,25 +77,29 @@ export default function CheckoutPage() {
       });
   }, [searchParams, cart, appliedCoupon]);
 
-  useEffect(() => {
-    if (!isLoading && !isLoggedIn) {
-      router.push('/account/login?next=/checkout');
-    }
-  }, [isLoading, isLoggedIn, router]);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
+  const guestFieldsOk = isLoggedIn || (emailValid && buyerName.trim().length > 0);
 
   async function handleCheckout() {
-    if (!cart || !acceptTerms) return;
+    if (!cart || !acceptTerms || !guestFieldsOk) return;
     setError('');
     setSubmitting(true);
     try {
-      const token = await getValidToken();
-      if (!token) { router.push('/account/login?next=/checkout'); return; }
+      // Guest = token null; prihlásený = platný token (server scopuje na účet)
+      const token = (await getValidToken()) ?? undefined;
 
-      // 1. Create the order
+      // 1. Create the order (guest posiela buyer údaje; prihlásený ich vynechá)
       const order = await ordersApi.create({
         terminId: cart.terminId,
         items: cart.items.map((i) => ({ ticketTypeId: i.ticketTypeId, quantity: i.quantity })),
         acceptTerms: true,
+        ...(isLoggedIn
+          ? {}
+          : {
+              buyerEmail: buyerEmail.trim(),
+              buyerName: buyerName.trim(),
+              ...(buyerPhone.trim() ? { buyerPhone: buyerPhone.trim() } : {}),
+            }),
       }, token);
 
       // 2. Initiate checkout – returns { url } (Stripe URL or direct success URL for mock)
@@ -133,6 +156,40 @@ export default function CheckoutPage() {
             </div>
           ))}
         </div>
+
+        {/* Guest – buyer údaje (prihlásení berú z účtu) */}
+        {!isLoggedIn && (
+          <div className="mt-4 space-y-3 border-t pt-4">
+            <p className="text-sm font-medium text-gray-700">Kontaktné údaje</p>
+            <input
+              type="email"
+              value={buyerEmail}
+              onChange={(e) => setBuyerEmail(e.target.value)}
+              placeholder="E-mail (vstupenky pošleme sem) *"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <input
+              type="text"
+              value={buyerName}
+              onChange={(e) => setBuyerName(e.target.value)}
+              placeholder="Meno a priezvisko *"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <input
+              type="tel"
+              value={buyerPhone}
+              onChange={(e) => setBuyerPhone(e.target.value)}
+              placeholder="Telefón (voliteľné)"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <p className="text-xs text-gray-400">
+              Máte účet?{' '}
+              <Link href="/account/login?next=/checkout" className="text-indigo-600 hover:underline">
+                Prihláste sa
+              </Link>
+            </p>
+          </div>
+        )}
 
         {/* Kupón */}
         <div className="mt-4 border-t pt-4">
@@ -194,7 +251,7 @@ export default function CheckoutPage() {
 
       <Button
         onClick={handleCheckout}
-        disabled={!acceptTerms || submitting}
+        disabled={!acceptTerms || submitting || !guestFieldsOk}
         loading={submitting}
         size="lg"
         className="w-full gap-2"

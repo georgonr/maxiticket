@@ -5,6 +5,7 @@ export interface CreateCheckoutParams {
   orderNumber: string;
   currency: string;
   items: { name: string; unitPrice: number; quantity: number }[];
+  customerEmail?: string;
   successUrl: string;
   cancelUrl: string;
 }
