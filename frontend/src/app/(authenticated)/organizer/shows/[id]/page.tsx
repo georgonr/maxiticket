@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
 import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { CouponsSection } from '@/components/coupons/CouponsSection';
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: 'bg-gray-100 text-gray-600',
@@ -266,6 +267,16 @@ export default function ShowDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Coupons (14B-2) */}
+        <CouponsSection
+          showId={id}
+          showTitle={show.name}
+          organizerId={show.organizerId}
+          ticketTypes={(show.termins ?? []).flatMap((t: Termin) =>
+            (t.ticketTypes ?? []).map((tt: TicketType) => ({ id: tt.id, label: tt.name })),
+          )}
+        />
       </main>
     </div>
   );

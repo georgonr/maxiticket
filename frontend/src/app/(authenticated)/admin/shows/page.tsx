@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { clsx } from 'clsx';
 import { getValidToken } from '@/lib/auth';
 import { ApiError, heroAdminApi, AdminShow } from '@/lib/api';
@@ -107,7 +108,12 @@ export default function AdminShowsPage() {
                       <tr key={s.id} className="hover:bg-gray-50">
                         <td className="py-2.5 pr-3">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-900">{s.name}</span>
+                            <Link
+                              href={`/organizer/shows/${s.id}`}
+                              className="font-medium text-gray-900 hover:text-brand hover:underline"
+                            >
+                              {s.name}
+                            </Link>
                             {s.isPromoted && (
                               <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-xs font-medium text-brand">
                                 promoted

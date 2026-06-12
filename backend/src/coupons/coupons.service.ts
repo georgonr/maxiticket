@@ -263,6 +263,7 @@ export class CouponsService {
       status?: string;
       organizerId?: string;
       showId?: string;
+      relevantToShowId?: string;
       bulkBatchId?: string;
       search?: string;
       limit?: number;
@@ -273,7 +274,28 @@ export class CouponsService {
     const offset = Math.max(Number(query.offset) || 0, 0);
 
     const where: Prisma.CouponWhereInput = {};
-    if (user.role !== UserRole.SUPERADMIN) {
+    if (query.relevantToShowId) {
+      // Show editor mód: všetky kupóny "dotýkajúce sa" daného show –
+      // SHOW(showId) + TICKET_TYPE(ticketTypeId v show) + dedené ORGANIZER + GLOBAL.
+      // Org-scoping zámerne neaplikujeme (dedené GLOBAL/ORG sa zobrazia ako read-only),
+      // ale prístup k show overujeme rovnako ako shows.service.assertAccess.
+      const show = await this.prisma.show.findUnique({
+        where: { id: query.relevantToShowId },
+        include: { termins: { select: { ticketTypes: { select: { id: true } } } } },
+      });
+      if (!show) throw new NotFoundException('Show neexistuje');
+      if (user.role !== UserRole.SUPERADMIN) {
+        const orgId = await this.resolveOwnerOrganizerId(user);
+        if (show.organizerId !== orgId) throw new ForbiddenException();
+      }
+      const ttIds = show.termins.flatMap((t) => t.ticketTypes.map((tt) => tt.id));
+      where.OR = [
+        { showId: show.id },
+        ...(ttIds.length ? [{ ticketTypeId: { in: ttIds } } as Prisma.CouponWhereInput] : []),
+        { scope: CouponScope.ORGANIZER, organizerId: show.organizerId },
+        { scope: CouponScope.GLOBAL },
+      ];
+    } else if (user.role !== UserRole.SUPERADMIN) {
       const orgId = await this.resolveOwnerOrganizerId(user);
       where.OR = [{ createdById: user.sub }, { organizerId: orgId }];
     }
