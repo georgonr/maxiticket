@@ -153,6 +153,7 @@ model Organizer {
   products         Product[]
   termsVersions    TermsVersion[]
   coupons          Coupon[]
+  posClosures      PosClosure[]
 
   @@index([status])
 }
@@ -187,6 +188,7 @@ model User {
   passwordResetTokens  PasswordResetToken[]
   createdCoupons       Coupon[]             @relation("CouponCreator")
   couponRedemptions    CouponRedemption[]
+  posClosures          PosClosure[]
 
   @@index([organizerId])
   @@index([role])
@@ -466,6 +468,31 @@ model Order {
   @@index([status])
   @@index([orderNumber])
   @@index([couponId])
+  @@index([paymentProvider])
+}
+
+// ─────────────────────────────────────────────
+// POS CLOSURE (uzávierka pokladne – snapshot za obdobie)
+// ─────────────────────────────────────────────
+
+model PosClosure {
+  id           String    @id @default(cuid())
+  organizerId  String
+  organizer    Organizer @relation(fields: [organizerId], references: [id])
+  closedById   String
+  closedBy     User      @relation(fields: [closedById], references: [id])
+
+  periodFrom   DateTime  // koniec predošlej uzávierky (alebo prvý POS predaj)
+  periodTo     DateTime  // moment uzávierky
+  cashTotal    Decimal   @db.Decimal(10, 2)
+  cardTotal    Decimal   @db.Decimal(10, 2)
+  orderCount   Int
+  ticketCount  Int
+  note         String?
+
+  createdAt    DateTime  @default(now())
+
+  @@index([organizerId, createdAt])
 }
 
 // ─────────────────────────────────────────────

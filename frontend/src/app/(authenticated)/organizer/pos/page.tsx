@@ -1,14 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { clsx } from 'clsx';
 import {
   Loader2, Calendar, MapPin, Minus, Plus, ArrowLeft, Banknote,
-  CreditCard, CheckCircle2, Mail, RotateCcw, RefreshCw,
+  CreditCard, CheckCircle2, Mail, RotateCcw, RefreshCw, Printer, Lock,
 } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
-import { posApi, PosTermin, PosOrderResult } from '@/lib/api/pos';
+import { posApi, PosTermin, PosOrderResult, PosSummary } from '@/lib/api/pos';
 import { formatPrice, formatDate } from '@/lib/format';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { QrCanvas } from '@/components/pos/QrCanvas';
@@ -41,6 +42,7 @@ export default function PosPage() {
   const [result, setResult] = useState<PosOrderResult | null>(null);
   const [emailPrompt, setEmailPrompt] = useState('');
   const [emailMsg, setEmailMsg] = useState('');
+  const [summary, setSummary] = useState<PosSummary | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,7 +60,15 @@ export default function PosPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const loadSummary = useCallback(async () => {
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      setSummary(await posApi.summary(token));
+    } catch { /* summary lišta je doplnková – tichý fail */ }
+  }, []);
+
+  useEffect(() => { load(); loadSummary(); }, [load, loadSummary]);
 
   const subtotal = useMemo(() => {
     if (!selected) return 0;
@@ -111,6 +121,7 @@ export default function PosPage() {
       setResult(res);
       setEmailMsg(res.emailSent ? `Lístky odoslané na ${buyerEmail.trim()}.` : '');
       setStep('done');
+      loadSummary();
     } catch (e) {
       setError(readableError(e));
     } finally {
@@ -145,10 +156,28 @@ export default function PosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
-      <main className="mx-auto max-w-3xl p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-50 print:bg-white">
+      <div className="print:hidden"><DashboardHeader /></div>
+      <main className="mx-auto max-w-3xl p-4 sm:p-6 print:hidden">
         <h1 className="mb-4 text-2xl font-bold text-gray-900">Pokladňa</h1>
+
+        {/* Summary lišta – od poslednej uzávierky */}
+        {summary && (
+          <Link
+            href="/organizer/pos/closures"
+            className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm hover:border-brand"
+          >
+            <span className="text-gray-500">Od poslednej uzávierky:</span>
+            <span className="flex items-center gap-3 font-medium">
+              <span className="text-emerald-700">{formatPrice(summary.cashTotal)} hotovosť</span>
+              <span className="text-sky-700">{formatPrice(summary.cardTotal)} karta</span>
+              <span className="text-gray-400">· {summary.ticketCount} lístkov</span>
+            </span>
+            <span className="inline-flex items-center gap-1 text-brand">
+              <Lock size={13} /> Uzávierka →
+            </span>
+          </Link>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand" size={36} /></div>
@@ -295,9 +324,14 @@ export default function PosPage() {
                   <input value={emailPrompt} onChange={(e) => setEmailPrompt(e.target.value)} type="email" placeholder="E-mail pre zaslanie lístkov" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
                 </div>
               )}
-              <button onClick={sendEmail} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <Mail size={15} /> Poslať e-mailom
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={sendEmail} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  <Mail size={15} /> Poslať e-mailom
+                </button>
+                <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  <Printer size={15} /> Vytlačiť
+                </button>
+              </div>
               {emailMsg && <p className="text-sm text-emerald-700">{emailMsg}</p>}
             </div>
 
@@ -307,6 +341,24 @@ export default function PosPage() {
           </div>
         ) : null}
       </main>
+
+      {/* Tlačiteľný pohľad lístkov – viditeľný len pri tlači */}
+      {result && selected && (
+        <div className="hidden print:block">
+          {result.tickets.map((t) => (
+            <div key={`print-${t.ticketId}`} className="flex break-inside-avoid items-center gap-6 border-b border-gray-300 p-6">
+              <QrCanvas value={t.qrToken} size={180} />
+              <div className="space-y-1">
+                <div className="text-xl font-bold text-gray-900">{selected.showName}</div>
+                <div className="text-gray-700">{formatDate(selected.startsAt)}</div>
+                {selected.venueName && <div className="text-gray-700">{selected.venueName}{selected.venueCity ? `, ${selected.venueCity}` : ''}</div>}
+                <div className="pt-1 font-medium text-gray-900">{t.ticketTypeName}</div>
+                <div className="font-mono text-sm text-gray-500">{result.orderNumber} · …{t.ticketId.slice(-4).toUpperCase()}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

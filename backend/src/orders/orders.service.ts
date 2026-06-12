@@ -9,11 +9,12 @@ import { MailService } from '../mail/mail.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CompOrderDto } from './dto/comp-order.dto';
 import { PosOrderDto } from './dto/pos-order.dto';
-import { OrderStatus, TerminStatus, TicketStatus, UserRole } from '@prisma/client';
+import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { sendTicketsForOrder } from './orders-mail.helper';
 import { CouponsService } from '../coupons/coupons.service';
+import { generatePosClosurePdf, PosClosureByTermin } from './pos-closure-pdf.helper';
 
 @Injectable()
 export class OrdersService {
@@ -721,6 +722,261 @@ export class OrdersService {
     await this.prisma.order.update({ where: { id: orderId }, data: { buyerEmail: clean } });
     await sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger);
     return { sent: true, email: clean };
+  }
+
+  // ── POS uzávierka (17-B) ─────────────────────────────────────────────────────
+
+  /** Org callera: organizer = vlastný; super/staff = z parametra (povinné). */
+  private resolvePosOrg(user: JwtPayload, requested?: string): string {
+    if (this.isSuperOrStaff(user)) {
+      if (!requested) throw new BadRequestException('organizerId je povinný pre SUPERADMIN/STAFF.');
+      return requested;
+    }
+    if (!user.organizerId) throw new ForbiddenException();
+    return user.organizerId;
+  }
+
+  /**
+   * Agregácia POS predajov od poslednej uzávierky po `upperBound`.
+   * Súvislé obdobia: periodFrom = posledná closure.periodTo (alebo prvý POS predaj).
+   */
+  private async computePosSummary(organizerId: string, upperBound: Date) {
+    const last = await this.prisma.posClosure.findFirst({
+      where: { organizerId },
+      orderBy: { createdAt: 'desc' },
+      select: { periodTo: true },
+    });
+    const periodFrom = last?.periodTo ?? null;
+
+    const where: Prisma.OrderWhereInput = {
+      organizerId,
+      status: OrderStatus.PAID,
+      paymentProvider: { in: ['pos_cash', 'pos_card'] },
+      createdAt: { ...(periodFrom ? { gt: periodFrom } : {}), lte: upperBound },
+    };
+
+    const orders = await this.prisma.order.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+      select: {
+        orderNumber: true,
+        paymentProvider: true,
+        totalAmount: true,
+        createdAt: true,
+        _count: { select: { tickets: true } },
+        items: {
+          take: 1,
+          select: { termin: { select: { startsAt: true, show: { select: { name: true } } } } },
+        },
+      },
+    });
+
+    let cashTotal = 0;
+    let cardTotal = 0;
+    let ticketCount = 0;
+    const orderNumbers: string[] = [];
+    const terminMap = new Map<string, PosClosureByTermin>();
+
+    for (const o of orders) {
+      const amt = Number(o.totalAmount);
+      const tk = o._count.tickets;
+      ticketCount += tk;
+      orderNumbers.push(o.orderNumber);
+      const isCash = o.paymentProvider === 'pos_cash';
+      if (isCash) cashTotal += amt; else cardTotal += amt;
+
+      const termin = o.items[0]?.termin;
+      const key = termin ? `${termin.show?.name}|${termin.startsAt?.toISOString()}` : 'unknown';
+      const entry = terminMap.get(key) ?? {
+        showTitle: termin?.show?.name ?? null,
+        terminStartsAt: termin?.startsAt ?? null,
+        cash: 0,
+        card: 0,
+        tickets: 0,
+      };
+      if (isCash) entry.cash += amt; else entry.card += amt;
+      entry.tickets += tk;
+      terminMap.set(key, entry);
+    }
+
+    const earliest = orders[0]?.createdAt ?? null;
+    const byTermin = [...terminMap.values()].sort(
+      (a, b) => (a.terminStartsAt?.getTime() ?? 0) - (b.terminStartsAt?.getTime() ?? 0),
+    );
+
+    return {
+      periodFrom: periodFrom ?? earliest,
+      cashTotal,
+      cardTotal,
+      total: cashTotal + cardTotal,
+      orderCount: orders.length,
+      ticketCount,
+      byTermin,
+      orderNumbers,
+    };
+  }
+
+  /** Živý prehľad POS predajov od poslednej uzávierky. */
+  async posSummary(user: JwtPayload, organizerId?: string) {
+    const orgId = this.resolvePosOrg(user, organizerId);
+    const now = new Date();
+    const s = await this.computePosSummary(orgId, now);
+    return {
+      periodFrom: s.periodFrom,
+      now,
+      cashTotal: s.cashTotal,
+      cardTotal: s.cardTotal,
+      total: s.total,
+      orderCount: s.orderCount,
+      ticketCount: s.ticketCount,
+      byTermin: s.byTermin,
+    };
+  }
+
+  /** Vytvorí uzávierku (snapshot). Len OWNER + super/staff (MEMBER 403). */
+  async posCreateClosure(user: JwtPayload, note?: string, organizerId?: string) {
+    if (!this.isSuperOrStaff(user) && user.role !== UserRole.ORGANIZER_OWNER) {
+      throw new ForbiddenException('Uzávierku môže vykonať len vlastník organizácie.');
+    }
+    const orgId = this.resolvePosOrg(user, organizerId);
+    const now = new Date();
+    const s = await this.computePosSummary(orgId, now);
+    if (s.orderCount === 0) {
+      throw new BadRequestException('Žiadne predaje na uzavretie.');
+    }
+
+    const closure = await this.prisma.posClosure.create({
+      data: {
+        organizerId: orgId,
+        closedById: user.sub,
+        periodFrom: s.periodFrom ?? now,
+        periodTo: now,
+        cashTotal: s.cashTotal,
+        cardTotal: s.cardTotal,
+        orderCount: s.orderCount,
+        ticketCount: s.ticketCount,
+        note: note?.trim() || null,
+      },
+    });
+
+    return {
+      closure: this.serializeClosure(closure),
+      orderNumbers: s.orderNumbers,
+    };
+  }
+
+  private serializeClosure(c: {
+    id: string; organizerId: string; closedById: string;
+    periodFrom: Date; periodTo: Date; cashTotal: any; cardTotal: any;
+    orderCount: number; ticketCount: number; note: string | null; createdAt: Date;
+    closedBy?: { firstName: string | null; lastName: string | null; email: string } | null;
+  }) {
+    const name = c.closedBy
+      ? `${c.closedBy.firstName ?? ''} ${c.closedBy.lastName ?? ''}`.trim() || c.closedBy.email
+      : null;
+    return {
+      id: c.id,
+      periodFrom: c.periodFrom,
+      periodTo: c.periodTo,
+      cashTotal: Number(c.cashTotal),
+      cardTotal: Number(c.cardTotal),
+      total: Number(c.cashTotal) + Number(c.cardTotal),
+      orderCount: c.orderCount,
+      ticketCount: c.ticketCount,
+      note: c.note,
+      closedByName: name,
+      createdAt: c.createdAt,
+    };
+  }
+
+  async posClosuresList(user: JwtPayload, organizerId?: string, limit = 25, offset = 0) {
+    const orgId = this.resolvePosOrg(user, organizerId);
+    const take = Math.min(Math.max(limit, 1), 100);
+    const skip = Math.max(offset, 0);
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.posClosure.findMany({
+        where: { organizerId: orgId },
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip,
+        include: { closedBy: { select: { firstName: true, lastName: true, email: true } } },
+      }),
+      this.prisma.posClosure.count({ where: { organizerId: orgId } }),
+    ]);
+    return { items: rows.map((r) => this.serializeClosure(r)), total, limit: take, offset: skip };
+  }
+
+  /** Vygeneruje PDF report uzávierky (recompute breakdown za uložené obdobie). */
+  async posClosurePdf(id: string, user: JwtPayload) {
+    const closure = await this.prisma.posClosure.findUnique({
+      where: { id },
+      include: {
+        organizer: { select: { name: true } },
+        closedBy: { select: { firstName: true, lastName: true, email: true } },
+      },
+    });
+    if (!closure) throw new NotFoundException('Uzávierka neexistuje.');
+    if (!this.isSuperOrStaff(user) && closure.organizerId !== user.organizerId) {
+      throw new ForbiddenException('Uzávierka nepatrí vašej organizácii.');
+    }
+
+    // Breakdown za uložené obdobie [periodFrom, periodTo]
+    const orders = await this.prisma.order.findMany({
+      where: {
+        organizerId: closure.organizerId,
+        status: OrderStatus.PAID,
+        paymentProvider: { in: ['pos_cash', 'pos_card'] },
+        createdAt: { gt: closure.periodFrom, lte: closure.periodTo },
+      },
+      select: {
+        paymentProvider: true,
+        totalAmount: true,
+        _count: { select: { tickets: true } },
+        items: {
+          take: 1,
+          select: { termin: { select: { startsAt: true, show: { select: { name: true } } } } },
+        },
+      },
+    });
+    const terminMap = new Map<string, PosClosureByTermin>();
+    for (const o of orders) {
+      const amt = Number(o.totalAmount);
+      const isCash = o.paymentProvider === 'pos_cash';
+      const termin = o.items[0]?.termin;
+      const key = termin ? `${termin.show?.name}|${termin.startsAt?.toISOString()}` : 'unknown';
+      const entry = terminMap.get(key) ?? {
+        showTitle: termin?.show?.name ?? null,
+        terminStartsAt: termin?.startsAt ?? null,
+        cash: 0, card: 0, tickets: 0,
+      };
+      if (isCash) entry.cash += amt; else entry.card += amt;
+      entry.tickets += o._count.tickets;
+      terminMap.set(key, entry);
+    }
+    const byTermin = [...terminMap.values()].sort(
+      (a, b) => (a.terminStartsAt?.getTime() ?? 0) - (b.terminStartsAt?.getTime() ?? 0),
+    );
+
+    const platform = await this.prisma.platformInfo.findFirst();
+    const closedByName = closure.closedBy
+      ? `${closure.closedBy.firstName ?? ''} ${closure.closedBy.lastName ?? ''}`.trim() || closure.closedBy.email
+      : '—';
+
+    const pdf = await generatePosClosurePdf({
+      organizerName: closure.organizer?.name ?? '—',
+      closedByName,
+      periodFrom: closure.periodFrom,
+      periodTo: closure.periodTo,
+      cashTotal: Number(closure.cashTotal),
+      cardTotal: Number(closure.cardTotal),
+      total: Number(closure.cashTotal) + Number(closure.cardTotal),
+      orderCount: closure.orderCount,
+      ticketCount: closure.ticketCount,
+      note: closure.note,
+      byTermin,
+      platformName: platform?.legalName ?? 'TicketAll',
+    });
+    return { pdf, filename: `uzavierka-${closure.id}.pdf` };
   }
 
   private signQrToken(ticketId: string, terminId: string, nonce: string, secret: string): string {
