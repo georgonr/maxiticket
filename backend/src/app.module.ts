@@ -26,6 +26,7 @@ import { ScanModule } from './scan/scan.module';
 import { PlatformInfoModule } from './platform-info/platform-info.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { ScannersModule } from './scanners/scanners.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -55,6 +56,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     PlatformInfoModule,
     MetricsModule,
     CouponsModule,
+    ScannersModule,
   ],
   controllers: [HealthController],
   providers: [

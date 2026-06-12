@@ -53,6 +53,7 @@ export function DashboardHeader() {
     { label: 'Hero slider', href: '/admin/hero', roles: ['SUPERADMIN'] },
     { label: 'Platforma', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
     { label: 'Údaje firmy', href: '/organizer/settings', roles: ['ORGANIZER_OWNER'] },
+    { label: 'Skeneri', href: '/organizer/scanners', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
     {
       label: 'Moje lístky',
       href: '/account/tickets',

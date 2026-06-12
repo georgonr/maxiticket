@@ -15,14 +15,21 @@ import { ScanService } from './scan.service';
 import { ValidateScanDto } from './dto/scan.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { ActiveUserGuard } from '../common/guards/active-user.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../casl/casl-ability.factory';
 import { UserRole } from '@prisma/client';
 
 @Controller('scan')
-@UseGuards(JwtAuthGuard, RolesGuard, ThrottlerGuard)
-@Roles(UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER, UserRole.SCANNER)
+@UseGuards(JwtAuthGuard, RolesGuard, ActiveUserGuard, ThrottlerGuard)
+@Roles(
+  UserRole.SUPERADMIN,
+  UserRole.STAFF,
+  UserRole.ORGANIZER_OWNER,
+  UserRole.ORGANIZER_MEMBER,
+  UserRole.SCANNER,
+)
 @Throttle({ default: { ttl: 60_000, limit: 30 } })
 export class ScanController {
   constructor(private readonly svc: ScanService) {}

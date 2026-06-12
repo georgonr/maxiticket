@@ -46,6 +46,13 @@ export function LoginForm() {
 
       // Role decides the area; ?next= is honoured only when compatible with the role.
       const role = parseJwt(json.accessToken)?.role;
+
+      if (role === 'SCANNER') {
+        // Scanner area beží na samostatnej subdoméne (cross-subdomain cookie .ticketall.eu).
+        window.location.href = 'https://skener.ticketall.eu';
+        return;
+      }
+
       const isStaff =
         role === 'SUPERADMIN' || role === 'ORGANIZER_OWNER' ||
         role === 'ORGANIZER_MEMBER' || role === 'STAFF';
