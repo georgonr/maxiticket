@@ -52,6 +52,11 @@ export function DashboardHeader() {
     },
     { label: 'Hero slider', href: '/admin/hero', roles: ['SUPERADMIN'] },
     { label: 'Platforma', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
+    {
+      label: 'Objednávky',
+      href: role === 'SUPERADMIN' ? '/admin/orders' : '/organizer/orders',
+      roles: ['SUPERADMIN', 'ORGANIZER_OWNER'],
+    },
     { label: 'Údaje firmy', href: '/organizer/settings', roles: ['ORGANIZER_OWNER'] },
     { label: 'Skeneri', href: '/organizer/scanners', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
     {

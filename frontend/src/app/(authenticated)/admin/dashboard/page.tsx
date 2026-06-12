@@ -188,10 +188,12 @@ export default function AdminDashboardPage() {
         <SectionCard
           title="Posledné objednávky"
           action={
-            // TODO: /admin/orders route zatiaľ neexistuje (Úloha 12C)
-            <span className="flex items-center gap-0.5 text-xs text-gray-300">
+            <Link
+              href="/admin/orders"
+              className="flex items-center gap-0.5 text-xs text-brand hover:underline"
+            >
               Všetky <ArrowRight className="h-3 w-3" />
-            </span>
+            </Link>
           }
         >
           {loading ? <Skeleton className="h-32" /> : <RecentOrdersList orders={recentOrders} />}

@@ -11,6 +11,7 @@ import {
   Users,
   RefreshCw,
   Plus,
+  ArrowRight,
 } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
@@ -237,7 +238,17 @@ export default function OrganizerDashboardPage() {
         </div>
 
         {/* Posledné objednávky */}
-        <SectionCard title="Posledné objednávky">
+        <SectionCard
+          title="Posledné objednávky"
+          action={
+            <Link
+              href="/organizer/orders"
+              className="flex items-center gap-0.5 text-xs text-brand hover:underline"
+            >
+              Všetky <ArrowRight className="h-3 w-3" />
+            </Link>
+          }
+        >
           {loading ? <Skeleton className="h-32" /> : <RecentOrdersList orders={recentOrders} />}
         </SectionCard>
 
