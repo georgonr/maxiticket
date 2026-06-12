@@ -312,6 +312,40 @@ export class MailService {
     this.logger.log(`Password reset email sent to ${data.to}`);
   }
 
+  async sendTeamInvite(data: { to: string; organizerName: string; inviteLink: string; firstName?: string }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const name = data.firstName ? `, ${data.firstName}` : '';
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+  </div>
+  <h2 style="font-size:20px;margin:0 0 12px;">Pozvánka do tímu</h2>
+  <p style="color:#374151;">Dobrý deň${name},</p>
+  <p style="color:#374151;">Boli ste pozvaný do tímu <strong>${data.organizerName}</strong> na platforme TicketAll. Ako člen tímu môžete spravovať podujatia, predávať na pokladni a skenovať vstupenky.</p>
+  <p style="color:#374151;">Kliknutím nastavíte svoje heslo – link je platný <strong>7 dní</strong>.</p>
+  <div style="text-align:center;margin:28px 0;">
+    <a href="${data.inviteLink}"
+       style="background:#10B981;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+      Nastaviť heslo a vstúpiť
+    </a>
+  </div>
+  <p style="color:#6b7280;font-size:13px;">Ak ste túto pozvánku neočakávali, tento e-mail môžete ignorovať.</p>
+  <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">
+    TicketAll · <a href="${data.inviteLink}" style="color:#9ca3af;">${data.inviteLink}</a>
+  </p>
+</body></html>`;
+
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `Pozvánka do tímu ${data.organizerName} – TicketAll`,
+      html,
+    });
+    this.logger.log(`Team invite email sent to ${data.to}`);
+  }
+
   async sendContactEmail(data: { meno: string; email: string; predmet: string; sprava: string }): Promise<void> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
     const to = this.config.get('CONTACT_EMAIL', 'info@ticketall.eu');

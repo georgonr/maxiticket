@@ -9,7 +9,7 @@ import { OrdersQueryService } from './orders-query.service';
 
 @Controller('organizer/orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ORGANIZER_OWNER, UserRole.SUPERADMIN, UserRole.STAFF)
+@Roles(UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER, UserRole.SUPERADMIN, UserRole.STAFF)
 export class OrganizerOrdersController {
   constructor(private readonly query: OrdersQueryService) {}
 
