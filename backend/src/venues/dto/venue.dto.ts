@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, MinLength } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateVenueDto {
@@ -11,4 +11,6 @@ export class CreateVenueDto {
   @IsOptional() @IsString() notes?: string;
 }
 
-export class UpdateVenueDto extends PartialType(CreateVenueDto) {}
+export class UpdateVenueDto extends PartialType(CreateVenueDto) {
+  @IsOptional() @IsBoolean() isActive?: boolean;
+}

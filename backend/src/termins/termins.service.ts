@@ -3,10 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
 import { UserRole } from '@prisma/client';
 import { CreateTerminDto, UpdateTerminDto } from './dto/termin.dto';
+import { VenuesService } from '../venues/venues.service';
 
 @Injectable()
 export class TerminsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private venues: VenuesService,
+  ) {}
 
   private async assertShowAccess(showId: string, user: JwtPayload) {
     const show = await this.prisma.show.findUnique({ where: { id: showId } });
@@ -37,6 +41,7 @@ export class TerminsService {
 
   async create(showId: string, dto: CreateTerminDto, user: JwtPayload) {
     await this.assertShowAccess(showId, user);
+    await this.venues.assertUsableForTermin(dto.venueId, user);
     const { venueId, startsAt, endsAt, doorsOpenAt, ...rest } = dto;
     return this.prisma.termin.create({
       data: {
@@ -53,6 +58,7 @@ export class TerminsService {
 
   async update(showId: string, id: string, dto: UpdateTerminDto, user: JwtPayload) {
     await this.findOne(showId, id, user);
+    if (dto.venueId) await this.venues.assertUsableForTermin(dto.venueId, user);
     const { startsAt, endsAt, doorsOpenAt, ...rest } = dto;
     return this.prisma.termin.update({
       where: { id },

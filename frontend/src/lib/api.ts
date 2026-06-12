@@ -112,8 +112,37 @@ export const showImagesApi = {
 };
 
 export const venuesApi = {
-  list: (token: string) => apiFetch<Venue[]>('/v1/venues', { token }),
-  create: (body: CreateVenueBody, token: string) => apiFetch<Venue>('/v1/venues', { method: 'POST', body: JSON.stringify(body), token }),
+  list: (token: string, query: VenueListQuery = {}) => {
+    const p = new URLSearchParams();
+    if (query.search) p.set('search', query.search);
+    if (query.isActive) p.set('isActive', 'true');
+    if (query.organizerId) p.set('organizerId', query.organizerId);
+    const qs = p.toString();
+    return apiFetch<Venue[]>('/v1/venues' + (qs ? `?${qs}` : ''), { token });
+  },
+  get: (id: string, token: string) => apiFetch<Venue>('/v1/venues/' + id, { token }),
+  create: (
+    body: CreateVenueBody,
+    token: string,
+    opts: { global?: boolean; organizerId?: string } = {},
+  ) => {
+    const p = new URLSearchParams();
+    if (opts.global) p.set('global', 'true');
+    if (opts.organizerId) p.set('organizerId', opts.organizerId);
+    const qs = p.toString();
+    return apiFetch<Venue>('/v1/venues' + (qs ? `?${qs}` : ''), {
+      method: 'POST',
+      body: JSON.stringify(body),
+      token,
+    });
+  },
+  update: (id: string, body: Partial<CreateVenueBody> & { isActive?: boolean }, token: string) =>
+    apiFetch<Venue>('/v1/venues/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
+  remove: (id: string, token: string) =>
+    apiFetch<{ deleted: boolean; deactivated: boolean }>('/v1/venues/' + id, {
+      method: 'DELETE',
+      token,
+    }),
 };
 
 export const terminsApi = {
@@ -165,7 +194,18 @@ export interface Venue {
   name: string;
   city?: string;
   street?: string;
+  postalCode?: string;
+  country?: string;
   capacity?: number;
+  notes?: string;
+  organizerId?: string | null;
+  isActive?: boolean;
+}
+
+export interface VenueListQuery {
+  search?: string;
+  isActive?: boolean;
+  organizerId?: string;
 }
 
 export interface Termin {
@@ -210,7 +250,9 @@ export interface CreateVenueBody {
   city?: string;
   street?: string;
   postalCode?: string;
+  country?: string;
   capacity?: number;
+  notes?: string;
 }
 
 export interface CreateTerminBody {

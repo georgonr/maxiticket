@@ -43,7 +43,8 @@ export default function NewTerminPage() {
     getValidToken().then(async (token) => {
       if (!token) { router.replace('/login'); return; }
       try {
-        const data = await venuesApi.list(token);
+        // Len aktívne miesta (deaktivované sa pri nových termínoch neponúkajú).
+        const data = await venuesApi.list(token, { isActive: true });
         setVenues(data);
         if (data.length > 0) setForm((f) => ({ ...f, venueId: data[0].id }));
       } catch {
@@ -90,7 +91,10 @@ export default function NewTerminPage() {
     }
   }
 
-  const venueOptions = venues.map((v) => ({ value: v.id, label: `${v.name}${v.city ? ` (${v.city})` : ''}` }));
+  const venueOptions = venues.map((v) => ({
+    value: v.id,
+    label: `${v.name}${v.city ? ` (${v.city})` : ''}${v.organizerId == null ? ' • globálne' : ''}`,
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">

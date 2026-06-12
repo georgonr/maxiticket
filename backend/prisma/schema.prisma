@@ -222,26 +222,29 @@ model PasswordResetToken {
 // ─────────────────────────────────────────────
 
 model Venue {
-  id           String    @id @default(cuid())
-  organizerId  String
-  organizer    Organizer @relation(fields: [organizerId], references: [id])
+  id           String     @id @default(cuid())
+  // null organizerId = globálne miesto (SUPERADMIN-created, zdieľané všetkým organizátorom)
+  organizerId  String?
+  organizer    Organizer? @relation(fields: [organizerId], references: [id])
 
   name         String
   street       String?
   city         String?
   postalCode   String?
-  country      String    @default("SK")
-  lat          Decimal?  @db.Decimal(10, 7)
-  lng          Decimal?  @db.Decimal(10, 7)
+  country      String     @default("SK")
+  lat          Decimal?   @db.Decimal(10, 7)
+  lng          Decimal?   @db.Decimal(10, 7)
   capacity     Int?
   notes        String?
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   termins      Termin[]
 
   @@index([organizerId])
+  @@index([city])
 }
 
 // ─────────────────────────────────────────────
