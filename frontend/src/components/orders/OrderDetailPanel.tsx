@@ -19,6 +19,8 @@ const TICKET_STATUS: Record<string, { label: string; cls: string }> = {
 
 const PROVIDER_LABEL: Record<string, string> = {
   stripe: 'Stripe',
+  pos_cash: 'POS hotovosť',
+  pos_card: 'POS karta',
   comp: 'Zdarma (comp)',
   manual: 'Manuál',
   mock: 'Test',

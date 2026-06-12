@@ -30,12 +30,16 @@ const STATUS_OPTIONS: { value: OrderStatus | ''; label: string }[] = [
 const PROVIDER_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'Všetky platby' },
   { value: 'stripe', label: 'Stripe' },
+  { value: 'pos_cash', label: 'POS hotovosť' },
+  { value: 'pos_card', label: 'POS karta' },
   { value: 'comp', label: 'Zdarma (comp)' },
   { value: 'manual', label: 'Manuál' },
 ];
 
 const PROVIDER_META: Record<string, { label: string; cls: string }> = {
   stripe: { label: 'Stripe', cls: 'bg-indigo-50 text-indigo-700' },
+  pos_cash: { label: 'POS hotovosť', cls: 'bg-emerald-50 text-emerald-700' },
+  pos_card: { label: 'POS karta', cls: 'bg-sky-50 text-sky-700' },
   comp: { label: 'Zdarma', cls: 'bg-emerald-50 text-emerald-700' },
   manual: { label: 'Manuál', cls: 'bg-amber-50 text-amber-700' },
   mock: { label: 'Test', cls: 'bg-gray-100 text-gray-500' },

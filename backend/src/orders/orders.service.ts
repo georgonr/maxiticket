@@ -8,7 +8,8 @@ import { JwtPayload } from '../casl/casl-ability.factory';
 import { MailService } from '../mail/mail.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CompOrderDto } from './dto/comp-order.dto';
-import { OrderStatus, TerminStatus, TicketStatus } from '@prisma/client';
+import { PosOrderDto } from './dto/pos-order.dto';
+import { OrderStatus, TerminStatus, TicketStatus, UserRole } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { sendTicketsForOrder } from './orders-mail.helper';
@@ -469,6 +470,257 @@ export class OrdersService {
     if (result.count > 0) {
       this.logger.log(`Expired ${result.count} pending order(s)`);
     }
+  }
+
+  // ── POS (pokladňa na mieste) ────────────────────────────────────────────────
+  private readonly POS_SENTINEL_EMAIL = 'pos@ticketall.eu';
+
+  private isSuperOrStaff(user: JwtPayload): boolean {
+    return user.role === UserRole.SUPERADMIN || user.role === UserRole.STAFF;
+  }
+
+  /** Najbližšie predajné termíny callera (dnešné + budúce) s dostupnosťou – pre POS výber. */
+  async posTermins(user: JwtPayload) {
+    const orgFilter = this.isSuperOrStaff(user)
+      ? {}
+      : { show: { organizerId: user.organizerId! } };
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const terminy = await this.prisma.termin.findMany({
+      where: {
+        ...orgFilter,
+        status: { in: [TerminStatus.ON_SALE, TerminStatus.SOLD_OUT] },
+        OR: [{ startsAt: { gte: startOfToday } }, { endsAt: { gte: now } }],
+      },
+      include: {
+        show: { select: { name: true } },
+        venue: { select: { name: true, city: true } },
+        ticketTypes: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
+      },
+      orderBy: { startsAt: 'asc' },
+    });
+
+    const ttIds = terminy.flatMap((t) => t.ticketTypes.map((tt) => tt.id));
+    const soldRows = ttIds.length
+      ? await this.prisma.orderItem.groupBy({
+          by: ['ticketTypeId'],
+          where: {
+            ticketTypeId: { in: ttIds },
+            order: { status: { in: [OrderStatus.PENDING, OrderStatus.PAID] } },
+          },
+          _sum: { quantity: true },
+        })
+      : [];
+    const soldMap = new Map(soldRows.map((r) => [r.ticketTypeId, r._sum.quantity ?? 0]));
+
+    return terminy.map((t) => ({
+      terminId: t.id,
+      showName: t.show.name,
+      startsAt: t.startsAt,
+      venueName: t.venue?.name ?? null,
+      venueCity: t.venue?.city ?? null,
+      ticketTypes: t.ticketTypes.map((tt) => ({
+        ticketTypeId: tt.id,
+        name: tt.name,
+        price: Number(tt.price),
+        currency: tt.currency,
+        maxPerOrder: tt.maxPerOrder,
+        remaining:
+          tt.totalQuantity == null
+            ? null
+            : Math.max(0, tt.totalQuantity - (soldMap.get(tt.id) ?? 0)),
+      })),
+    }));
+  }
+
+  /** POS predaj: okamžitý PAID order + lístky, voliteľný email/anonymný, kupóny. */
+  async posOrder(dto: PosOrderDto, user: JwtPayload) {
+    const termin = await this.prisma.termin.findUnique({
+      where: { id: dto.terminId },
+      include: { show: true, ticketTypes: true },
+    });
+    if (!termin) throw new NotFoundException('Termín neexistuje.');
+    if (!this.isSuperOrStaff(user) && termin.show.organizerId !== user.organizerId) {
+      throw new ForbiddenException('Termín nepatrí vašej organizácii.');
+    }
+    if (termin.status !== TerminStatus.ON_SALE && termin.status !== TerminStatus.SOLD_OUT) {
+      throw new BadRequestException('Termín nie je v predaji.');
+    }
+
+    // Validácia položiek + dostupnosti (zhodné s web createOrder)
+    let subtotal = 0;
+    const validated: { tt: any; quantity: number }[] = [];
+    const now = new Date();
+    for (const item of dto.items) {
+      const tt = termin.ticketTypes.find((t) => t.id === item.ticketTypeId);
+      if (!tt) throw new NotFoundException(`Typ lístka ${item.ticketTypeId} neexistuje.`);
+      if (!tt.isActive) throw new BadRequestException(`Typ lístka "${tt.name}" nie je aktívny.`);
+      if (item.quantity > tt.maxPerOrder) {
+        throw new BadRequestException(`Max ${tt.maxPerOrder} ks typu "${tt.name}" na objednávku.`);
+      }
+      if (tt.saleStartsAt && now < tt.saleStartsAt) {
+        throw new BadRequestException(`Predaj "${tt.name}" sa ešte nezačal.`);
+      }
+      if (tt.saleEndsAt && now > tt.saleEndsAt) {
+        throw new BadRequestException(`Predaj "${tt.name}" už skončil.`);
+      }
+      if (tt.totalQuantity != null) {
+        const sold = await this.prisma.orderItem.aggregate({
+          where: {
+            ticketTypeId: tt.id,
+            order: { status: { in: [OrderStatus.PENDING, OrderStatus.PAID] } },
+          },
+          _sum: { quantity: true },
+        });
+        const remaining = tt.totalQuantity - (sold._sum.quantity ?? 0);
+        if (remaining < item.quantity) {
+          throw new BadRequestException(`Zostáva len ${remaining} ks typu "${tt.name}".`);
+        }
+      }
+      subtotal += Number(tt.price) * item.quantity;
+      validated.push({ tt, quantity: item.quantity });
+    }
+    if (validated.length === 0) throw new BadRequestException('Objednávka neobsahuje žiadne lístky.');
+
+    // Kupón (voliteľný)
+    let discountAmount = 0;
+    let couponId: string | null = null;
+    let totalAmount = subtotal;
+    if (dto.couponCode) {
+      const validation = await this.coupons.validate({
+        code: dto.couponCode,
+        subtotal,
+        items: validated.map(({ tt, quantity }) => ({ ticketTypeId: tt.id, quantity })),
+      });
+      if ('reason' in validation) throw new BadRequestException(validation.reason);
+      discountAmount = validation.discount;
+      couponId = validation.couponId;
+      totalAmount = validation.finalAmount;
+    }
+
+    const provider = dto.paymentMethod === 'card' ? 'pos_card' : 'pos_cash';
+    const currency = validated[0].tt.currency ?? 'EUR';
+    const hasEmail = !!dto.buyerEmail?.trim();
+    const buyerEmail = hasEmail ? dto.buyerEmail!.trim() : this.POS_SENTINEL_EMAIL;
+    const buyerName = dto.buyerName?.trim() || 'POS predaj';
+    const buyerUser = hasEmail
+      ? await this.prisma.user.findUnique({ where: { email: buyerEmail } })
+      : null;
+
+    const hmacSecret =
+      this.config.get<string>('QR_HMAC_SECRET') ?? this.config.get<string>('JWT_SECRET')!;
+
+    const year = new Date().getFullYear();
+    const count = await this.prisma.order.count();
+    const orderNumber = `MT-${year}-${String(count + 1).padStart(5, '0')}`;
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          orderNumber,
+          organizerId: termin.show.organizerId,
+          userId: buyerUser?.id ?? null,
+          buyerEmail,
+          buyerName,
+          currency,
+          totalAmount,
+          discountAmount,
+          couponId,
+          status: OrderStatus.PAID,
+          paidAt: new Date(),
+          paymentProvider: provider,
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          items: {
+            create: validated.map(({ tt, quantity }) => ({
+              ticketTypeId: tt.id,
+              terminId: termin.id,
+              quantity,
+              unitPrice: tt.price,
+              currency: tt.currency,
+              priceSnapshot: {
+                name: tt.name,
+                price: Number(tt.price),
+                currency: tt.currency,
+                showName: termin.show.name,
+                terminId: termin.id,
+                startsAt: termin.startsAt,
+              },
+            })),
+          },
+        },
+        include: { items: true },
+      });
+
+      const tickets: { ticketId: string; ticketTypeName: string; qrToken: string }[] = [];
+      for (const orderItem of order.items) {
+        const v = validated.find((x) => x.tt.id === orderItem.ticketTypeId);
+        const ttName = v?.tt.name ?? 'Vstupenka';
+        for (let i = 0; i < orderItem.quantity; i++) {
+          const ticketId = randomUUID();
+          const nonce = randomUUID();
+          const qrToken = this.signQrToken(ticketId, termin.id, nonce, hmacSecret);
+          await tx.ticket.create({
+            data: {
+              id: ticketId,
+              orderId: order.id,
+              orderItemId: orderItem.id,
+              ticketTypeId: orderItem.ticketTypeId!,
+              terminId: termin.id,
+              nonce,
+              qrToken,
+              status: TicketStatus.VALID,
+            },
+          });
+          tickets.push({ ticketId, ticketTypeName: ttName, qrToken });
+        }
+      }
+      return { order, tickets };
+    });
+
+    // Redeem kupónu (idempotentné) – až po PAID
+    if (couponId) {
+      this.coupons
+        .redeemForPaidOrder(result.order.id)
+        .catch((e) => this.logger.error(`POS coupon redeem failed for ${result.order.id}: ${e.message}`));
+    }
+    // Email len ak bol zadaný reálny buyerEmail (anonymný predaj = QR na obrazovke)
+    if (hasEmail) {
+      sendTicketsForOrder(result.order.id, this.prisma, this.mail, this.logger)
+        .catch((e) => this.logger.error(`POS email failed for ${result.order.id}: ${e.message}`));
+    }
+
+    return {
+      orderId: result.order.id,
+      orderNumber: result.order.orderNumber,
+      totalAmount: Number(result.order.totalAmount),
+      discountAmount: Number(result.order.discountAmount),
+      currency,
+      emailSent: hasEmail,
+      tickets: result.tickets,
+    };
+  }
+
+  /** Dodatočné odoslanie POS lístkov e-mailom (napr. po anonymnom predaji). */
+  async posEmailTickets(orderId: string, email: string, user: JwtPayload) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, organizerId: true, paymentProvider: true },
+    });
+    if (!order) throw new NotFoundException('Objednávka neexistuje.');
+    if (!this.isSuperOrStaff(user) && order.organizerId !== user.organizerId) {
+      throw new ForbiddenException('Objednávka nepatrí vašej organizácii.');
+    }
+    if (!order.paymentProvider?.startsWith('pos_')) {
+      throw new BadRequestException('Nie je to POS objednávka.');
+    }
+    const clean = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      throw new BadRequestException('Neplatný e-mail.');
+    }
+    await this.prisma.order.update({ where: { id: orderId }, data: { buyerEmail: clean } });
+    await sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger);
+    return { sent: true, email: clean };
   }
 
   private signQrToken(ticketId: string, terminId: string, nonce: string, secret: string): string {
