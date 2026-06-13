@@ -1,6 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable, NotFoundException, ForbiddenException, BadRequestException,
+} from '@nestjs/common';
 import { Prisma, OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { generateReceiptPdf } from './account-receipt-pdf.helper';
+
+const PAYMENT_LABEL: Record<string, string> = {
+  stripe: 'Stripe (online platba)',
+  pos_cash: 'Hotovosť (pokladňa)',
+  pos_card: 'Karta (pokladňa)',
+  comp: 'Zdarma',
+  manual: 'Manuálna platba',
+  mock: 'Test',
+};
 
 export type OrderSort =
   | 'createdAt_desc'
@@ -229,5 +241,149 @@ export class OrdersQueryService {
         status: t.status,
       })),
     };
+  }
+
+  // ── Account (zákaznícka história – striktne userId-scoped) ───────────────────
+
+  /** Zoznam vlastných objednávok prihláseného používateľa (Order.userId == userId). */
+  async accountList(userId: string, query: { limit?: number; offset?: number }) {
+    const limit = Math.min(Math.max(Number(query.limit) || 25, 1), 100);
+    const offset = Math.max(Number(query.offset) || 0, 0);
+    const where: Prisma.OrderWhereInput = { userId };
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        where,
+        take: limit,
+        skip: offset,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, orderNumber: true, status: true, totalAmount: true,
+          discountAmount: true, createdAt: true,
+          coupon: { select: { code: true } },
+          _count: { select: { tickets: true } },
+          items: { select: { termin: { select: { show: { select: { name: true } } } } } },
+        },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return {
+      items: rows.map((o) => {
+        const names = [...new Set(o.items.map((i) => i.termin?.show?.name).filter(Boolean) as string[])];
+        return {
+          orderId: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          totalAmount: Number(o.totalAmount),
+          discountAmount: Number(o.discountAmount),
+          couponCode: o.coupon?.code ?? null,
+          showTitles: names.slice(0, 2),
+          extraShows: Math.max(0, names.length - 2),
+          ticketCount: o._count.tickets,
+          createdAt: o.createdAt,
+        };
+      }),
+      total,
+      limit,
+      offset,
+    };
+  }
+
+  private async loadOwnOrder(orderId: string, userId: string) {
+    const o = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        coupon: { select: { code: true } },
+        items: {
+          include: {
+            ticketType: { select: { name: true } },
+            termin: {
+              select: { startsAt: true, show: { select: { name: true } }, venue: { select: { name: true, city: true } } },
+            },
+          },
+        },
+        tickets: { select: { id: true, status: true, qrToken: true }, orderBy: { id: 'asc' } },
+      },
+    });
+    if (!o) throw new NotFoundException('Objednávka neexistuje.');
+    if (o.userId !== userId) throw new ForbiddenException('Objednávka nepatrí vášmu účtu.');
+    return o;
+  }
+
+  /** Detail vlastnej objednávky – vrátane qrToken (vlastník lístka ho smie zobraziť). */
+  async accountDetail(orderId: string, userId: string) {
+    const o = await this.loadOwnOrder(orderId, userId);
+    return {
+      orderId: o.id,
+      orderNumber: o.orderNumber,
+      status: o.status,
+      currency: o.currency,
+      totalAmount: Number(o.totalAmount),
+      discountAmount: Number(o.discountAmount),
+      couponCode: o.coupon?.code ?? null,
+      paymentProvider: o.paymentProvider ?? null,
+      buyerName: o.buyerName,
+      buyerEmail: o.buyerEmail,
+      buyerPhone: o.buyerPhone,
+      createdAt: o.createdAt,
+      paidAt: o.paidAt,
+      items: o.items.map((i) => ({
+        showTitle: i.termin?.show?.name ?? null,
+        venueName: i.termin?.venue?.name ?? null,
+        venueCity: i.termin?.venue?.city ?? null,
+        terminStartsAt: i.termin?.startsAt ?? null,
+        ticketTypeName: i.ticketType?.name ?? null,
+        quantity: i.quantity,
+        unitPrice: Number(i.unitPrice),
+        lineTotal: Number(i.unitPrice) * i.quantity,
+      })),
+      tickets: o.tickets.map((t) => ({
+        ticketId: t.id,
+        maskedCode: '…' + t.id.slice(-4).toUpperCase(),
+        status: t.status,
+        qrToken: t.qrToken,
+      })),
+    };
+  }
+
+  /** PDF doklad pre vlastnú PAID objednávku. */
+  async accountReceiptPdf(orderId: string, userId: string) {
+    const o = await this.loadOwnOrder(orderId, userId);
+    if (o.status !== OrderStatus.PAID) {
+      throw new BadRequestException('Doklad je dostupný len pre zaplatené objednávky.');
+    }
+    const platform = await this.prisma.platformInfo.findFirst();
+    const subtotal = Number(o.totalAmount) + Number(o.discountAmount);
+
+    const pdf = await generateReceiptPdf({
+      orderNumber: o.orderNumber,
+      createdAt: o.paidAt ?? o.createdAt,
+      paymentLabel: o.paymentProvider ? PAYMENT_LABEL[o.paymentProvider] ?? o.paymentProvider : '—',
+      buyerName: o.buyerName,
+      buyerEmail: o.buyerEmail,
+      currency: o.currency,
+      items: o.items.map((i) => ({
+        showTitle: i.termin?.show?.name ?? null,
+        terminStartsAt: i.termin?.startsAt ?? null,
+        ticketTypeName: i.ticketType?.name ?? null,
+        quantity: i.quantity,
+        unitPrice: Number(i.unitPrice),
+        lineTotal: Number(i.unitPrice) * i.quantity,
+      })),
+      subtotal,
+      discountAmount: Number(o.discountAmount),
+      couponCode: o.coupon?.code ?? null,
+      total: Number(o.totalAmount),
+      platform: {
+        legalName: platform?.legalName ?? 'TicketAll s.r.o.',
+        ico: platform?.ico ?? null,
+        icDph: platform?.icDph ?? null,
+        addressStreet: platform?.addressStreet ?? null,
+        addressCity: platform?.addressCity ?? null,
+        addressZip: platform?.addressZip ?? null,
+      },
+    });
+    return { pdf, filename: `potvrdenie-${o.orderNumber}.pdf` };
   }
 }

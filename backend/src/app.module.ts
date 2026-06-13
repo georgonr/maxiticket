@@ -28,6 +28,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { ScannersModule } from './scanners/scanners.module';
 import { MembersModule } from './members/members.module';
+import { AccountModule } from './account/account.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -59,6 +60,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     CouponsModule,
     ScannersModule,
     MembersModule,
+    AccountModule,
   ],
   controllers: [HealthController],
   providers: [

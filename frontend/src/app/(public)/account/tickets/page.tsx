@@ -8,6 +8,7 @@ import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
 import { formatDate } from '@/lib/format';
 import { Calendar, MapPin, Ticket, QrCode, ChevronRight } from 'lucide-react';
+import { AccountTabs } from '@/components/account/AccountTabs';
 
 export default function MyTicketsPage() {
   const router = useRouter();
@@ -47,6 +48,7 @@ export default function MyTicketsPage() {
 
   return (
     <div>
+      <AccountTabs />
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
           <Ticket size={20} className="text-purple-700" />

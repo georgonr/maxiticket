@@ -13,6 +13,6 @@ import { CouponsModule } from '../coupons/coupons.module';
   imports: [MailModule, PaymentModule, CouponsModule],
   controllers: [OrdersController, AdminOrdersController, OrganizerOrdersController, PosController],
   providers: [OrdersService, OrdersQueryService],
-  exports: [OrdersService],
+  exports: [OrdersService, OrdersQueryService],
 })
 export class OrdersModule {}
