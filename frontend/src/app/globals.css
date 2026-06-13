@@ -25,6 +25,22 @@
   }
 
   /*
+   * Svetlý ZÁKLAD pre natívne inputy (UX-FIX-2, KRITICKÉ).
+   * next-themes má enableColorScheme=true → pri systémovo-dark OS nastaví
+   * color-scheme:dark na <html>, čo stmaví natívne inputy aj na public/login
+   * (text dedí tmavú body farbu → nečitateľné). Explicitný svetlý základ to ruší.
+   * Špecificita input:not×3 = (0,3,1) < (0,5,1) dark .theme-scope nižšie,
+   * takže staff+account inputy ostávajú tmavé; Tailwind bg-* (utilities) prebije
+   * tento základ, takže komponenty s vlastným pozadím sú nedotknuté.
+   */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select {
+    background-color: #ffffff;
+    color: #111827; /* gray-900 */
+  }
+
+  /*
    * Dark formuláre – scopované na .theme-scope (staff shell + account vetva).
    * Verejné stránky (events/checkout) class nemajú → ich inputy ostávajú svetlé
    * aj keď je globálne aktívny dark (izolácia public, Úloha 21).

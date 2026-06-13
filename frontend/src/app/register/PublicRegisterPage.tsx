@@ -55,14 +55,12 @@ export function PublicRegisterPage() {
             <li className="flex items-start gap-2"><span className="mt-0.5 text-rose-500">✓</span>QR skener vstupeniek (PWA, bez inštalácie)</li>
             <li className="flex items-start gap-2"><span className="mt-0.5 text-rose-500">✓</span>Štatistiky predaja a výplata výnosov</li>
           </ul>
-          <a
-            href="https://admin.ticketall.eu/register"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/register/organizer"
             className="mt-6 block rounded-xl bg-rose-500 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-rose-600 transition-colors"
           >
             Zaregistrovať sa ako organizátor
-          </a>
+          </Link>
           <p className="mt-3 text-center text-xs text-slate-400">
             Viac info:{' '}
             <Link href="/pre-organizatorov" className="text-rose-500 hover:underline">Pre organizátorov</Link>
