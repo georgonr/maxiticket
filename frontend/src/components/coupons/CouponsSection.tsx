@@ -102,7 +102,7 @@ export function CouponsSection({
     <div className="flex gap-2">
       <button
         onClick={() => setShowBulk(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
       >
         <Layers size={15} /> Generovať viac kódov
       </button>
@@ -140,7 +140,7 @@ export function CouponsSection({
           </button>
         </div>
       ) : coupons.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-gray-400">
+        <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
           <Ticket size={28} className="text-gray-300" />
           <p>Pre toto podujatie zatiaľ nie sú žiadne kupóny.</p>
           <button onClick={() => setShowCreate(true)} className="font-medium text-brand hover:underline">
@@ -151,7 +151,7 @@ export function CouponsSection({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+              <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                 <th className="py-2 pr-3 font-medium">Kód</th>
                 <th className="py-2 px-3 font-medium">Zľava</th>
                 <th className="py-2 px-3 font-medium">Rozsah</th>
@@ -161,23 +161,23 @@ export function CouponsSection({
                 <th className="py-2 pl-3 font-medium text-right">Akcie</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {coupons.map((c) => {
                 const inherited = isInherited(c);
                 const canDelete = !inherited && c.usedCount === 0;
                 return (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="py-2.5 pr-3 font-mono font-medium text-gray-900">{c.code}</td>
-                    <td className="px-3 text-gray-700">{typeValueLabel(c.type, c.value)}</td>
+                  <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-2.5 pr-3 font-mono font-medium text-gray-900 dark:text-gray-100">{c.code}</td>
+                    <td className="px-3 text-gray-700 dark:text-gray-200">{typeValueLabel(c.type, c.value)}</td>
                     <td className="px-3"><ScopeBadge scope={c.scope} inherited={inherited} /></td>
-                    <td className="px-3 text-gray-500">{validityLabel(c.validFrom, c.validUntil)}</td>
-                    <td className="px-3 tabular-nums text-gray-600">{usageLabel(c.usedCount, c.maxUses)}</td>
+                    <td className="px-3 text-gray-500 dark:text-gray-400">{validityLabel(c.validFrom, c.validUntil)}</td>
+                    <td className="px-3 tabular-nums text-gray-600 dark:text-gray-300">{usageLabel(c.usedCount, c.maxUses)}</td>
                     <td className="px-3"><StatusBadge status={c.status} /></td>
                     <td className="py-2.5 pl-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => setDetailId(c.id)}
-                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                          className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700"
                           title="Detail"
                         >
                           <Eye size={15} />
@@ -185,7 +185,7 @@ export function CouponsSection({
                         <button
                           onClick={() => handleDelete(c)}
                           disabled={!canDelete || deletingId === c.id}
-                          className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400"
+                          className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400"
                           title={
                             inherited
                               ? 'Dedený kupón – upravte v jeho vlastnom rozsahu'

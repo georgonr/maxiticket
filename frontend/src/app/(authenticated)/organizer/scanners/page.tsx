@@ -7,7 +7,6 @@ import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
 import { scannersApi, Scanner } from '@/lib/api/scanners';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { CreateScannerModal } from '@/components/scanners/CreateScannerModal';
 
@@ -103,14 +102,13 @@ export default function ScannersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
 
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Skeneri</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Skeneri</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Účty pre personál na vstupe – môžu výhradne skenovať vstupenky vašich podujatí.
             </p>
           </div>
@@ -149,7 +147,7 @@ export default function ScannersPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                    <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                       <th className="py-2 pr-3 font-medium">E-mail</th>
                       <th className="py-2 px-3 font-medium">Meno</th>
                       <th className="py-2 px-3 font-medium">Stav</th>
@@ -157,30 +155,30 @@ export default function ScannersPage() {
                       <th className="py-2 pl-3 font-medium text-right">Akcie</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     {scanners.map((s) => (
-                      <tr key={s.id} className="hover:bg-gray-50">
-                        <td className="py-2.5 pr-3 font-medium text-gray-900">{s.email}</td>
-                        <td className="px-3 text-gray-600">{s.firstName ?? '—'}</td>
+                      <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td className="py-2.5 pr-3 font-medium text-gray-900 dark:text-gray-100">{s.email}</td>
+                        <td className="px-3 text-gray-600 dark:text-gray-300">{s.firstName ?? '—'}</td>
                         <td className="px-3">
                           <span
                             className={clsx(
                               'inline-block rounded-full px-2 py-0.5 text-xs font-medium',
                               s.isActive
                                 ? 'bg-emerald-50 text-emerald-700'
-                                : 'bg-gray-100 text-gray-500',
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
                             )}
                           >
                             {s.isActive ? 'Aktívny' : 'Deaktivovaný'}
                           </span>
                         </td>
-                        <td className="px-3 text-gray-500">{formatDate(s.createdAt)}</td>
+                        <td className="px-3 text-gray-500 dark:text-gray-400">{formatDate(s.createdAt)}</td>
                         <td className="py-2.5 pl-3">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => toggleActive(s)}
                               disabled={busyId === s.id}
-                              className="inline-flex items-center gap-1 rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40"
+                              className="inline-flex items-center gap-1 rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40"
                               title={s.isActive ? 'Deaktivovať' : 'Aktivovať'}
                             >
                               <Power size={15} className={s.isActive ? 'text-emerald-600' : ''} />
@@ -188,7 +186,7 @@ export default function ScannersPage() {
                             <button
                               onClick={() => removeScanner(s)}
                               disabled={busyId === s.id}
-                              className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                              className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
                               title="Zmazať"
                             >
                               <Trash2 size={15} />
@@ -205,7 +203,7 @@ export default function ScannersPage() {
         )}
 
         {!loading && scanners.length === 0 && canManage && (
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
             <ScanLine size={15} /> Skeneri sa prihlasujú cez prihlasovaciu stránku a sú presmerovaní
             na skener.ticketall.eu.
           </div>

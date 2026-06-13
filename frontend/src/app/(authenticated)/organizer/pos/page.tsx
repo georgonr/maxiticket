@@ -11,7 +11,6 @@ import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
 import { posApi, PosTermin, PosOrderResult, PosSummary } from '@/lib/api/pos';
 import { formatPrice, formatDate } from '@/lib/format';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { QrCanvas } from '@/components/pos/QrCanvas';
 
 type Step = 'termin' | 'tickets' | 'payment' | 'done';
@@ -156,22 +155,21 @@ export default function PosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
-      <div className="print:hidden"><DashboardHeader /></div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 print:bg-white">
       <main className="mx-auto max-w-3xl p-4 sm:p-6 print:hidden">
-        <h1 className="mb-4 text-2xl font-bold text-gray-900">Pokladňa</h1>
+        <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">Pokladňa</h1>
 
         {/* Summary lišta – od poslednej uzávierky */}
         {summary && (
           <Link
             href="/organizer/pos/closures"
-            className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm hover:border-brand"
+            className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 text-sm shadow-sm hover:border-brand"
           >
-            <span className="text-gray-500">Od poslednej uzávierky:</span>
+            <span className="text-gray-500 dark:text-gray-400">Od poslednej uzávierky:</span>
             <span className="flex items-center gap-3 font-medium">
               <span className="text-emerald-700">{formatPrice(summary.cashTotal)} hotovosť</span>
               <span className="text-sky-700">{formatPrice(summary.cardTotal)} karta</span>
-              <span className="text-gray-400">· {summary.ticketCount} lístkov</span>
+              <span className="text-gray-400 dark:text-gray-500">· {summary.ticketCount} lístkov</span>
             </span>
             <span className="inline-flex items-center gap-1 text-brand">
               <Lock size={13} /> Uzávierka →
@@ -187,22 +185,22 @@ export default function PosPage() {
             <button onClick={load} className="inline-flex items-center gap-1 font-medium underline"><RefreshCw size={13} /> Skúsiť znova</button>
           </div>
         ) : termins.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-500">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 text-center text-gray-500 dark:text-gray-400">
             Žiadne aktívne termíny na predaj. Vytvorte termín so statusom „V predaji".
           </div>
         ) : step === 'termin' ? (
           <div className="space-y-3">
-            <p className="text-sm text-gray-500">Vyberte termín:</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Vyberte termín:</p>
             {termins.map((t) => (
               <button
                 key={t.terminId}
                 onClick={() => selectTermin(t)}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-brand active:bg-gray-50"
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 text-left shadow-sm hover:border-brand active:bg-gray-50"
               >
                 <div>
-                  <div className="font-semibold text-gray-900">{t.showName}</div>
-                  <div className="mt-0.5 flex items-center gap-1 text-sm text-gray-500"><Calendar size={13} /> {formatDate(t.startsAt)}</div>
-                  {t.venueName && <div className="flex items-center gap-1 text-sm text-gray-500"><MapPin size={13} /> {t.venueName}{t.venueCity ? `, ${t.venueCity}` : ''}</div>}
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">{t.showName}</div>
+                  <div className="mt-0.5 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"><Calendar size={13} /> {formatDate(t.startsAt)}</div>
+                  {t.venueName && <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"><MapPin size={13} /> {t.venueName}{t.venueCity ? `, ${t.venueCity}` : ''}</div>}
                 </div>
                 <span className="text-brand">›</span>
               </button>
@@ -211,9 +209,9 @@ export default function PosPage() {
         ) : step === 'tickets' && selected ? (
           <div className="space-y-4">
             <button onClick={() => setStep('termin')} className="inline-flex items-center gap-1 text-sm text-brand"><ArrowLeft size={15} /> Iný termín</button>
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="font-semibold text-gray-900">{selected.showName}</div>
-              <div className="text-sm text-gray-500">{formatDate(selected.startsAt)}{selected.venueName ? ` • ${selected.venueName}` : ''}</div>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+              <div className="font-semibold text-gray-900 dark:text-gray-100">{selected.showName}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{formatDate(selected.startsAt)}{selected.venueName ? ` • ${selected.venueName}` : ''}</div>
             </div>
 
             <div className="space-y-2">
@@ -221,21 +219,21 @@ export default function PosPage() {
                 const n = qty[tt.ticketTypeId] ?? 0;
                 const soldOut = tt.remaining != null && tt.remaining <= 0;
                 return (
-                  <div key={tt.ticketTypeId} className={clsx('flex items-center justify-between gap-3 rounded-xl border bg-white p-4', soldOut ? 'border-gray-100 opacity-60' : 'border-gray-200')}>
+                  <div key={tt.ticketTypeId} className={clsx('flex items-center justify-between gap-3 rounded-xl border bg-white dark:bg-gray-900 p-4', soldOut ? 'border-gray-100 dark:border-gray-800 opacity-60' : 'border-gray-200 dark:border-gray-800')}>
                     <div>
-                      <div className="font-medium text-gray-900">{tt.name}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{tt.name}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         {formatPrice(tt.price, tt.currency)}
-                        {tt.remaining != null && <span className="ml-2 text-xs text-gray-400">zostáva {tt.remaining}</span>}
+                        {tt.remaining != null && <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">zostáva {tt.remaining}</span>}
                       </div>
                     </div>
                     {soldOut ? (
-                      <span className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-400">Vypredané</span>
+                      <span className="rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-400 dark:text-gray-500">Vypredané</span>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <button onClick={() => setQuantity(tt.ticketTypeId, -1, tt.remaining, tt.maxPerOrder)} disabled={n === 0} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 text-gray-700 disabled:opacity-30 active:bg-gray-100"><Minus size={18} /></button>
+                        <button onClick={() => setQuantity(tt.ticketTypeId, -1, tt.remaining, tt.maxPerOrder)} disabled={n === 0} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-30 active:bg-gray-100"><Minus size={18} /></button>
                         <span className="w-8 text-center text-lg font-semibold tabular-nums">{n}</span>
-                        <button onClick={() => setQuantity(tt.ticketTypeId, 1, tt.remaining, tt.maxPerOrder)} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 text-gray-700 active:bg-gray-100"><Plus size={18} /></button>
+                        <button onClick={() => setQuantity(tt.ticketTypeId, 1, tt.remaining, tt.maxPerOrder)} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 active:bg-gray-100"><Plus size={18} /></button>
                       </div>
                     )}
                   </div>
@@ -247,13 +245,13 @@ export default function PosPage() {
               value={coupon}
               onChange={(e) => setCoupon(e.target.value)}
               placeholder="Zľavový kupón (voliteľné)"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm uppercase focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
             />
 
-            <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
+            <div className="sticky bottom-0 flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-lg">
               <div>
-                <div className="text-xs text-gray-400">Súčet ({totalQty} ks)</div>
-                <div className="text-2xl font-bold text-gray-900">{formatPrice(subtotal)}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">Súčet ({totalQty} ks)</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(subtotal)}</div>
               </div>
               <button
                 onClick={() => setStep('payment')}
@@ -268,16 +266,16 @@ export default function PosPage() {
           <div className="space-y-4">
             <button onClick={() => setStep('tickets')} className="inline-flex items-center gap-1 text-sm text-brand"><ArrowLeft size={15} /> Späť na lístky</button>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
-              <div className="text-sm text-gray-400">Na úhradu</div>
-              <div className="text-4xl font-bold text-gray-900">{formatPrice(subtotal)}</div>
-              <div className="mt-1 text-sm text-gray-500">{totalQty} {totalQty === 1 ? 'lístok' : 'lístky/-ov'}{coupon.trim() ? ` • kupón ${coupon.trim().toUpperCase()}` : ''}</div>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-center">
+              <div className="text-sm text-gray-400 dark:text-gray-500">Na úhradu</div>
+              <div className="text-4xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(subtotal)}</div>
+              <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">{totalQty} {totalQty === 1 ? 'lístok' : 'lístky/-ov'}{coupon.trim() ? ` • kupón ${coupon.trim().toUpperCase()}` : ''}</div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-              <p className="text-sm font-medium text-gray-700">Kupujúci (voliteľné – nechať prázdne = anonymný predaj)</p>
-              <input value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} type="email" placeholder="E-mail (lístky pošleme sem)" className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-              <input value={buyerName} onChange={(e) => setBuyerName(e.target.value)} placeholder="Meno" className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Kupujúci (voliteľné – nechať prázdne = anonymný predaj)</p>
+              <input value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} type="email" placeholder="E-mail (lístky pošleme sem)" className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+              <input value={buyerName} onChange={(e) => setBuyerName(e.target.value)} placeholder="Meno" className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
             </div>
 
             {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
@@ -293,7 +291,7 @@ export default function PosPage() {
               </button>
             </div>
             {submitting && <div className="flex justify-center"><Loader2 className="animate-spin text-brand" size={28} /></div>}
-            <p className="text-center text-xs text-gray-400">Karta = potvrďte až po schválení na platobnom termináli.</p>
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500">Karta = potvrďte až po schválení na platobnom termináli.</p>
           </div>
         ) : step === 'done' && result ? (
           <div className="space-y-4">
@@ -301,34 +299,34 @@ export default function PosPage() {
               <CheckCircle2 size={40} className="text-emerald-600" />
               <div className="text-lg font-bold text-emerald-800">Predaj dokončený</div>
               <div className="font-mono text-sm text-emerald-700">{result.orderNumber}</div>
-              <div className="text-2xl font-bold text-gray-900">{formatPrice(result.totalAmount, result.currency)}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(result.totalAmount, result.currency)}</div>
               {result.discountAmount > 0 && <div className="text-sm text-emerald-600">zľava −{formatPrice(result.discountAmount, result.currency)}</div>}
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="mb-3 text-sm font-medium text-gray-700">Lístky ({result.tickets.length}) – zákazník odfotí alebo personál naskenuje:</p>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+              <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-200">Lístky ({result.tickets.length}) – zákazník odfotí alebo personál naskenuje:</p>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {result.tickets.map((t, i) => (
                   <div key={t.ticketId} className="flex flex-col items-center gap-1">
                     <QrCanvas value={t.qrToken} size={150} />
-                    <span className="text-xs font-medium text-gray-600">{t.ticketTypeName}</span>
-                    <span className="font-mono text-[10px] text-gray-400">…{t.ticketId.slice(-4).toUpperCase()}</span>
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t.ticketTypeName}</span>
+                    <span className="font-mono text-[10px] text-gray-400 dark:text-gray-500">…{t.ticketId.slice(-4).toUpperCase()}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-2">
               {!result.emailSent && (
                 <div className="flex gap-2">
-                  <input value={emailPrompt} onChange={(e) => setEmailPrompt(e.target.value)} type="email" placeholder="E-mail pre zaslanie lístkov" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+                  <input value={emailPrompt} onChange={(e) => setEmailPrompt(e.target.value)} type="email" placeholder="E-mail pre zaslanie lístkov" className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
-                <button onClick={sendEmail} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button onClick={sendEmail} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <Mail size={15} /> Poslať e-mailom
                 </button>
-                <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <Printer size={15} /> Vytlačiť
                 </button>
               </div>
@@ -346,14 +344,14 @@ export default function PosPage() {
       {result && selected && (
         <div className="hidden print:block">
           {result.tickets.map((t) => (
-            <div key={`print-${t.ticketId}`} className="flex break-inside-avoid items-center gap-6 border-b border-gray-300 p-6">
+            <div key={`print-${t.ticketId}`} className="flex break-inside-avoid items-center gap-6 border-b border-gray-300 dark:border-gray-700 p-6">
               <QrCanvas value={t.qrToken} size={180} />
               <div className="space-y-1">
-                <div className="text-xl font-bold text-gray-900">{selected.showName}</div>
-                <div className="text-gray-700">{formatDate(selected.startsAt)}</div>
-                {selected.venueName && <div className="text-gray-700">{selected.venueName}{selected.venueCity ? `, ${selected.venueCity}` : ''}</div>}
-                <div className="pt-1 font-medium text-gray-900">{t.ticketTypeName}</div>
-                <div className="font-mono text-sm text-gray-500">{result.orderNumber} · …{t.ticketId.slice(-4).toUpperCase()}</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{selected.showName}</div>
+                <div className="text-gray-700 dark:text-gray-200">{formatDate(selected.startsAt)}</div>
+                {selected.venueName && <div className="text-gray-700 dark:text-gray-200">{selected.venueName}{selected.venueCity ? `, ${selected.venueCity}` : ''}</div>}
+                <div className="pt-1 font-medium text-gray-900 dark:text-gray-100">{t.ticketTypeName}</div>
+                <div className="font-mono text-sm text-gray-500 dark:text-gray-400">{result.orderNumber} · …{t.ticketId.slice(-4).toUpperCase()}</div>
               </div>
             </div>
           ))}

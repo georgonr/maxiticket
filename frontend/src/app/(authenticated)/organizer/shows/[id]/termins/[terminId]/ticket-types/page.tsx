@@ -23,9 +23,9 @@ function toLocalDT(iso: string) {
 function nowDT() { return toLocalDT(new Date().toISOString()); }
 
 function getSaleBadge(tt: TicketType) {
-  if (!tt.isActive) return { label: 'Neaktívny', cls: 'bg-gray-100 text-gray-500' };
+  if (!tt.isActive) return { label: 'Neaktívny', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
   const now = new Date();
-  if (tt.saleEndsAt && new Date(tt.saleEndsAt) <= now) return { label: 'Predaj ukončený', cls: 'bg-gray-100 text-gray-500' };
+  if (tt.saleEndsAt && new Date(tt.saleEndsAt) <= now) return { label: 'Predaj ukončený', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
   if (tt.saleStartsAt && new Date(tt.saleStartsAt) > now) return { label: 'Čoskoro v predaji', cls: 'bg-blue-100 text-blue-700' };
   return { label: 'V predaji', cls: 'bg-green-100 text-green-700' };
 }
@@ -125,8 +125,8 @@ export default function TicketTypesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
       </header>
@@ -140,20 +140,20 @@ export default function TicketTypesPage() {
 
         {/* Existing ticket types */}
         {ticketTypes.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
             {ticketTypes.map((tt) => {
               const badge = getSaleBadge(tt);
               return (
                 <div key={tt.id} className="flex items-center justify-between px-4 py-3 gap-4">
                   <div>
                     <p className="font-medium text-sm">{tt.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {tt.price} {tt.currency}
                       {tt.totalQuantity ? ` · ${tt.totalQuantity} ks` : ''}
                       {` · max ${tt.maxPerOrder}/objednávka`}
                     </p>
                     {tt.saleStartsAt && (
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         Predaj od: {new Date(tt.saleStartsAt).toLocaleString('sk-SK')}
                         {tt.saleEndsAt ? ` – ${new Date(tt.saleEndsAt).toLocaleString('sk-SK')}` : ''}
                       </p>
@@ -174,11 +174,11 @@ export default function TicketTypesPage() {
         )}
 
         {ticketTypes.length === 0 && (
-          <p className="text-sm text-gray-500">Žiadne typy lístkov.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Žiadne typy lístkov.</p>
         )}
 
         {/* Add form */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="font-semibold mb-4">Pridať typ lístka</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -219,7 +219,7 @@ export default function TicketTypesPage() {
                 type="checkbox"
                 checked={startSaleNow}
                 onChange={(e) => handleStartSaleNow(e.target.checked)}
-                className="rounded border-gray-300 text-brand focus:ring-brand"
+                className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand"
               />
               <span className="font-medium text-indigo-800">
                 Okamžite začať predaj
@@ -245,7 +245,7 @@ export default function TicketTypesPage() {
                 type="checkbox"
                 checked={form.isActive ?? true}
                 onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                className="rounded border-gray-300 text-brand focus:ring-brand"
+                className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand"
               />
               Aktívny (dostupný na predaj)
             </label>

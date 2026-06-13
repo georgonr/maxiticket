@@ -31,7 +31,7 @@ export function ScopeBadge({ scope, inherited }: { scope: CouponScope; inherited
     <span className="inline-flex items-center gap-1">
       <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', m.cls)}>{m.label}</span>
       {inherited && (
-        <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+        <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400">
           dedené
         </span>
       )}
@@ -42,12 +42,12 @@ export function ScopeBadge({ scope, inherited }: { scope: CouponScope; inherited
 const STATUS_META: Record<CouponStatus, { label: string; cls: string }> = {
   active: { label: 'Aktívny', cls: 'bg-emerald-50 text-emerald-700' },
   scheduled: { label: 'Naplánovaný', cls: 'bg-blue-50 text-blue-700' },
-  expired: { label: 'Expirovaný', cls: 'bg-gray-100 text-gray-500' },
+  expired: { label: 'Expirovaný', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
   exhausted: { label: 'Vyčerpaný', cls: 'bg-orange-50 text-orange-700' },
 };
 
 export function StatusBadge({ status }: { status: CouponStatus }) {
-  const m = STATUS_META[status] ?? { label: status, cls: 'bg-gray-100 text-gray-500' };
+  const m = STATUS_META[status] ?? { label: status, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
   return (
     <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', m.cls)}>
       {m.label}
@@ -97,14 +97,14 @@ export function ModalShell({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl bg-white shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl bg-white dark:bg-gray-900 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <h3 className="font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600"
             aria-label="Zavrieť"
           >
             <X size={18} />
@@ -112,7 +112,7 @@ export function ModalShell({
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
-          <div className="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">{footer}</div>
+          <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-gray-800 px-5 py-4">{footer}</div>
         )}
       </div>
     </div>
@@ -124,12 +124,12 @@ export function ModalShell({
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-gray-400">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{hint}</span>}
     </label>
   );
 }
 
 export const inputCls =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand';
+  'w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand';

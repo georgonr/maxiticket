@@ -23,4 +23,22 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /*
+   * Dark formuláre – scopované na .theme-scope (staff shell + account vetva).
+   * Verejné stránky (events/checkout) class nemajú → ich inputy ostávajú svetlé
+   * aj keď je globálne aktívny dark (izolácia public, Úloha 21).
+   */
+  .dark .theme-scope input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  .dark .theme-scope textarea,
+  .dark .theme-scope select {
+    background-color: #111827; /* gray-900 */
+    color: #f3f4f6;            /* gray-100 */
+    border-color: #374151;     /* gray-700 */
+  }
+
+  .dark .theme-scope input::placeholder,
+  .dark .theme-scope textarea::placeholder {
+    color: #6b7280; /* gray-500 */
+  }
 }

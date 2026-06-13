@@ -123,14 +123,14 @@ export function useCouponFields(opts: { showId: string; ticketTypes: FlatTicketT
           disabled={isFree}
           min={type === 'PERCENTAGE' ? 1 : 0}
           max={type === 'PERCENTAGE' ? 100 : undefined}
-          className={inputCls + (isFree ? ' bg-gray-50 text-gray-400' : '')}
+          className={inputCls + (isFree ? ' bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-500' : '')}
           placeholder={type === 'PERCENTAGE' ? 'napr. 15' : 'napr. 5'}
         />
       </Field>
 
       <Field label="Rozsah platnosti">
         <div className="flex gap-2">
-          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm">
             <input
               type="radio"
               name="coupon-scope"
@@ -140,7 +140,7 @@ export function useCouponFields(opts: { showId: string; ticketTypes: FlatTicketT
             />
             Celé podujatie
           </label>
-          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm">
             <input
               type="radio"
               name="coupon-scope"

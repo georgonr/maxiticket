@@ -49,16 +49,16 @@ export default function TicketPage({ params }: { params: { id: string } }) {
   }
 
   if (!ticket) {
-    return <div className="py-20 text-center text-gray-500">Vstupenka nenájdená.</div>;
+    return <div className="py-20 text-center text-gray-500 dark:text-gray-400">Vstupenka nenájdená.</div>;
   }
 
   return (
     <div className="mx-auto max-w-sm">
-      <Link href="/account/tickets" className="mb-6 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
+      <Link href="/account/tickets" className="mb-6 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800">
         <ArrowLeft size={14} /> Všetky lístky
       </Link>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg">
         {/* Header */}
         <div className="bg-indigo-600 px-5 py-4 text-white">
           <p className="text-xs font-medium uppercase tracking-wider opacity-75">Vstupenka / Ticket</p>
@@ -89,25 +89,25 @@ export default function TicketPage({ params }: { params: { id: string } }) {
         {/* QR Code */}
         <div className="flex flex-col items-center px-5 py-6">
           <div className={`rounded-xl p-3 shadow-inner ${
-            ticket.status === 'VALID' ? 'bg-gray-50' : 'bg-red-50 opacity-60'
+            ticket.status === 'VALID' ? 'bg-gray-50 dark:bg-gray-900' : 'bg-red-50 opacity-60'
           }`}>
             <canvas ref={canvasRef} className="block" />
           </div>
           {ticket.status !== 'VALID' && (
             <p className="mt-3 text-sm font-medium text-red-600">Vstupenka bola použitá</p>
           )}
-          <p className="mt-3 font-mono text-xs text-gray-400">
+          <p className="mt-3 font-mono text-xs text-gray-400 dark:text-gray-500">
             {ticket.id.slice(-12).toUpperCase()}
           </p>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-dashed border-gray-200 px-5 py-3 text-xs text-gray-400 text-center">
+        <div className="border-t border-dashed border-gray-200 dark:border-gray-800 px-5 py-3 text-xs text-gray-400 dark:text-gray-500 text-center">
           Obj: {ticket.order.orderNumber} • QR kód je jednorazový
         </div>
       </div>
 
-      <p className="mt-4 text-center text-xs text-gray-400">
+      <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
         Predložte QR kód pri vstupe na podujatie
       </p>
     </div>

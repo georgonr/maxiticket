@@ -21,10 +21,10 @@ function TrendTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <div className="font-medium text-gray-900">{p.label}</div>
-      <div className="mt-1 text-emerald-600">{formatPrice(p.revenue)}</div>
-      <div className="text-gray-500">{p.ticketsSold} vstupeniek</div>
+    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-md dark:border-gray-700 dark:bg-gray-800">
+      <div className="font-medium text-gray-900 dark:text-gray-100">{p.label}</div>
+      <div className="mt-1 text-emerald-600 dark:text-emerald-400">{formatPrice(p.revenue)}</div>
+      <div className="text-gray-500 dark:text-gray-400">{p.ticketsSold} vstupeniek</div>
     </div>
   );
 }

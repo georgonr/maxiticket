@@ -26,7 +26,6 @@ import {
   RecentOrder,
   OrganizerRow,
 } from '@/lib/api/metrics';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { SalesTrendChart } from '@/components/dashboard/SalesTrendChart';
 import { TopShowsChart } from '@/components/dashboard/TopShowsChart';
 import { RecentOrdersList } from '@/components/dashboard/RecentOrdersList';
@@ -136,16 +135,15 @@ export default function OrganizerDashboardPage() {
       : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
 
       <main className="mx-auto max-w-7xl space-y-6 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {greeting()}, {user?.email}
             </h1>
-            <p className="text-sm text-gray-500">Prehľad vašich podujatí a predajov</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Prehľad vašich podujatí a predajov</p>
           </div>
           <div className="flex items-center gap-2">
             {isSuperAdmin && orgList.length > 0 && (
@@ -203,23 +201,23 @@ export default function OrganizerDashboardPage() {
                 value={String(overview.myUpcomingTermins)}
                 icon={<CalendarClock className="h-5 w-5" />}
               />
-              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Obsadenosť</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Obsadenosť</span>
                   <span className="text-brand">
                     <Users className="h-5 w-5" />
                   </span>
                 </div>
-                <div className="mt-2 text-2xl font-bold tabular-nums text-gray-900">
+                <div className="mt-2 text-2xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
                   {overview.myCapacityFilled} / {overview.myCapacityTotal}
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                   <div
                     className="h-full rounded-full bg-brand transition-all"
                     style={{ width: `${capacityPct}%` }}
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                   {capacityPct}% obsadené (najbližšie termíny)
                 </p>
               </div>
@@ -256,14 +254,14 @@ export default function OrganizerDashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Link
             href="/organizer/shows"
-            className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+            className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm transition-shadow hover:shadow-md"
           >
             <span className="rounded-lg bg-brand/10 p-2 text-brand">
               <Plus className="h-5 w-5" />
             </span>
             <div>
-              <h3 className="font-semibold text-gray-900">Pridať podujatie</h3>
-              <p className="text-sm text-gray-500">Vytvorte a spravujte svoje show</p>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Pridať podujatie</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Vytvorte a spravujte svoje show</p>
             </div>
           </Link>
           <a
@@ -279,7 +277,7 @@ export default function OrganizerDashboardPage() {
             </span>
             <div>
               <h3 className="font-semibold text-brand">Skenovať vstupenky</h3>
-              <p className="text-sm text-gray-600">Otvorí mobilný skener pre kontrolu QR kódov</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Otvorí mobilný skener pre kontrolu QR kódov</p>
             </div>
           </a>
         </div>

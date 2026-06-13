@@ -24,7 +24,6 @@ import {
   OrganizerRow,
   OrganizerSort,
 } from '@/lib/api/metrics';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { SalesTrendChart } from '@/components/dashboard/SalesTrendChart';
 import { TopShowsChart } from '@/components/dashboard/TopShowsChart';
 import { RecentOrdersList } from '@/components/dashboard/RecentOrdersList';
@@ -104,17 +103,16 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
 
       <main className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Header s pozdravom */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {greeting()}, {user?.email}
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Tu je prehľad platformy TicketAll v reálnom čase
             </p>
           </div>
@@ -223,7 +221,7 @@ export default function AdminDashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                  <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                     <th className="py-2 pr-3 font-medium">Organizátor</th>
                     <th className="py-2 px-3 font-medium">Podujatia</th>
                     <th className="py-2 px-3 text-right font-medium">Tržby</th>
@@ -231,25 +229,25 @@ export default function AdminDashboardPage() {
                     <th className="py-2 pl-3 text-right font-medium">Výplata (odhad)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                   {organizers.map((o) => (
-                    <tr key={o.organizerId} className="hover:bg-gray-50">
+                    <tr key={o.organizerId} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="py-2.5 pr-3">
-                        <div className="font-medium text-gray-900">{o.name}</div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">{o.name}</div>
                         {o.companyName && (
-                          <div className="text-xs text-gray-400">{o.companyName}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">{o.companyName}</div>
                         )}
                       </td>
-                      <td className="px-3 text-gray-600 tabular-nums">
+                      <td className="px-3 text-gray-600 dark:text-gray-300 tabular-nums">
                         {o.publishedShowsCount}/{o.showsCount}
                       </td>
-                      <td className="px-3 text-right font-medium tabular-nums text-gray-900">
+                      <td className="px-3 text-right font-medium tabular-nums text-gray-900 dark:text-gray-100">
                         {formatPrice(o.totalRevenue)}
                       </td>
-                      <td className="px-3 text-right tabular-nums text-gray-600">
+                      <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">
                         {o.totalTicketsSold}
                       </td>
-                      <td className="pl-3 text-right tabular-nums text-gray-500">
+                      <td className="pl-3 text-right tabular-nums text-gray-500 dark:text-gray-400">
                         {formatPrice(o.outstandingPayout)}
                       </td>
                     </tr>

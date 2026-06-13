@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CouponsSection } from '@/components/coupons/CouponsSection';
 
 const STATUS_STYLES: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-600',
+  DRAFT: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300',
   PUBLISHED: 'bg-green-100 text-green-700',
   ARCHIVED: 'bg-yellow-100 text-yellow-700',
   ON_SALE: 'bg-green-100 text-green-700',
@@ -118,8 +118,8 @@ export default function ShowDetailPage() {
   const cover = show.images?.find((i) => i.isCover);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
       </header>
@@ -130,21 +130,21 @@ export default function ShowDetailPage() {
         )}
 
         {/* Show header */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex gap-4 items-start">
               {cover && (
-                <img src={cover.squareUrl} alt={show.name} className="h-20 w-20 rounded-md object-cover flex-shrink-0 border border-gray-200" />
+                <img src={cover.squareUrl} alt={show.name} className="h-20 w-20 rounded-md object-cover flex-shrink-0 border border-gray-200 dark:border-gray-800" />
               )}
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <h1 className="text-2xl font-bold">{show.name}</h1>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[show.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[show.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
                     {show.status}
                   </span>
                 </div>
-                {show.category && <p className="text-sm text-gray-500">{show.category}</p>}
-                {show.description && <p className="mt-1 text-sm text-gray-700">{show.description}</p>}
+                {show.category && <p className="text-sm text-gray-500 dark:text-gray-400">{show.category}</p>}
+                {show.description && <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">{show.description}</p>}
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={() => router.push(`/organizer/shows/${id}/edit`)}>Editovať</Button>
@@ -152,9 +152,9 @@ export default function ShowDetailPage() {
         </div>
 
         {/* Gallery */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="text-lg font-semibold mb-1">Galéria</h2>
-          <p className="text-xs text-gray-500 mb-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
             Prvý nahraný obrázok sa automaticky stane titulkou. Titulku môžete neskôr zmeniť kliknutím na ľubovoľný obrázok.
           </p>
 
@@ -195,7 +195,7 @@ export default function ShowDetailPage() {
           )}
 
           {show.images?.length === 0 && (
-            <p className="text-sm text-gray-400 mb-4">Žiadne obrázky. Nahrajte prvý obrázok.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Žiadne obrázky. Nahrajte prvý obrázok.</p>
           )}
 
           {/* Upload new images */}
@@ -218,7 +218,7 @@ export default function ShowDetailPage() {
                 <div className="flex flex-wrap gap-2">
                   {uploadPreviews.map((p, i) => (
                     <div key={i} className="relative">
-                      <img src={p.preview} alt="" className="h-16 w-16 rounded object-cover border border-gray-200" />
+                      <img src={p.preview} alt="" className="h-16 w-16 rounded object-cover border border-gray-200 dark:border-gray-800" />
                       <button
                         onClick={() => setUploadPreviews((prev) => { URL.revokeObjectURL(prev[i].preview); return prev.filter((_, j) => j !== i); })}
                         className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center leading-none"
@@ -227,7 +227,7 @@ export default function ShowDetailPage() {
                   ))}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-16 w-16 rounded border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xl hover:border-gray-400"
+                    className="h-16 w-16 rounded border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xl hover:border-gray-400"
                   >+</button>
                 </div>
                 <div className="flex gap-2">
@@ -244,14 +244,14 @@ export default function ShowDetailPage() {
         </div>
 
         {/* Termins */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Termíny</h2>
             <Button size="sm" onClick={() => router.push(`/organizer/shows/${id}/termins/new`)}>+ Pridať termín</Button>
           </div>
 
           {(!show.termins || show.termins.length === 0) ? (
-            <p className="text-sm text-gray-500">Žiadne termíny. Pridajte prvý termín.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Žiadne termíny. Pridajte prvý termín.</p>
           ) : (
             <div className="space-y-4">
               {show.termins.map((termin: Termin) => (
@@ -295,32 +295,32 @@ function TerminCard({
   const ticketTypes: TicketType[] = termin.ticketTypes ?? [];
 
   return (
-    <div className="rounded-md border border-gray-200 p-4">
+    <div className="rounded-md border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-medium text-sm">{date}</p>
           {termin.venue && (
-            <p className="text-xs text-gray-500">{termin.venue.name}{termin.venue.city ? `, ${termin.venue.city}` : ''}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{termin.venue.name}{termin.venue.city ? `, ${termin.venue.city}` : ''}</p>
           )}
-          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[termin.status] ?? 'bg-gray-100 text-gray-600'}`}>
+          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[termin.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
             {termin.status}
           </span>
         </div>
         <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={onDelete}>Odstrániť</Button>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-100">
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-gray-600">Typy lístkov ({ticketTypes.length})</p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Typy lístkov ({ticketTypes.length})</p>
           <button onClick={onAddTicketType} className="text-xs text-brand hover:underline">+ Pridať typ lístka</button>
         </div>
         {ticketTypes.length > 0 && (
           <div className="space-y-1">
             {ticketTypes.map((tt) => (
-              <div key={tt.id} className="flex items-center justify-between text-xs bg-gray-50 rounded px-2 py-1">
+              <div key={tt.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-900 rounded px-2 py-1">
                 <span className="font-medium">{tt.name}</span>
-                <span className="text-gray-500">{tt.price} {tt.currency}</span>
-                <span className={tt.isActive ? 'text-green-600' : 'text-gray-400'}>{tt.isActive ? 'Aktívny' : 'Neaktívny'}</span>
+                <span className="text-gray-500 dark:text-gray-400">{tt.price} {tt.currency}</span>
+                <span className={tt.isActive ? 'text-green-600' : 'text-gray-400 dark:text-gray-500'}>{tt.isActive ? 'Aktívny' : 'Neaktívny'}</span>
                 <button onClick={() => onDeleteTicketType(tt.id)} className="text-red-500 hover:text-red-700 ml-2">×</button>
               </div>
             ))}

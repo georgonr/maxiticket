@@ -130,30 +130,30 @@ export default function PlatformInfoPage() {
 
   if (allowed === false) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Prístup zamietnutý</h1>
-        <p className="text-gray-500 mb-6">Táto sekcia je dostupná len pre správcu platformy.</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Prístup zamietnutý</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">Táto sekcia je dostupná len pre správcu platformy.</p>
         <Link href="/organizer/shows"><Button variant="outline">Späť na podujatia</Button></Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {toast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-lg transition-all ${toast.ok ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
           {toast.msg}
         </div>
       )}
 
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-6 sm:p-8">
         <h1 className="text-2xl font-bold mb-1">Platforma</h1>
-        <p className="text-gray-500 mb-6 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
           Údaje prevádzkovateľa platformy a predvolené sadzby DPH. Zobrazujú sa na vstupenkách.
         </p>
 
@@ -161,7 +161,7 @@ export default function PlatformInfoPage() {
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
-        <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
           <Input
             id="legalName" label="Právny názov"
             placeholder="TicketAll s.r.o."
@@ -175,8 +175,8 @@ export default function PlatformInfoPage() {
               value={form.icDph} onChange={(e) => set('icDph', e.target.value)} />
           </div>
 
-          <div className="border-t border-gray-100 pt-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Sídlo</h2>
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Sídlo</h2>
             <div className="space-y-4">
               <Input id="addressStreet" label="Ulica a číslo" placeholder="Napr. Hlavná 1"
                 value={form.addressStreet} onChange={(e) => set('addressStreet', e.target.value)} />
@@ -191,8 +191,8 @@ export default function PlatformInfoPage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Predvolené sadzby DPH</h2>
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Predvolené sadzby DPH</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input id="defaultVatRateSk" label="SK sadzba (%)" type="number" step="0.01" placeholder="20.00"
                 value={form.defaultVatRateSk} onChange={(e) => set('defaultVatRateSk', e.target.value)} />

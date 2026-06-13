@@ -7,12 +7,12 @@ import { venuesApi, Venue, CreateVenueBody } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
 const inputCls =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand';
+  'w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{label}</span>
       {children}
     </label>
   );
@@ -83,10 +83,10 @@ export function VenueFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <h3 className="font-semibold text-gray-900">{isEdit ? 'Upraviť miesto' : 'Pridať miesto'}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label="Zavrieť">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{isEdit ? 'Upraviť miesto' : 'Pridať miesto'}</h3>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600" aria-label="Zavrieť">
             <X size={18} />
           </button>
         </div>
@@ -123,7 +123,7 @@ export function VenueFormModal({
           {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+        <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-gray-800 px-5 py-4">
           <Button variant="outline" onClick={onClose} disabled={submitting}>Zrušiť</Button>
           <Button onClick={handleSubmit} loading={submitting} disabled={submitting}>
             {isEdit ? 'Uložiť' : 'Vytvoriť'}

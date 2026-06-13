@@ -67,7 +67,7 @@ export default function ShowsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-lg transition-all ${toast.ok ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
@@ -75,7 +75,7 @@ export default function ShowsPage() {
         </div>
       )}
 
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
       </header>
@@ -93,8 +93,8 @@ export default function ShowsPage() {
         )}
 
         {shows.length === 0 ? (
-          <div className="rounded-lg border-2 border-dashed border-gray-300 bg-white p-12 text-center">
-            <p className="text-gray-500 mb-4">Zatiaľ nemáte žiadne podujatia.</p>
+          <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Zatiaľ nemáte žiadne podujatia.</p>
             <Button onClick={() => router.push('/organizer/shows/new')}>Vytvoriť prvé podujatie</Button>
           </div>
         ) : (
@@ -105,19 +105,19 @@ export default function ShowsPage() {
               const isArchived = show.status === 'ARCHIVED';
               const coverOpacity = isArchived ? 'opacity-40' : isDraft ? 'opacity-60' : '';
               return (
-                <div key={show.id} className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div key={show.id} className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
                   {/* Cover */}
                   <div className={`relative ${coverOpacity}`}>
                     {cover ? (
                       <img src={cover.squareUrl} alt={show.name} className="w-full h-40 object-cover" />
                     ) : (
-                      <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">Bez obrázka</div>
+                      <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs">Bez obrázka</div>
                     )}
                   </div>
 
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900 leading-tight">{show.name}</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 leading-tight">{show.name}</h3>
                       {/* Status toggle button */}
                       {isArchived ? (
                         <button title="Archivované" disabled className="flex-shrink-0 rounded p-1 text-slate-400 cursor-not-allowed">
@@ -157,7 +157,7 @@ export default function ShowsPage() {
                     )}
 
                     {show.category && (
-                      <p className="text-xs text-gray-500 mb-3">{show.category}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{show.category}</p>
                     )}
                     <Button
                       variant="outline"

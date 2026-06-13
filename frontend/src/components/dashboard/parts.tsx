@@ -51,18 +51,18 @@ export function KpiCard({
   const hasChange = typeof change === 'number';
   const up = (change ?? 0) >= 0;
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-500">{title}</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">{title}</span>
         <span className="text-brand">{icon}</span>
       </div>
       <div className="mt-2 flex items-end gap-2">
-        <span className="text-2xl font-bold text-gray-900 tabular-nums">{value}</span>
+        <span className="text-2xl font-bold text-gray-900 tabular-nums dark:text-gray-100">{value}</span>
         {hasChange && (
           <span
             className={clsx(
               'mb-1 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium',
-              up ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600',
+              up ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400',
             )}
           >
             {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -71,7 +71,7 @@ export function KpiCard({
           </span>
         )}
       </div>
-      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
     </div>
   );
 }
@@ -90,9 +90,9 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <div className={clsx('rounded-xl border border-gray-200 bg-white p-5 shadow-sm', className)}>
+    <div className={clsx('rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900', className)}>
       <div className="mb-4 flex items-center justify-between gap-2">
-        <h3 className="font-semibold text-gray-900">{title}</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
         {action}
       </div>
       {children}
@@ -125,12 +125,12 @@ export function OrderStatusBadge({ status }: { status: string }) {
 // ── loading / empty / error stavy ──────────────────────────────────────────────
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={clsx('animate-pulse rounded bg-gray-100', className)} />;
+  return <div className={clsx('animate-pulse rounded bg-gray-100 dark:bg-gray-800', className)} />;
 }
 
 export function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-200 py-8 text-sm text-gray-400">
+    <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-200 py-8 text-sm text-gray-400 dark:border-gray-700 dark:text-gray-500">
       {message}
     </div>
   );
@@ -138,7 +138,7 @@ export function EmptyState({ message }: { message: string }) {
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
       {message}
     </div>
   );

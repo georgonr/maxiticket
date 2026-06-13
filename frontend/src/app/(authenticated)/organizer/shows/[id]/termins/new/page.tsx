@@ -97,8 +97,8 @@ export default function NewTerminPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
       </header>
@@ -110,7 +110,7 @@ export default function NewTerminPage() {
           <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           {/* Venue */}
           <div>
             {venueOptions.length > 0 ? (
@@ -121,7 +121,7 @@ export default function NewTerminPage() {
                 onChange={(e) => setForm((f) => ({ ...f, venueId: e.target.value }))}
               />
             ) : (
-              <p className="text-sm text-gray-500">Žiadne miesta. Vytvorte nové miesto nižšie.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Žiadne miesta. Vytvorte nové miesto nižšie.</p>
             )}
             <button
               type="button"
@@ -132,7 +132,7 @@ export default function NewTerminPage() {
             </button>
 
             {showVenueForm && (
-              <div className="mt-2 rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
+              <div className="mt-2 rounded-md border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-3 space-y-2">
                 <Input
                   id="venueName" label="Názov miesta *" required
                   value={venueForm.name} onChange={(e) => setVenueForm((f) => ({ ...f, name: e.target.value }))}
@@ -181,7 +181,7 @@ export default function NewTerminPage() {
               type="checkbox"
               checked={form.visible ?? true}
               onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
-              className="rounded border-gray-300 text-brand focus:ring-brand"
+              className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand"
             />
             Viditeľný pre verejnosť
           </label>

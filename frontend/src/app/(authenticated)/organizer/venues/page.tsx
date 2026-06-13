@@ -6,7 +6,6 @@ import { MapPin, Plus, Pencil, Trash2, Globe } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError, venuesApi, Venue } from '@/lib/api';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { VenueFormModal } from '@/components/venues/VenueFormModal';
 
@@ -97,13 +96,12 @@ export default function VenuesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Miesta konania</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Miesta konania</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Opakovane použiteľné haly a miesta. Pri vytváraní termínu si miesto vyberiete z databázy.
             </p>
           </div>
@@ -133,7 +131,7 @@ export default function VenuesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                    <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                       <th className="py-2 pr-3 font-medium">Názov</th>
                       <th className="py-2 px-3 font-medium">Mesto</th>
                       <th className="py-2 px-3 font-medium">Adresa</th>
@@ -143,15 +141,15 @@ export default function VenuesPage() {
                       <th className="py-2 pl-3 font-medium text-right">Akcie</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     {venues.map((v) => {
                       const manage = canManage(v);
                       return (
-                        <tr key={v.id} className="hover:bg-gray-50">
-                          <td className="py-2.5 pr-3 font-medium text-gray-900">{v.name}</td>
-                          <td className="px-3 text-gray-600">{v.city ?? '—'}</td>
-                          <td className="px-3 text-gray-500">{v.street ?? '—'}</td>
-                          <td className="px-3 text-right tabular-nums text-gray-600">{v.capacity ?? '—'}</td>
+                        <tr key={v.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="py-2.5 pr-3 font-medium text-gray-900 dark:text-gray-100">{v.name}</td>
+                          <td className="px-3 text-gray-600 dark:text-gray-300">{v.city ?? '—'}</td>
+                          <td className="px-3 text-gray-500 dark:text-gray-400">{v.street ?? '—'}</td>
+                          <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{v.capacity ?? '—'}</td>
                           <td className="px-3">
                             {isGlobal(v) ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
@@ -162,7 +160,7 @@ export default function VenuesPage() {
                             )}
                           </td>
                           <td className="px-3">
-                            <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', v.isActive === false ? 'bg-gray-100 text-gray-500' : 'bg-emerald-50 text-emerald-700')}>
+                            <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', v.isActive === false ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' : 'bg-emerald-50 text-emerald-700')}>
                               {v.isActive === false ? 'Deaktivované' : 'Aktívne'}
                             </span>
                           </td>
@@ -176,7 +174,7 @@ export default function VenuesPage() {
                               <button
                                 onClick={() => setEditing(v)}
                                 disabled={!manage}
-                                className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
+                                className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
                                 title={manage ? 'Upraviť' : 'Globálne miesto – len na čítanie'}
                               >
                                 <Pencil size={15} />
@@ -184,7 +182,7 @@ export default function VenuesPage() {
                               <button
                                 onClick={() => remove(v)}
                                 disabled={!manage || busyId === v.id}
-                                className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
+                                className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
                                 title={manage ? 'Zmazať' : 'Globálne miesto – len na čítanie'}
                               >
                                 <Trash2 size={15} />
@@ -201,7 +199,7 @@ export default function VenuesPage() {
           </SectionCard>
         )}
 
-        <div className="flex items-center gap-2 text-sm text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
           <MapPin size={15} /> Globálne miesta (napr. veľké arény) spravuje administrátor a sú dostupné všetkým.
         </div>
       </main>

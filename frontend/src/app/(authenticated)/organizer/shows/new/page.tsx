@@ -54,8 +54,8 @@ export default function NewShowPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
       </header>
@@ -69,7 +69,7 @@ export default function NewShowPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <Input
             id="name" label="Názov podujatia *" required
             value={form.name} onChange={handleNameChange}

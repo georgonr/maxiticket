@@ -42,12 +42,12 @@ const PROVIDER_META: Record<string, { label: string; cls: string }> = {
   pos_card: { label: 'POS karta', cls: 'bg-sky-50 text-sky-700' },
   comp: { label: 'Zdarma', cls: 'bg-emerald-50 text-emerald-700' },
   manual: { label: 'Manuál', cls: 'bg-amber-50 text-amber-700' },
-  mock: { label: 'Test', cls: 'bg-gray-100 text-gray-500' },
+  mock: { label: 'Test', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
 };
 
 function ProviderBadge({ provider }: { provider: string | null }) {
   if (!provider) return <span className="text-gray-300">—</span>;
-  const m = PROVIDER_META[provider] ?? { label: provider, cls: 'bg-gray-100 text-gray-600' };
+  const m = PROVIDER_META[provider] ?? { label: provider, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' };
   return (
     <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', m.cls)}>
       {m.label}
@@ -174,28 +174,28 @@ export function OrdersTable({
       {/* Filter bar */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[240px] flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Číslo objednávky, email alebo meno"
-            className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 py-2 pl-9 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
-        <select value={status} onChange={(e) => setStatus(e.target.value as OrderStatus | '')} className="rounded-lg border border-gray-300 px-2 py-2 text-sm">
+        <select value={status} onChange={(e) => setStatus(e.target.value as OrderStatus | '')} className="rounded-lg border border-gray-300 dark:border-gray-700 px-2 py-2 text-sm">
           {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        <select value={provider} onChange={(e) => setProvider(e.target.value)} className="rounded-lg border border-gray-300 px-2 py-2 text-sm">
+        <select value={provider} onChange={(e) => setProvider(e.target.value)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-2 py-2 text-sm">
           {PROVIDER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         {isAdmin && (
-          <select value={organizerId} onChange={(e) => setOrganizerId(e.target.value)} className="rounded-lg border border-gray-300 px-2 py-2 text-sm">
+          <select value={organizerId} onChange={(e) => setOrganizerId(e.target.value)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-2 py-2 text-sm">
             <option value="">Všetci organizátori</option>
             {organizers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
           </select>
         )}
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-lg border border-gray-300 px-2 py-2 text-sm" title="Od" />
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-lg border border-gray-300 px-2 py-2 text-sm" title="Do" />
+        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-2 py-2 text-sm" title="Od" />
+        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-2 py-2 text-sm" title="Do" />
       </div>
 
       {loading ? (
@@ -214,7 +214,7 @@ export function OrdersTable({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                   <th className="py-2 pr-3 font-medium">Číslo</th>
                   <th className="py-2 px-3 font-medium">Dátum</th>
                   <th className="py-2 px-3 font-medium">Kupujúci</th>
@@ -226,34 +226,34 @@ export function OrdersTable({
                   <th className="py-2 pl-3 font-medium">Stav</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                 {items.map((o) => (
-                  <tr key={o.orderId} className="hover:bg-gray-50">
+                  <tr key={o.orderId} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="py-2.5 pr-3">
                       <Link href={`${basePath}/${o.orderId}`} className="font-mono font-medium text-brand hover:underline">
                         {o.orderNumber}
                       </Link>
                     </td>
-                    <td className="px-3 whitespace-nowrap text-gray-500">{fmtDate(o.createdAt)}</td>
+                    <td className="px-3 whitespace-nowrap text-gray-500 dark:text-gray-400">{fmtDate(o.createdAt)}</td>
                     <td className="px-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-gray-800">{o.buyerName ?? '—'}</span>
+                        <span className="font-medium text-gray-800 dark:text-gray-100">{o.buyerName ?? '—'}</span>
                         {o.isGuest && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500" title="Nákup bez účtu">
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400" title="Nákup bez účtu">
                             <User size={9} /> hosť
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400">{o.buyerEmail}</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">{o.buyerEmail}</div>
                     </td>
-                    {isAdmin && <td className="px-3 text-gray-600">{o.organizerName ?? '—'}</td>}
-                    <td className="px-3 text-gray-700">
+                    {isAdmin && <td className="px-3 text-gray-600 dark:text-gray-300">{o.organizerName ?? '—'}</td>}
+                    <td className="px-3 text-gray-700 dark:text-gray-200">
                       {o.showTitles.length === 0 ? '—' : o.showTitles.join(', ')}
-                      {o.extraShows > 0 && <span className="text-gray-400"> +{o.extraShows}</span>}
+                      {o.extraShows > 0 && <span className="text-gray-400 dark:text-gray-500"> +{o.extraShows}</span>}
                     </td>
-                    <td className="px-3 text-right tabular-nums text-gray-600">{o.ticketCount}</td>
+                    <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{o.ticketCount}</td>
                     <td className="px-3 text-right tabular-nums">
-                      <span className="font-semibold text-gray-900">{formatPrice(o.totalAmount)}</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">{formatPrice(o.totalAmount)}</span>
                       {o.discountAmount > 0 && (
                         <div className="text-xs text-emerald-600">
                           −{formatPrice(o.discountAmount)}{o.couponCode ? ` ${o.couponCode}` : ''}
@@ -269,20 +269,20 @@ export function OrdersTable({
           </div>
 
           {/* Stránkovanie */}
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
             <span>{from}–{to} z {total}</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
                 disabled={offset === 0}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft size={15} /> Predošlá
               </button>
               <button
                 onClick={() => setOffset(offset + PAGE_SIZE)}
                 disabled={to >= total}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Ďalšia <ChevronRight size={15} />
               </button>

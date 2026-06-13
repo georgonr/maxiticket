@@ -12,7 +12,7 @@ import { OrderStatusBadge } from '@/components/dashboard/parts';
 
 const TICKET_STATUS: Record<string, { label: string; cls: string }> = {
   VALID: { label: 'Platný', cls: 'bg-emerald-50 text-emerald-700' },
-  USED: { label: 'Použitý', cls: 'bg-gray-100 text-gray-500' },
+  USED: { label: 'Použitý', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
   CANCELLED: { label: 'Zrušený', cls: 'bg-red-50 text-red-700' },
   REFUNDED: { label: 'Refundovaný', cls: 'bg-orange-50 text-orange-700' },
 };
@@ -20,7 +20,7 @@ const TICKET_STATUS: Record<string, { label: string; cls: string }> = {
 const REFUND_STATUS: Record<string, { label: string; cls: string }> = {
   REQUESTED: { label: 'Čaká na vybavenie', cls: 'bg-amber-50 text-amber-700' },
   APPROVED: { label: 'Schválené', cls: 'bg-sky-50 text-sky-700' },
-  REJECTED: { label: 'Zamietnuté', cls: 'bg-gray-100 text-gray-500' },
+  REJECTED: { label: 'Zamietnuté', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
   REFUNDED: { label: 'Peniaze vrátené', cls: 'bg-orange-50 text-orange-700' },
 };
 
@@ -45,8 +45,8 @@ function readableError(e: unknown): string {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-3 font-semibold text-gray-900">{title}</h2>
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
+      <h2 className="mb-3 font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
       {children}
     </div>
   );
@@ -101,8 +101,8 @@ export function OrderDetailPanel({
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="font-mono text-2xl font-bold text-gray-900">{order.orderNumber}</h1>
-              <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+              <h1 className="font-mono text-2xl font-bold text-gray-900 dark:text-gray-100">{order.orderNumber}</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(order.createdAt)}</p>
             </div>
             <OrderStatusBadge status={order.status} />
           </div>
@@ -110,23 +110,23 @@ export function OrderDetailPanel({
           <Card title="Kupujúci">
             <div className="space-y-1.5 text-sm">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-gray-800">{order.buyerName ?? '—'}</span>
+                <span className="font-medium text-gray-800 dark:text-gray-100">{order.buyerName ?? '—'}</span>
                 <span
                   className={clsx(
                     'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
-                    order.isGuest ? 'bg-gray-100 text-gray-500' : 'bg-sky-50 text-sky-700',
+                    order.isGuest ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' : 'bg-sky-50 text-sky-700',
                   )}
                 >
                   <User size={9} /> {order.isGuest ? 'hosť' : 'registrovaný'}
                 </span>
               </div>
-              <div className="text-gray-600">{order.buyerEmail}</div>
+              <div className="text-gray-600 dark:text-gray-300">{order.buyerEmail}</div>
               {order.userEmail && order.userEmail !== order.buyerEmail && (
-                <div className="text-xs text-gray-400">Účet: {order.userEmail}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">Účet: {order.userEmail}</div>
               )}
-              {order.buyerPhone && <div className="text-gray-600">{order.buyerPhone}</div>}
+              {order.buyerPhone && <div className="text-gray-600 dark:text-gray-300">{order.buyerPhone}</div>}
               {order.organizerName && (
-                <div className="text-xs text-gray-400">Organizátor: {order.organizerName}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">Organizátor: {order.organizerName}</div>
               )}
             </div>
           </Card>
@@ -135,7 +135,7 @@ export function OrderDetailPanel({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                  <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                     <th className="py-2 pr-3 font-medium">Podujatie / termín</th>
                     <th className="py-2 px-3 font-medium">Typ lístka</th>
                     <th className="py-2 px-3 font-medium text-right">Ks</th>
@@ -143,29 +143,29 @@ export function OrderDetailPanel({
                     <th className="py-2 pl-3 font-medium text-right">Spolu</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                   {order.items.map((it, idx) => (
                     <tr key={idx}>
                       <td className="py-2.5 pr-3">
-                        <div className="font-medium text-gray-800">{it.showTitle ?? '—'}</div>
+                        <div className="font-medium text-gray-800 dark:text-gray-100">{it.showTitle ?? '—'}</div>
                         {it.terminStartsAt && (
-                          <div className="text-xs text-gray-400">{formatDate(it.terminStartsAt)}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">{formatDate(it.terminStartsAt)}</div>
                         )}
                       </td>
-                      <td className="px-3 text-gray-600">{it.ticketTypeName ?? '—'}</td>
-                      <td className="px-3 text-right tabular-nums text-gray-600">{it.quantity}</td>
-                      <td className="px-3 text-right tabular-nums text-gray-600">{formatPrice(it.unitPrice)}</td>
-                      <td className="pl-3 text-right tabular-nums font-medium text-gray-800">{formatPrice(it.lineTotal)}</td>
+                      <td className="px-3 text-gray-600 dark:text-gray-300">{it.ticketTypeName ?? '—'}</td>
+                      <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{it.quantity}</td>
+                      <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{formatPrice(it.unitPrice)}</td>
+                      <td className="pl-3 text-right tabular-nums font-medium text-gray-800 dark:text-gray-100">{formatPrice(it.lineTotal)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <div className="mt-4 space-y-1.5 border-t border-gray-100 pt-3 text-sm">
+            <div className="mt-4 space-y-1.5 border-t border-gray-100 dark:border-gray-800 pt-3 text-sm">
               {order.discountAmount > 0 && (
                 <>
-                  <div className="flex justify-between text-gray-500">
+                  <div className="flex justify-between text-gray-500 dark:text-gray-400">
                     <span>Medzisúčet</span>
                     <span className="tabular-nums">{formatPrice(subtotal)}</span>
                   </div>
@@ -176,23 +176,23 @@ export function OrderDetailPanel({
                 </>
               )}
               <div className="flex justify-between pt-1">
-                <span className="font-semibold text-gray-900">Spolu</span>
-                <span className="text-lg font-bold text-gray-900 tabular-nums">{formatPrice(order.totalAmount)}</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">Spolu</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums">{formatPrice(order.totalAmount)}</span>
               </div>
             </div>
           </Card>
 
           <Card title={`Lístky (${order.tickets.length})`}>
             {order.tickets.length === 0 ? (
-              <p className="text-sm text-gray-400">Žiadne vygenerované lístky.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Žiadne vygenerované lístky.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {order.tickets.map((t) => {
-                  const m = TICKET_STATUS[t.status] ?? { label: t.status, cls: 'bg-gray-100 text-gray-600' };
+                  const m = TICKET_STATUS[t.status] ?? { label: t.status, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' };
                   return (
-                    <div key={t.ticketId} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm">
-                      <TicketIcon size={13} className="text-gray-400" />
-                      <span className="font-mono text-gray-700">…{t.codeSuffix}</span>
+                    <div key={t.ticketId} className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-800 px-3 py-1.5 text-sm">
+                      <TicketIcon size={13} className="text-gray-400 dark:text-gray-500" />
+                      <span className="font-mono text-gray-700 dark:text-gray-200">…{t.codeSuffix}</span>
                       <span className={clsx('rounded-full px-1.5 py-0.5 text-[10px] font-medium', m.cls)}>{m.label}</span>
                     </div>
                   );
@@ -204,27 +204,27 @@ export function OrderDetailPanel({
           <Card title="Platba">
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">Spôsob</span>
-                <span className="font-medium text-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Spôsob</span>
+                <span className="font-medium text-gray-800 dark:text-gray-100">
                   {order.paymentProvider ? PROVIDER_LABEL[order.paymentProvider] ?? order.paymentProvider : '—'}
                 </span>
               </div>
               {order.paymentRef && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Referencia</span>
-                  <span className="font-mono text-xs text-gray-600">{order.paymentRef}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Referencia</span>
+                  <span className="font-mono text-xs text-gray-600 dark:text-gray-300">{order.paymentRef}</span>
                 </div>
               )}
               {order.paidAt && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Zaplatené</span>
-                  <span className="text-gray-700">{formatDate(order.paidAt)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Zaplatené</span>
+                  <span className="text-gray-700 dark:text-gray-200">{formatDate(order.paidAt)}</span>
                 </div>
               )}
               {order.refundedAt && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Refundované</span>
-                  <span className="text-gray-700">{formatDate(order.refundedAt)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Refundované</span>
+                  <span className="text-gray-700 dark:text-gray-200">{formatDate(order.refundedAt)}</span>
                 </div>
               )}
             </div>
@@ -234,17 +234,17 @@ export function OrderDetailPanel({
             <Card title="Vrátenie peňazí">
               <div className="space-y-3">
                 {order.refundRequests.map((r) => {
-                  const rs = REFUND_STATUS[r.status] ?? { label: r.status, cls: 'bg-gray-100 text-gray-600' };
+                  const rs = REFUND_STATUS[r.status] ?? { label: r.status, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' };
                   return (
-                    <div key={r.id} className="rounded-lg border border-gray-100 p-3 text-sm">
+                    <div key={r.id} className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 text-sm">
                       <div className="flex items-center justify-between gap-2">
                         <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', rs.cls)}>{rs.label}</span>
-                        <span className="text-xs text-gray-400">{formatDate(r.requestedAt)}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(r.requestedAt)}</span>
                       </div>
-                      <p className="mt-2 text-gray-600"><span className="text-gray-400">Dôvod:</span> {r.reason}</p>
-                      {r.reviewNote && <p className="mt-1 text-gray-500"><span className="text-gray-400">Poznámka:</span> {r.reviewNote}</p>}
+                      <p className="mt-2 text-gray-600 dark:text-gray-300"><span className="text-gray-400 dark:text-gray-500">Dôvod:</span> {r.reason}</p>
+                      {r.reviewNote && <p className="mt-1 text-gray-500 dark:text-gray-400"><span className="text-gray-400 dark:text-gray-500">Poznámka:</span> {r.reviewNote}</p>}
                       {r.refundAmount != null && (
-                        <p className="mt-1 text-gray-500"><span className="text-gray-400">Suma:</span> {formatPrice(r.refundAmount, order.currency)}</p>
+                        <p className="mt-1 text-gray-500 dark:text-gray-400"><span className="text-gray-400 dark:text-gray-500">Suma:</span> {formatPrice(r.refundAmount, order.currency)}</p>
                       )}
                     </div>
                   );

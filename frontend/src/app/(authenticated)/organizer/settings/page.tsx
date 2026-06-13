@@ -134,21 +134,21 @@ export default function OrganizerSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {toast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-lg transition-all ${toast.ok ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
           {toast.msg}
         </div>
       )}
 
-      <header className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-6 sm:p-8">
         <h1 className="text-2xl font-bold mb-1">Údaje firmy</h1>
-        <p className="text-gray-500 mb-6 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
           Tieto údaje sa zobrazujú na vstupenkách a daňových dokladoch podľa zákona.
         </p>
 
@@ -156,7 +156,7 @@ export default function OrganizerSettingsPage() {
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
-        <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
           <Input
             id="companyName" label="Právny názov firmy"
             placeholder="Napr. Acme s.r.o."
@@ -178,13 +178,13 @@ export default function OrganizerSettingsPage() {
             />
           </div>
 
-          <div className="flex items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-900 px-4 py-3">
             <input
               id="vatPayer" type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
+              className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand"
               checked={form.vatPayer} onChange={(e) => set('vatPayer', e.target.checked)}
             />
-            <label htmlFor="vatPayer" className="text-sm font-medium text-gray-700">Sme platca DPH</label>
+            <label htmlFor="vatPayer" className="text-sm font-medium text-gray-700 dark:text-gray-200">Sme platca DPH</label>
           </div>
 
           {form.vatPayer && (
@@ -195,8 +195,8 @@ export default function OrganizerSettingsPage() {
             />
           )}
 
-          <div className="border-t border-gray-100 pt-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Sídlo firmy</h2>
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Sídlo firmy</h2>
             <div className="space-y-4">
               <Input
                 id="addressStreet" label="Ulica a číslo"

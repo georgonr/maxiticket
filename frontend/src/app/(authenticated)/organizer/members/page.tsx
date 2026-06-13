@@ -7,7 +7,6 @@ import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
 import { membersApi, Member } from '@/lib/api/members';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { InviteMemberModal } from '@/components/members/InviteMemberModal';
 
@@ -114,18 +113,17 @@ export default function MembersPage() {
 
   function statusBadge(m: Member) {
     if (m.pending) return { label: 'Čaká na prijatie', cls: 'bg-amber-50 text-amber-700' };
-    if (!m.isActive) return { label: 'Deaktivovaný', cls: 'bg-gray-100 text-gray-500' };
+    if (!m.isActive) return { label: 'Deaktivovaný', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
     return { label: 'Aktívny', cls: 'bg-emerald-50 text-emerald-700' };
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Tím</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tím</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Členovia tímu spravujú podujatia, pokladňu a skenovanie. Nemajú prístup k uzávierkam,
               skenerom ani údajom firmy.
             </p>
@@ -160,7 +158,7 @@ export default function MembersPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                    <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                       <th className="py-2 pr-3 font-medium">E-mail</th>
                       <th className="py-2 px-3 font-medium">Meno</th>
                       <th className="py-2 px-3 font-medium">Stav</th>
@@ -168,15 +166,15 @@ export default function MembersPage() {
                       <th className="py-2 pl-3 font-medium text-right">Akcie</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     {members.map((m) => {
                       const st = statusBadge(m);
                       return (
-                        <tr key={m.id} className="hover:bg-gray-50">
-                          <td className="py-2.5 pr-3 font-medium text-gray-900">{m.email}</td>
-                          <td className="px-3 text-gray-600">{m.name ?? '—'}</td>
+                        <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="py-2.5 pr-3 font-medium text-gray-900 dark:text-gray-100">{m.email}</td>
+                          <td className="px-3 text-gray-600 dark:text-gray-300">{m.name ?? '—'}</td>
                           <td className="px-3"><span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', st.cls)}>{st.label}</span></td>
-                          <td className="px-3 text-gray-500">{formatDate(m.createdAt)}</td>
+                          <td className="px-3 text-gray-500 dark:text-gray-400">{formatDate(m.createdAt)}</td>
                           <td className="py-2.5 pl-3">
                             <div className="flex items-center justify-end gap-1">
                               {m.pending && (
@@ -185,11 +183,11 @@ export default function MembersPage() {
                                 </button>
                               )}
                               {!m.pending && (
-                                <button onClick={() => toggleActive(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40" title={m.isActive ? 'Deaktivovať' : 'Aktivovať'}>
+                                <button onClick={() => toggleActive(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40" title={m.isActive ? 'Deaktivovať' : 'Aktivovať'}>
                                   <Power size={15} className={m.isActive ? 'text-emerald-600' : ''} />
                                 </button>
                               )}
-                              <button onClick={() => remove(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40" title="Odstrániť">
+                              <button onClick={() => remove(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-40" title="Odstrániť">
                                 <Trash2 size={15} />
                               </button>
                             </div>
@@ -204,7 +202,7 @@ export default function MembersPage() {
           </SectionCard>
         )}
 
-        <div className="flex items-center gap-2 text-sm text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
           <Users size={15} /> Pozvaný člen dostane e-mail s odkazom na nastavenie hesla (platnosť 7 dní).
         </div>
       </main>

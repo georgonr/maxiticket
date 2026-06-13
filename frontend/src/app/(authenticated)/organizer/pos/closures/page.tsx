@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
 import { posApi, PosSummary, PosClosure } from '@/lib/api/pos';
 import { formatPrice, formatDate } from '@/lib/format';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { Button } from '@/components/ui/button';
 
@@ -98,12 +97,11 @@ export default function PosClosuresPage() {
   const hasSales = (summary?.orderCount ?? 0) > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <main className="mx-auto max-w-4xl space-y-6 p-6">
         <div>
           <Link href="/organizer/pos" className="inline-flex items-center gap-1 text-sm text-brand hover:underline"><ArrowLeft size={15} /> Späť na pokladňu</Link>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900">Uzávierka pokladne</h1>
+          <h1 className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">Uzávierka pokladne</h1>
         </div>
 
         {toast && (
@@ -119,11 +117,11 @@ export default function PosClosuresPage() {
         ) : (
           <>
             {/* Živý summary */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold text-gray-900">Od poslednej uzávierky</h2>
-                  <p className="text-xs text-gray-400">
+                  <h2 className="font-semibold text-gray-900 dark:text-gray-100">Od poslednej uzávierky</h2>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     {summary?.periodFrom ? `od ${formatDate(summary.periodFrom)}` : 'všetky POS predaje'}
                   </p>
                 </div>
@@ -143,13 +141,13 @@ export default function PosClosuresPage() {
                   <div className="flex items-center gap-1 text-xs font-medium text-sky-700"><CreditCard size={13} /> Karta</div>
                   <div className="mt-1 text-2xl font-bold text-sky-800">{formatPrice(summary?.cardTotal ?? 0)}</div>
                 </div>
-                <div className="rounded-lg bg-gray-50 p-4">
-                  <div className="text-xs font-medium text-gray-500">Spolu</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900">{formatPrice(summary?.total ?? 0)}</div>
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-900 p-4">
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Spolu</div>
+                  <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(summary?.total ?? 0)}</div>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-gray-500">{summary?.orderCount ?? 0} predajov · {summary?.ticketCount ?? 0} lístkov</p>
-              {!hasSales && <p className="mt-2 text-sm text-gray-400">Žiadne nové POS predaje na uzavretie.</p>}
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{summary?.orderCount ?? 0} predajov · {summary?.ticketCount ?? 0} lístkov</p>
+              {!hasSales && <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">Žiadne nové POS predaje na uzavretie.</p>}
             </div>
 
             {/* História */}
@@ -160,7 +158,7 @@ export default function PosClosuresPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                      <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
                         <th className="py-2 pr-3 font-medium">Uzavreté</th>
                         <th className="py-2 px-3 font-medium">Obdobie</th>
                         <th className="py-2 px-3 font-medium text-right">Hotovosť</th>
@@ -171,18 +169,18 @@ export default function PosClosuresPage() {
                         <th className="py-2 pl-3 font-medium text-right">PDF</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                       {closures.map((c) => (
-                        <tr key={c.id} className="hover:bg-gray-50">
-                          <td className="py-2.5 pr-3 whitespace-nowrap text-gray-700">{formatDate(c.createdAt)}</td>
-                          <td className="px-3 whitespace-nowrap text-xs text-gray-400">{formatDate(c.periodFrom)} – {formatDate(c.periodTo)}</td>
+                        <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="py-2.5 pr-3 whitespace-nowrap text-gray-700 dark:text-gray-200">{formatDate(c.createdAt)}</td>
+                          <td className="px-3 whitespace-nowrap text-xs text-gray-400 dark:text-gray-500">{formatDate(c.periodFrom)} – {formatDate(c.periodTo)}</td>
                           <td className="px-3 text-right tabular-nums text-emerald-700">{formatPrice(c.cashTotal)}</td>
                           <td className="px-3 text-right tabular-nums text-sky-700">{formatPrice(c.cardTotal)}</td>
-                          <td className="px-3 text-right tabular-nums font-semibold text-gray-900">{formatPrice(c.total)}</td>
-                          <td className="px-3 text-right tabular-nums text-gray-600">{c.orderCount}/{c.ticketCount}</td>
-                          <td className="px-3 text-gray-600">{c.closedByName ?? '—'}</td>
+                          <td className="px-3 text-right tabular-nums font-semibold text-gray-900 dark:text-gray-100">{formatPrice(c.total)}</td>
+                          <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{c.orderCount}/{c.ticketCount}</td>
+                          <td className="px-3 text-gray-600 dark:text-gray-300">{c.closedByName ?? '—'}</td>
                           <td className="py-2.5 pl-3 text-right">
-                            <button onClick={() => downloadPdf(c)} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-brand" title="Stiahnuť PDF">
+                            <button onClick={() => downloadPdf(c)} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-brand" title="Stiahnuť PDF">
                               <FileDown size={16} />
                             </button>
                           </td>
@@ -200,22 +198,22 @@ export default function PosClosuresPage() {
       {/* Confirm modal */}
       {confirmOpen && summary && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setConfirmOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-              <h3 className="font-semibold text-gray-900">Uzavrieť pokladňu?</h3>
-              <button onClick={() => setConfirmOpen(false)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X size={18} /></button>
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Uzavrieť pokladňu?</h3>
+              <button onClick={() => setConfirmOpen(false)} className="rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
             </div>
             <div className="space-y-4 px-5 py-4">
-              <div className="space-y-1 rounded-lg bg-gray-50 p-4 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Hotovosť</span><span className="font-semibold">{formatPrice(summary.cashTotal)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Karta</span><span className="font-semibold">{formatPrice(summary.cardTotal)}</span></div>
-                <div className="flex justify-between border-t border-gray-200 pt-1 text-base"><span className="font-semibold">Spolu</span><span className="font-bold text-brand">{formatPrice(summary.total)}</span></div>
-                <div className="text-xs text-gray-400">{summary.orderCount} predajov · {summary.ticketCount} lístkov</div>
+              <div className="space-y-1 rounded-lg bg-gray-50 dark:bg-gray-900 p-4 text-sm">
+                <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Hotovosť</span><span className="font-semibold">{formatPrice(summary.cashTotal)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Karta</span><span className="font-semibold">{formatPrice(summary.cardTotal)}</span></div>
+                <div className="flex justify-between border-t border-gray-200 dark:border-gray-800 pt-1 text-base"><span className="font-semibold">Spolu</span><span className="font-bold text-brand">{formatPrice(summary.total)}</span></div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">{summary.orderCount} predajov · {summary.ticketCount} lístkov</div>
               </div>
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Poznámka (voliteľné)" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-              <p className="text-xs text-gray-400">Uzávierka zamkne toto obdobie. Ďalšie predaje začnú nové obdobie.</p>
+              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Poznámka (voliteľné)" className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+              <p className="text-xs text-gray-400 dark:text-gray-500">Uzávierka zamkne toto obdobie. Ďalšie predaje začnú nové obdobie.</p>
             </div>
-            <div className="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+            <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-gray-800 px-5 py-4">
               <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={submitting}>Zrušiť</Button>
               <Button onClick={doClose} loading={submitting} disabled={submitting} className="gap-2"><Lock size={15} /> Uzavrieť</Button>
             </div>

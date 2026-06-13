@@ -36,11 +36,11 @@ export default function MyTicketsPage() {
     return (
       <div className="space-y-3">
         <div className="mb-6 flex items-center gap-3">
-          <div className="h-8 w-8 rounded-xl bg-slate-100 animate-pulse" />
-          <div className="h-7 w-40 rounded-full bg-slate-100 animate-pulse" />
+          <div className="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+          <div className="h-7 w-40 rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse" />
         </div>
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-24 rounded-2xl border border-slate-100 bg-slate-50 animate-pulse" />
+          <div key={i} className="h-24 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 animate-pulse" />
         ))}
       </div>
     );
@@ -54,20 +54,20 @@ export default function MyTicketsPage() {
           <Ticket size={20} className="text-purple-700" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Moje lístky</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Moje lístky</h1>
           {tickets.length > 0 && (
-            <p className="text-sm text-slate-400">{tickets.length} {tickets.length === 1 ? 'vstupenka' : tickets.length < 5 ? 'vstupenky' : 'vstupeniek'}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{tickets.length} {tickets.length === 1 ? 'vstupenka' : tickets.length < 5 ? 'vstupenky' : 'vstupeniek'}</p>
           )}
         </div>
       </div>
 
       {tickets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-20 text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
             <Ticket size={28} className="text-slate-300" />
           </div>
-          <p className="font-semibold text-slate-500">Zatiaľ nemáte žiadne vstupenky</p>
-          <p className="mt-1 text-sm text-slate-400">Kúpte si lístky na niektoré z našich podujatí</p>
+          <p className="font-semibold text-slate-500 dark:text-slate-400">Zatiaľ nemáte žiadne vstupenky</p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">Kúpte si lístky na niektoré z našich podujatí</p>
           <Link
             href="/events"
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
@@ -81,7 +81,7 @@ export default function MyTicketsPage() {
             <Link
               key={ticket.id}
               href={`/account/tickets/${ticket.id}`}
-              className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-purple-200 transition-all"
+              className="group flex items-center gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 p-4 shadow-sm hover:shadow-md hover:border-purple-200 transition-all"
             >
               {/* Left: QR icon area */}
               <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-purple-50 group-hover:bg-purple-100 transition-colors">
@@ -90,17 +90,17 @@ export default function MyTicketsPage() {
 
               {/* Info */}
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-1">
+                <p className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-purple-700 transition-colors line-clamp-1">
                   {ticket.termin.show.name}
                 </p>
                 <p className="text-sm font-medium text-purple-600">{ticket.ticketType.name}</p>
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                  <span className="flex items-center gap-1 text-xs text-slate-500">
+                  <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                     <Calendar size={10} className="text-purple-400" />
                     {formatDate(ticket.termin.startsAt, ticket.termin.timezone, { year: undefined })}
                   </span>
                   {ticket.termin.venue.city && (
-                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <MapPin size={10} className="text-purple-400" />
                       {ticket.termin.venue.name}{ticket.termin.venue.city ? `, ${ticket.termin.venue.city}` : ''}
                     </span>
@@ -113,11 +113,11 @@ export default function MyTicketsPage() {
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                   ticket.status === 'VALID'
                     ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-slate-100 text-slate-500'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}>
                   {ticket.status === 'VALID' ? 'Platná' : ticket.status}
                 </span>
-                <ChevronRight size={15} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
+                <ChevronRight size={15} className="text-slate-400 dark:text-slate-500 group-hover:text-purple-600 transition-colors" />
               </div>
             </Link>
           ))}
