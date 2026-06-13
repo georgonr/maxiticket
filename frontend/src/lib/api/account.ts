@@ -1,6 +1,27 @@
 import { apiFetch, API_BASE } from '@/lib/api';
 
-export type OrderStatus = 'PENDING' | 'PAID' | 'REFUNDED' | 'CANCELLED' | 'FAILED';
+export type OrderStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'REFUND_REQUESTED'
+  | 'REFUND_APPROVED'
+  | 'REFUND_REJECTED'
+  | 'REFUNDED'
+  | 'CANCELLED'
+  | 'FAILED';
+
+export type RefundRequestStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'REFUNDED';
+
+export interface RefundRequestItem {
+  id: string;
+  status: RefundRequestStatus;
+  reason: string;
+  reviewNote: string | null;
+  refundAmount: number | null;
+  requestedAt: string;
+  reviewedAt: string | null;
+  refundedAt: string | null;
+}
 
 export interface AccountOrderListItem {
   orderId: string;
@@ -56,6 +77,8 @@ export interface AccountOrderDetail {
   paidAt: string | null;
   items: AccountOrderDetailItem[];
   tickets: AccountOrderTicket[];
+  canRequestRefund: boolean;
+  refundRequests: RefundRequestItem[];
 }
 
 export interface AccountProfile {
@@ -74,6 +97,12 @@ export const accountApi = {
 
   order: (id: string, token: string) =>
     apiFetch<AccountOrderDetail>('/v1/account/orders/' + id, { token }),
+
+  requestRefund: (id: string, reason: string, token: string) =>
+    apiFetch<{ refundRequestId: string; status: string; orderStatus: string }>(
+      `/v1/account/orders/${id}/refund-request`,
+      { method: 'POST', body: JSON.stringify({ reason }), token },
+    ),
 
   profile: (token: string) =>
     apiFetch<AccountProfile>('/v1/account/profile', { token }),

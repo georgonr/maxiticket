@@ -1,10 +1,12 @@
 import {
-  Controller, Get, Patch, Param, Query, Body, Res, UseGuards,
+  Controller, Get, Post, Patch, Param, Query, Body, Res, UseGuards,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { AccountService } from './account.service';
 import { UpdateNotificationsDto } from './dto/update-notifications.dto';
 import { OrdersQueryService } from '../orders/orders-query.service';
+import { RefundsService } from '../refunds/refunds.service';
+import { RequestRefundDto } from '../refunds/dto/request-refund.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../casl/casl-ability.factory';
@@ -19,6 +21,7 @@ export class AccountController {
   constructor(
     private readonly account: AccountService,
     private readonly ordersQuery: OrdersQueryService,
+    private readonly refunds: RefundsService,
   ) {}
 
   @Get('orders')
@@ -36,6 +39,15 @@ export class AccountController {
   @Get('orders/:id')
   order(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.ordersQuery.accountDetail(id, user.sub);
+  }
+
+  @Post('orders/:id/refund-request')
+  requestRefund(
+    @Param('id') id: string,
+    @Body() dto: RequestRefundDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.refunds.requestRefund(id, user.sub, dto.reason);
   }
 
   @Get('orders/:id/receipt.pdf')

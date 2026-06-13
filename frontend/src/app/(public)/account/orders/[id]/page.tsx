@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { clsx } from 'clsx';
-import { ArrowLeft, Loader2, FileDown, Calendar, MapPin, Ticket as TicketIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, FileDown, Calendar, MapPin, Ticket as TicketIcon, RotateCcw, X } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
 import { accountApi, AccountOrderDetail } from '@/lib/api/account';
@@ -14,9 +14,19 @@ import { QrCanvas } from '@/components/pos/QrCanvas';
 const STATUS: Record<string, { label: string; cls: string }> = {
   PAID: { label: 'Zaplatené', cls: 'bg-emerald-50 text-emerald-700' },
   PENDING: { label: 'Čaká na platbu', cls: 'bg-amber-50 text-amber-700' },
+  REFUND_REQUESTED: { label: 'Žiadosť o vrátenie', cls: 'bg-amber-50 text-amber-700' },
+  REFUND_APPROVED: { label: 'Vrátenie schválené', cls: 'bg-sky-50 text-sky-700' },
+  REFUND_REJECTED: { label: 'Vrátenie zamietnuté', cls: 'bg-slate-100 text-slate-500' },
   REFUNDED: { label: 'Refundované', cls: 'bg-orange-50 text-orange-700' },
   CANCELLED: { label: 'Zrušené', cls: 'bg-slate-100 text-slate-500' },
   FAILED: { label: 'Zlyhalo', cls: 'bg-red-50 text-red-700' },
+};
+
+const REFUND_STATUS: Record<string, { label: string; cls: string }> = {
+  REQUESTED: { label: 'Čaká na vybavenie', cls: 'bg-amber-50 text-amber-700' },
+  APPROVED: { label: 'Schválené', cls: 'bg-sky-50 text-sky-700' },
+  REJECTED: { label: 'Zamietnuté', cls: 'bg-slate-100 text-slate-500' },
+  REFUNDED: { label: 'Peniaze vrátené', cls: 'bg-orange-50 text-orange-700' },
 };
 
 const TICKET_STATUS: Record<string, { label: string; cls: string }> = {
@@ -33,6 +43,37 @@ export default function AccountOrderDetailPage() {
   const [order, setOrder] = useState<AccountOrderDetail | null>(null);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState(false);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
+  const [refundError, setRefundError] = useState('');
+
+  async function reloadOrder() {
+    const token = await getValidToken();
+    if (!token) return;
+    setOrder(await accountApi.order(id, token));
+  }
+
+  async function submitRefund() {
+    if (refundReason.trim().length < 3) {
+      setRefundError('Uveďte dôvod vrátenia (aspoň 3 znaky).');
+      return;
+    }
+    setRefundSubmitting(true);
+    setRefundError('');
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      await accountApi.requestRefund(id, refundReason.trim(), token);
+      setRefundOpen(false);
+      setRefundReason('');
+      await reloadOrder();
+    } catch (e) {
+      setRefundError(e instanceof Error ? e.message : 'Odoslanie žiadosti zlyhalo.');
+    } finally {
+      setRefundSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     if (authLoading) return;
@@ -132,6 +173,49 @@ export default function AccountOrderDetailPage() {
         </div>
       </div>
 
+      {/* Vrátenie peňazí */}
+      {(order.canRequestRefund || order.refundRequests.length > 0) && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold text-slate-900">Vrátenie peňazí</h2>
+            {order.canRequestRefund && (
+              <button
+                onClick={() => { setRefundError(''); setRefundOpen(true); }}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <RotateCcw size={15} /> Požiadať o vrátenie
+              </button>
+            )}
+          </div>
+          {order.refundRequests.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-400">
+              Ak sa nemôžete zúčastniť, môžete požiadať o vrátenie peňazí. Žiadosť posúdi organizátor.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {order.refundRequests.map((r) => {
+                const rs = REFUND_STATUS[r.status] ?? { label: r.status, cls: 'bg-slate-100 text-slate-500' };
+                return (
+                  <div key={r.id} className="rounded-xl border border-slate-100 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', rs.cls)}>{rs.label}</span>
+                      <span className="text-xs text-slate-400">{formatDate(r.requestedAt)}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-600"><span className="text-slate-400">Dôvod:</span> {r.reason}</p>
+                    {r.status === 'REJECTED' && r.reviewNote && (
+                      <p className="mt-1 text-sm text-slate-500"><span className="text-slate-400">Poznámka organizátora:</span> {r.reviewNote}</p>
+                    )}
+                    {r.refundAmount != null && (r.status === 'APPROVED' || r.status === 'REFUNDED') && (
+                      <p className="mt-1 text-sm text-slate-500"><span className="text-slate-400">Suma:</span> {formatPrice(r.refundAmount, order.currency)}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lístky s QR */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="mb-3 font-semibold text-slate-900">Vstupenky ({order.tickets.length})</h2>
@@ -153,6 +237,35 @@ export default function AccountOrderDetailPage() {
         )}
         <p className="mt-3 inline-flex items-center gap-1 text-xs text-slate-400"><TicketIcon size={12} /> QR kód ukážte pri vstupe na podujatie.</p>
       </div>
+
+      {/* Modal – žiadosť o vrátenie */}
+      {refundOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !refundSubmitting && setRefundOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Žiadosť o vrátenie peňazí</h3>
+              <button onClick={() => !refundSubmitting && setRefundOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">Objednávka {order.orderNumber} · {formatPrice(order.totalAmount, order.currency)}</p>
+            <label className="mt-4 block text-sm font-medium text-slate-700">Dôvod vrátenia</label>
+            <textarea
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              placeholder="Napíšte, prečo žiadate o vrátenie peňazí…"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            />
+            {refundError && <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{refundError}</div>}
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setRefundOpen(false)} disabled={refundSubmitting} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Zrušiť</button>
+              <button onClick={submitRefund} disabled={refundSubmitting} className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">
+                {refundSubmitting && <Loader2 size={15} className="animate-spin" />} Odoslať žiadosť
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

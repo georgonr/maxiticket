@@ -3,7 +3,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Prisma, UserRole } from '@prisma/client';
+import { Prisma, UserRole, OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
 
@@ -94,6 +94,7 @@ export class MetricsService {
       ticketsSoldYesterday,
       activeShowsCount,
       organizersCount,
+      pendingRefundsCount,
     ] = await Promise.all([
       // comp zahrnuté → iba status filter
       this.prisma.ticket.count({
@@ -109,6 +110,8 @@ export class MetricsService {
       }),
       this.prisma.show.count({ where: { status: 'PUBLISHED' } }),
       this.prisma.organizer.count(),
+      // Úloha 20: otvorené žiadosti o vrátenie (Order.status = REFUND_REQUESTED).
+      this.prisma.order.count({ where: { status: OrderStatus.REFUND_REQUESTED } }),
     ]);
 
     return {
@@ -116,8 +119,7 @@ export class MetricsService {
       ticketsSoldToday,
       activeShowsCount,
       organizersCount,
-      // TODO: OrderStatus nemá REFUND_REQUESTED – refund workflow príde v Úlohe 13.
-      pendingRefundsCount: 0,
+      pendingRefundsCount,
       todayRevenueChange: this.pctChange(todayRevenue, yesterdayRevenue),
       ticketsSoldChange: this.pctChange(ticketsSoldToday, ticketsSoldYesterday),
     };

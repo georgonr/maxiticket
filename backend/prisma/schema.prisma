@@ -56,6 +56,9 @@ enum TerminStatus {
 enum OrderStatus {
   PENDING    // payment initiated
   PAID
+  REFUND_REQUESTED  // customer požiadal o vrátenie (Úloha 20)
+  REFUND_APPROVED   // schválené, čaká na vykonanie refundu (Stripe manuálne / comp-pos rovno)
+  REFUND_REJECTED   // žiadosť zamietnutá (Order sa reálne vracia na PAID; hodnota pre audit/úplnosť)
   REFUNDED
   CANCELLED
   FAILED
@@ -463,6 +466,7 @@ model Order {
   items         OrderItem[]
   tickets       Ticket[]
   couponRedemption CouponRedemption?
+  refundRequests RefundRequest[]
 
   @@index([organizerId])
   @@index([userId])
@@ -470,6 +474,28 @@ model Order {
   @@index([orderNumber])
   @@index([couponId])
   @@index([paymentProvider])
+}
+
+// ─────────────────────────────────────────────
+// REFUND (žiadosť o vrátenie – audit trail, Úloha 20)
+// ─────────────────────────────────────────────
+
+model RefundRequest {
+  id            String    @id @default(cuid())
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id])
+  requestedById String?   // userId customera (null ak admin/organizer inicioval)
+  reason        String
+  status        String    @default("REQUESTED") // REQUESTED/APPROVED/REJECTED/REFUNDED
+  reviewedById  String?
+  reviewNote    String?
+  refundAmount  Decimal?  @db.Decimal(10, 2)
+  requestedAt   DateTime  @default(now())
+  reviewedAt    DateTime?
+  refundedAt    DateTime?
+
+  @@index([orderId])
+  @@index([status])
 }
 
 // ─────────────────────────────────────────────

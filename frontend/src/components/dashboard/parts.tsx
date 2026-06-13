@@ -105,6 +105,9 @@ export function SectionCard({
 const ORDER_STATUS: Record<string, { label: string; cls: string }> = {
   PAID: { label: 'Zaplatené', cls: 'bg-emerald-50 text-emerald-700' },
   PENDING: { label: 'Čaká', cls: 'bg-amber-50 text-amber-700' },
+  REFUND_REQUESTED: { label: 'Žiadosť o vrátenie', cls: 'bg-amber-50 text-amber-700' },
+  REFUND_APPROVED: { label: 'Vrátenie schválené', cls: 'bg-sky-50 text-sky-700' },
+  REFUND_REJECTED: { label: 'Vrátenie zamietnuté', cls: 'bg-gray-100 text-gray-500' },
   REFUNDED: { label: 'Refundované', cls: 'bg-orange-50 text-orange-700' },
   CANCELLED: { label: 'Zrušené', cls: 'bg-gray-100 text-gray-500' },
   FAILED: { label: 'Zlyhalo', cls: 'bg-red-50 text-red-700' },

@@ -57,6 +57,11 @@ export function DashboardHeader() {
       href: role === 'SUPERADMIN' ? '/admin/orders' : '/organizer/orders',
       roles: ['SUPERADMIN', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER'],
     },
+    {
+      label: 'Refundy',
+      href: role === 'SUPERADMIN' ? '/admin/refunds' : '/organizer/refunds',
+      roles: ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER'],
+    },
     { label: 'Pokladňa', href: '/organizer/pos', roles: ['ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'STAFF', 'SUPERADMIN'] },
     { label: 'Tím', href: '/organizer/members', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
     { label: 'Miesta', href: '/organizer/venues', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },

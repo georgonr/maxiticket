@@ -17,6 +17,13 @@ const TICKET_STATUS: Record<string, { label: string; cls: string }> = {
   REFUNDED: { label: 'Refundovaný', cls: 'bg-orange-50 text-orange-700' },
 };
 
+const REFUND_STATUS: Record<string, { label: string; cls: string }> = {
+  REQUESTED: { label: 'Čaká na vybavenie', cls: 'bg-amber-50 text-amber-700' },
+  APPROVED: { label: 'Schválené', cls: 'bg-sky-50 text-sky-700' },
+  REJECTED: { label: 'Zamietnuté', cls: 'bg-gray-100 text-gray-500' },
+  REFUNDED: { label: 'Peniaze vrátené', cls: 'bg-orange-50 text-orange-700' },
+};
+
 const PROVIDER_LABEL: Record<string, string> = {
   stripe: 'Stripe',
   pos_cash: 'POS hotovosť',
@@ -222,6 +229,29 @@ export function OrderDetailPanel({
               )}
             </div>
           </Card>
+
+          {order.refundRequests.length > 0 && (
+            <Card title="Vrátenie peňazí">
+              <div className="space-y-3">
+                {order.refundRequests.map((r) => {
+                  const rs = REFUND_STATUS[r.status] ?? { label: r.status, cls: 'bg-gray-100 text-gray-600' };
+                  return (
+                    <div key={r.id} className="rounded-lg border border-gray-100 p-3 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', rs.cls)}>{rs.label}</span>
+                        <span className="text-xs text-gray-400">{formatDate(r.requestedAt)}</span>
+                      </div>
+                      <p className="mt-2 text-gray-600"><span className="text-gray-400">Dôvod:</span> {r.reason}</p>
+                      {r.reviewNote && <p className="mt-1 text-gray-500"><span className="text-gray-400">Poznámka:</span> {r.reviewNote}</p>}
+                      {r.refundAmount != null && (
+                        <p className="mt-1 text-gray-500"><span className="text-gray-400">Suma:</span> {formatPrice(r.refundAmount, order.currency)}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
         </>
       )}
     </main>

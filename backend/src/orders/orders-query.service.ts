@@ -89,6 +89,13 @@ const DETAIL_SELECT = {
     select: { id: true, status: true },
     orderBy: { id: 'asc' as const },
   },
+  refundRequests: {
+    select: {
+      id: true, status: true, reason: true, reviewNote: true,
+      refundAmount: true, requestedAt: true, reviewedAt: true, refundedAt: true,
+    },
+    orderBy: { requestedAt: 'desc' as const },
+  },
 } satisfies Prisma.OrderSelect;
 
 @Injectable()
@@ -240,6 +247,17 @@ export class OrdersQueryService {
         codeSuffix: t.id.slice(-4).toUpperCase(),
         status: t.status,
       })),
+      // Refund história (Úloha 20) – read-only pre organizer/admin detail.
+      refundRequests: o.refundRequests.map((r) => ({
+        id: r.id,
+        status: r.status,
+        reason: r.reason,
+        reviewNote: r.reviewNote,
+        refundAmount: r.refundAmount != null ? Number(r.refundAmount) : null,
+        requestedAt: r.requestedAt,
+        reviewedAt: r.reviewedAt,
+        refundedAt: r.refundedAt,
+      })),
     };
   }
 
@@ -304,6 +322,13 @@ export class OrdersQueryService {
           },
         },
         tickets: { select: { id: true, status: true, qrToken: true }, orderBy: { id: 'asc' } },
+        refundRequests: {
+          select: {
+            id: true, status: true, reason: true, reviewNote: true,
+            refundAmount: true, requestedAt: true, reviewedAt: true, refundedAt: true,
+          },
+          orderBy: { requestedAt: 'desc' },
+        },
       },
     });
     if (!o) throw new NotFoundException('Objednávka neexistuje.');
@@ -343,6 +368,20 @@ export class OrdersQueryService {
         maskedCode: '…' + t.id.slice(-4).toUpperCase(),
         status: t.status,
         qrToken: t.qrToken,
+      })),
+      // Refund (Úloha 20) – customer smie požiadať len pre PAID bez otvorenej žiadosti.
+      canRequestRefund:
+        o.status === OrderStatus.PAID
+        && !o.refundRequests.some((r) => r.status === 'REQUESTED'),
+      refundRequests: o.refundRequests.map((r) => ({
+        id: r.id,
+        status: r.status,
+        reason: r.reason,
+        reviewNote: r.reviewNote,
+        refundAmount: r.refundAmount != null ? Number(r.refundAmount) : null,
+        requestedAt: r.requestedAt,
+        reviewedAt: r.reviewedAt,
+        refundedAt: r.refundedAt,
       })),
     };
   }

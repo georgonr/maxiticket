@@ -1,6 +1,14 @@
 import { apiFetch } from '@/lib/api';
 
-export type OrderStatus = 'PENDING' | 'PAID' | 'REFUNDED' | 'CANCELLED' | 'FAILED';
+export type OrderStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'REFUND_REQUESTED'
+  | 'REFUND_APPROVED'
+  | 'REFUND_REJECTED'
+  | 'REFUNDED'
+  | 'CANCELLED'
+  | 'FAILED';
 export type OrderSort =
   | 'createdAt_desc'
   | 'createdAt_asc'
@@ -69,6 +77,18 @@ export interface OrderDetail {
   userEmail: string | null;
   items: OrderDetailItem[];
   tickets: OrderDetailTicket[];
+  refundRequests: OrderRefundRequest[];
+}
+
+export interface OrderRefundRequest {
+  id: string;
+  status: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'REFUNDED';
+  reason: string;
+  reviewNote: string | null;
+  refundAmount: number | null;
+  requestedAt: string;
+  reviewedAt: string | null;
+  refundedAt: string | null;
 }
 
 export interface ListOrdersQuery {

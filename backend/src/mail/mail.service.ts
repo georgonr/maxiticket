@@ -445,4 +445,108 @@ export class MailService {
       return `${amount} ${currency}`;
     }
   }
+
+  // ─────────────────────── REFUND (Úloha 20) ───────────────────────
+
+  /** Organizátorovi: nová zákaznícka žiadosť o vrátenie peňazí. */
+  async sendRefundRequested(data: {
+    to: string;
+    orderNumber: string;
+    buyerEmail: string;
+    amount: number;
+    currency?: string;
+    reason: string;
+    reviewLink?: string;
+  }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const amount = this.formatPrice(data.amount, data.currency ?? 'EUR');
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+  </div>
+  <h2 style="font-size:20px;margin:0 0 12px;">Nová žiadosť o vrátenie peňazí</h2>
+  <p style="color:#374151;">Zákazník požiadal o vrátenie peňazí pre objednávku <strong>${data.orderNumber}</strong>.</p>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
+    <tr><td style="padding:6px 0;color:#6b7280;width:130px;">Objednávka:</td><td style="padding:6px 0;color:#111827;">${data.orderNumber}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">Zákazník:</td><td style="padding:6px 0;color:#111827;">${data.buyerEmail}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">Suma:</td><td style="padding:6px 0;color:#111827;">${amount}</td></tr>
+  </table>
+  <div style="margin:8px 0 16px;padding:14px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;"><strong>Dôvod:</strong><br/>${data.reason}</div>
+  ${data.reviewLink ? `<div style="text-align:center;margin:24px 0;"><a href="${data.reviewLink}" style="background:#10B981;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">Spravovať žiadosti o vrátenie</a></div>` : ''}
+  <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">TicketAll · žiadosť spracujete v administrácii.</p>
+</body></html>`;
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `Nová žiadosť o vrátenie – ${data.orderNumber}`,
+      html,
+    });
+    this.logger.log(`Refund request email sent to organizer ${data.to} (order ${data.orderNumber})`);
+  }
+
+  /** Zákazníkovi: žiadosť o vrátenie bola schválená. */
+  async sendRefundApproved(data: {
+    to: string;
+    orderNumber: string;
+    firstName?: string | null;
+    amount: number;
+    currency?: string;
+    manualStripe?: boolean;
+  }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const name = data.firstName ? `, ${data.firstName}` : '';
+    const amount = this.formatPrice(data.amount, data.currency ?? 'EUR');
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+  </div>
+  <h2 style="font-size:20px;margin:0 0 12px;">Žiadosť o vrátenie bola schválená</h2>
+  <p style="color:#374151;">Dobrý deň${name},</p>
+  <p style="color:#374151;">Vaša žiadosť o vrátenie peňazí pre objednávku <strong>${data.orderNumber}</strong> (${amount}) bola <strong style="color:#10B981;">schválená</strong>.</p>
+  <p style="color:#374151;">Vrátenie peňazí bude spracované a suma vám bude vrátená pôvodným spôsobom platby. Vaše vstupenky z tejto objednávky boli zneplatnené.</p>
+  <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">TicketAll</p>
+</body></html>`;
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `Žiadosť o vrátenie schválená – ${data.orderNumber}`,
+      html,
+    });
+    this.logger.log(`Refund approved email sent to ${data.to} (order ${data.orderNumber})`);
+  }
+
+  /** Zákazníkovi: žiadosť o vrátenie bola zamietnutá (s dôvodom). */
+  async sendRefundRejected(data: {
+    to: string;
+    orderNumber: string;
+    firstName?: string | null;
+    reviewNote?: string | null;
+  }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const name = data.firstName ? `, ${data.firstName}` : '';
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+  </div>
+  <h2 style="font-size:20px;margin:0 0 12px;">Žiadosť o vrátenie bola zamietnutá</h2>
+  <p style="color:#374151;">Dobrý deň${name},</p>
+  <p style="color:#374151;">Vaša žiadosť o vrátenie peňazí pre objednávku <strong>${data.orderNumber}</strong> bola, žiaľ, zamietnutá. Vaša objednávka a vstupenky zostávajú platné.</p>
+  ${data.reviewNote ? `<div style="margin:8px 0 16px;padding:14px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;"><strong>Poznámka:</strong><br/>${data.reviewNote}</div>` : ''}
+  <p style="color:#374151;">V prípade otázok kontaktujte organizátora podujatia.</p>
+  <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">TicketAll</p>
+</body></html>`;
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `Žiadosť o vrátenie zamietnutá – ${data.orderNumber}`,
+      html,
+    });
+    this.logger.log(`Refund rejected email sent to ${data.to} (order ${data.orderNumber})`);
+  }
 }
