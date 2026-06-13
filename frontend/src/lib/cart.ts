@@ -4,6 +4,9 @@ export interface CartItem {
   // GENERAL: ticketTypeId. SEATMAP/SECTIONED: terminSectionId. Práve jeden z dvoch.
   ticketTypeId?: string;
   terminSectionId?: string;
+  // SEATED (úloha 22/3b): konkrétne sedadlá danej sekcie. quantity = seatIds.length.
+  seatIds?: string[];
+  seatLabels?: string[];
   quantity: number;
   name: string;
   price: number;

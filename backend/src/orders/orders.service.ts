@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject, Logger,
+  Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, Inject, Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -9,7 +9,7 @@ import { MailService } from '../mail/mail.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CompOrderDto } from './dto/comp-order.dto';
 import { PosOrderDto } from './dto/pos-order.dto';
-import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole, TerminMode, SectionMode } from '@prisma/client';
+import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole, TerminMode, SectionMode, SeatStatus } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { sendTicketsForOrder } from './orders-mail.helper';
@@ -45,22 +45,68 @@ export class OrdersService {
 
     let totalAmount = 0;
     let currency = 'EUR';
-    // Položky na vytvorenie (jednotné pre GENERAL aj SEATMAP – ďalej už spoločný flow).
-    const itemCreates: Prisma.OrderItemCreateWithoutOrderInput[] = [];
+    // Pripravené položky: data pre OrderItem + (pre SEATED) zoznam sedadiel na atomický claim.
+    const preparedItems: { data: Prisma.OrderItemCreateWithoutOrderInput; seatIds?: string[] }[] = [];
 
     if (termin.mode === TerminMode.SEATMAP) {
-      // Úloha 22/3a: SECTIONED predaj (sekcia + množstvo). SEATED výber sedadiel = fáza 3b.
       for (const item of dto.items) {
         if (!item.terminSectionId) {
           throw new BadRequestException('Pre tento termín musíte vybrať sekciu (terminSectionId).');
         }
         const ts = termin.terminSections.find((t) => t.id === item.terminSectionId);
         if (!ts) throw new NotFoundException(`Sekcia ${item.terminSectionId} pre tento termín neexistuje.`);
-        if (ts.section.mode !== SectionMode.SECTIONED) {
-          throw new BadRequestException(`Sekcia "${ts.section.name}": výber sedadiel pripravujeme (fáza 3b).`);
+
+        if (ts.section.mode === SectionMode.SEATED) {
+          // Úloha 22/3b: SEATED predaj konkrétnych sedadiel. Claim sa vykoná atomicky pri zápise.
+          const seatIds = [...new Set(item.seatIds ?? [])];
+          if (seatIds.length === 0) {
+            throw new BadRequestException(`Sekcia "${ts.section.name}": vyberte aspoň jedno sedadlo.`);
+          }
+          // Over že sedadlá patria tejto sekcii termínu (existencia AVAILABLE sa overí pri claime).
+          const terminSeats = await this.prisma.terminSeat.findMany({
+            where: { terminId: termin.id, seatId: { in: seatIds } },
+            include: { seat: { include: { row: true } } },
+          });
+          if (terminSeats.length !== seatIds.length) {
+            throw new BadRequestException('Niektoré zvolené sedadlá pre tento termín neexistujú.');
+          }
+          for (const tseat of terminSeats) {
+            if (tseat.seat.row.sectionId !== ts.sectionId) {
+              throw new BadRequestException(`Sedadlo "${tseat.seat.label}" nepatrí sekcii "${ts.section.name}".`);
+            }
+          }
+
+          const qty = seatIds.length;
+          totalAmount += Number(ts.price) * qty;
+          currency = ts.currency;
+          preparedItems.push({
+            data: {
+              terminSection: { connect: { id: ts.id } },
+              termin: { connect: { id: termin.id } },
+              quantity: qty,
+              unitPrice: ts.price,
+              currency: ts.currency,
+              priceSnapshot: {
+                name: ts.section.name,
+                price: Number(ts.price),
+                currency: ts.currency,
+                showName: termin.show.name,
+                terminId: termin.id,
+                startsAt: termin.startsAt,
+                sectionId: ts.sectionId,
+                seated: true,
+                seats: terminSeats.map((t) => ({ id: t.seatId, label: t.seat.label, row: t.seat.row.label })),
+              },
+            },
+            seatIds,
+          });
+          continue;
         }
 
-        // Dostupnosť – PENDING aj PAID rezervujú kapacitu (konzistentné s GENERAL).
+        // SECTIONED (úloha 22/3a) – množstvo vs kapacita, PENDING aj PAID rezervujú (ako GENERAL).
+        if (!item.quantity || item.quantity < 1) {
+          throw new BadRequestException(`Sekcia "${ts.section.name}": zadajte počet.`);
+        }
         if (ts.section.capacity != null) {
           const sold = await this.prisma.orderItem.aggregate({
             where: {
@@ -77,20 +123,22 @@ export class OrdersService {
 
         totalAmount += Number(ts.price) * item.quantity;
         currency = ts.currency;
-        itemCreates.push({
-          terminSection: { connect: { id: ts.id } },
-          termin: { connect: { id: termin.id } },
-          quantity: item.quantity,
-          unitPrice: ts.price,
-          currency: ts.currency,
-          priceSnapshot: {
-            name: ts.section.name,
-            price: Number(ts.price),
+        preparedItems.push({
+          data: {
+            terminSection: { connect: { id: ts.id } },
+            termin: { connect: { id: termin.id } },
+            quantity: item.quantity,
+            unitPrice: ts.price,
             currency: ts.currency,
-            showName: termin.show.name,
-            terminId: termin.id,
-            startsAt: termin.startsAt,
-            sectionId: ts.sectionId,
+            priceSnapshot: {
+              name: ts.section.name,
+              price: Number(ts.price),
+              currency: ts.currency,
+              showName: termin.show.name,
+              terminId: termin.id,
+              startsAt: termin.startsAt,
+              sectionId: ts.sectionId,
+            },
           },
         });
       }
@@ -99,6 +147,9 @@ export class OrdersService {
         const tt = termin.ticketTypes.find((t) => t.id === item.ticketTypeId);
         if (!tt) throw new NotFoundException(`TicketType ${item.ticketTypeId} not found`);
         if (!tt.isActive) throw new BadRequestException(`Ticket type ${tt.name} is not active`);
+        if (!item.quantity || item.quantity < 1) {
+          throw new BadRequestException(`Zadajte počet pre "${tt.name}".`);
+        }
         if (item.quantity > tt.maxPerOrder) {
           throw new BadRequestException(`Max ${tt.maxPerOrder} tickets of type "${tt.name}" per order`);
         }
@@ -128,31 +179,29 @@ export class OrdersService {
 
         totalAmount += Number(tt.price) * item.quantity;
         currency = tt.currency;
-        itemCreates.push({
-          ticketType: { connect: { id: tt.id } },
-          termin: { connect: { id: termin.id } },
-          quantity: item.quantity,
-          unitPrice: tt.price,
-          currency: tt.currency,
-          priceSnapshot: {
-            name: tt.name,
-            price: Number(tt.price),
+        preparedItems.push({
+          data: {
+            ticketType: { connect: { id: tt.id } },
+            termin: { connect: { id: termin.id } },
+            quantity: item.quantity,
+            unitPrice: tt.price,
             currency: tt.currency,
-            showName: termin.show.name,
-            terminId: termin.id,
-            startsAt: termin.startsAt,
+            priceSnapshot: {
+              name: tt.name,
+              price: Number(tt.price),
+              currency: tt.currency,
+              showName: termin.show.name,
+              terminId: termin.id,
+              startsAt: termin.startsAt,
+            },
           },
         });
       }
     }
 
-    if (itemCreates.length === 0) {
+    if (preparedItems.length === 0) {
       throw new BadRequestException('Objednávka neobsahuje žiadne položky.');
     }
-
-    const year = new Date().getFullYear();
-    const count = await this.prisma.order.count();
-    const orderNumber = `MT-${year}-${String(count + 1).padStart(5, '0')}`;
 
     // Guest checkout: bez prihlásenia musí DTO obsahovať buyerEmail + buyerName.
     const dbUser = user ? await this.prisma.user.findUnique({ where: { id: user.sub } }) : null;
@@ -166,24 +215,77 @@ export class OrdersService {
     const expiryMinutes = this.config.get<number>('ORDER_EXPIRY_MINUTES', 30);
     const expiresAt = new Date(Date.now() + Number(expiryMinutes) * 60 * 1000);
 
-    const order = await this.prisma.order.create({
-      data: {
-        orderNumber,
-        organizerId: termin.show.organizerId,
-        userId: user?.sub ?? null,
-        buyerEmail,
-        buyerName,
-        buyerPhone: dto.buyerPhone,
-        currency,
-        totalAmount,
-        status: OrderStatus.PENDING,
-        expiresAt,
-        items: { create: itemCreates },
-      },
-      include: { items: true },
-    });
+    const baseOrderData = {
+      organizerId: termin.show.organizerId,
+      userId: user?.sub ?? null,
+      buyerEmail,
+      buyerName,
+      buyerPhone: dto.buyerPhone,
+      currency,
+      totalAmount,
+      status: OrderStatus.PENDING,
+      expiresAt,
+    };
 
-    return order;
+    const hasSeated = preparedItems.some((p) => p.seatIds && p.seatIds.length > 0);
+
+    // orderNumber sa generuje z count() → pod súbehom môže kolidovať (P2002). Retry s prepočtom.
+    return this.withOrderNumberRetry(async (orderNumber) => {
+      const orderData: Prisma.OrderUncheckedCreateInput = { ...baseOrderData, orderNumber };
+
+      if (!hasSeated) {
+        // GENERAL + SECTIONED: jeden create, bez seat-locku (nezmenené správanie).
+        return this.prisma.order.create({
+          data: { ...orderData, items: { create: preparedItems.map((p) => p.data) } },
+          include: { items: true },
+        });
+      }
+
+      // SEATED (príp. mix so SECTIONED): transakcia s ATOMICKÝM claimom sedadiel.
+      // Podmienený UPDATE (status=AVAILABLE → HELD) je race-safe: súbežný claim toho istého
+      // sedadla nájde 0 riadkov → 409 a celá objednávka sa rollbackne (order.create je prvý
+      // príkaz, takže kolízia orderNumber rollbackne pred claimom – žiadne uviaznuté HELD).
+      return this.prisma.$transaction(async (tx) => {
+        const o = await tx.order.create({ data: orderData });
+        for (const p of preparedItems) {
+          const oi = await tx.orderItem.create({ data: { ...p.data, order: { connect: { id: o.id } } } });
+          if (p.seatIds?.length) {
+            for (const seatId of p.seatIds) {
+              const claimed = await tx.terminSeat.updateMany({
+                where: { terminId: termin.id, seatId, status: SeatStatus.AVAILABLE },
+                data: { status: SeatStatus.HELD, orderId: o.id, orderItemId: oi.id, heldAt: new Date() },
+              });
+              if (claimed.count === 0) {
+                throw new ConflictException('Niektoré sedadlo medzitým obsadil iný zákazník – vyberte iné.');
+              }
+            }
+          }
+        }
+        return tx.order.findUnique({ where: { id: o.id }, include: { items: true } });
+      });
+    });
+  }
+
+  /**
+   * Vytvorí objednávku s číslom MT-RRRR-NNNNN; pri kolízii orderNumber (P2002, súbeh) prepočíta
+   * a skúsi znova (max 5×). ConflictException (obsadené sedadlo) sa NEretryuje – prebublá hore.
+   */
+  private async withOrderNumberRetry<T>(fn: (orderNumber: string) => Promise<T>): Promise<T> {
+    const year = new Date().getFullYear();
+    for (let attempt = 0; ; attempt++) {
+      const count = await this.prisma.order.count();
+      const orderNumber = `MT-${year}-${String(count + 1).padStart(5, '0')}`;
+      try {
+        return await fn(orderNumber);
+      } catch (e) {
+        const isOrderNumberCollision =
+          e instanceof Prisma.PrismaClientKnownRequestError &&
+          e.code === 'P2002' &&
+          (e.meta?.target as string[] | undefined)?.includes('orderNumber');
+        if (isOrderNumberCollision && attempt < 5) continue;
+        throw e;
+      }
+    }
   }
 
   async getOrder(id: string, user?: JwtPayload) {
@@ -300,12 +402,23 @@ export class OrdersService {
             terminSection: { include: { section: true } },
           },
         },
+        // Úloha 22/3b: držané sedadlá (HELD) objednávky – pre tickety + prechod na SOLD.
+        terminSeats: { include: { seat: { include: { row: true } } } },
       },
     });
     if (!order) throw new NotFoundException('Order not found');
 
     const hmacSecret =
       this.config.get<string>('QR_HMAC_SECRET') ?? this.config.get<string>('JWT_SECRET')!;
+
+    // Sedadlá zoskupené podľa OrderItem (SEATED položky → 1 ticket na sedadlo).
+    const seatsByItem = new Map<string, typeof order.terminSeats>();
+    for (const tseat of order.terminSeats) {
+      if (!tseat.orderItemId) continue;
+      const arr = seatsByItem.get(tseat.orderItemId) ?? [];
+      arr.push(tseat);
+      seatsByItem.set(tseat.orderItemId, arr);
+    }
 
     // Atomic status transition: only succeeds if order is still PENDING
     const tickets = await this.prisma.$transaction(async (tx) => {
@@ -323,29 +436,48 @@ export class OrdersService {
       }
 
       const created: any[] = [];
+      const makeTicket = async (item: (typeof order.items)[number], seat?: (typeof order.terminSeats)[number]) => {
+        const ticketId = randomUUID();
+        const nonce = randomUUID();
+        const qrToken = this.signQrToken(ticketId, item.terminId!, nonce, hmacSecret);
+        const ticket = await tx.ticket.create({
+          data: {
+            id: ticketId,
+            orderId,
+            orderItemId: item.id,
+            // GENERAL: ticketTypeId. SEATMAP/SECTIONED/SEATED: ticketTypeId null + terminSectionId + názov sekcie.
+            ticketTypeId: item.ticketTypeId,
+            terminId: item.terminId!,
+            terminSectionId: item.terminSectionId,
+            seatSection: item.terminSection?.section.name ?? null,
+            // SEATED (úloha 22/3b): konkrétne sedadlo + labely.
+            seatId: seat?.seatId ?? null,
+            seatRow: seat?.seat.row.label ?? null,
+            seatNumber: seat?.seat.label ?? null,
+            nonce,
+            qrToken,
+            status: TicketStatus.VALID,
+          },
+        });
+        created.push({ ...ticket, ticketType: item.ticketType, termin: item.termin });
+      };
+
       for (const item of order.items) {
-        for (let i = 0; i < item.quantity; i++) {
-          const ticketId = randomUUID();
-          const nonce = randomUUID();
-          const qrToken = this.signQrToken(ticketId, item.terminId!, nonce, hmacSecret);
-          const ticket = await tx.ticket.create({
-            data: {
-              id: ticketId,
-              orderId,
-              orderItemId: item.id,
-              // GENERAL: ticketTypeId. SEATMAP/SECTIONED: ticketTypeId null + terminSectionId + názov sekcie.
-              ticketTypeId: item.ticketTypeId,
-              terminId: item.terminId!,
-              terminSectionId: item.terminSectionId,
-              seatSection: item.terminSection?.section.name ?? null,
-              nonce,
-              qrToken,
-              status: TicketStatus.VALID,
-            },
-          });
-          created.push({ ...ticket, ticketType: item.ticketType, termin: item.termin });
+        const itemSeats = seatsByItem.get(item.id);
+        if (itemSeats && itemSeats.length > 0) {
+          // SEATED: jeden lístok na konkrétne sedadlo.
+          for (const seat of itemSeats) await makeTicket(item, seat);
+        } else {
+          // GENERAL/SECTIONED: počet lístkov = quantity (nezmenené).
+          for (let i = 0; i < item.quantity; i++) await makeTicket(item);
         }
       }
+
+      // Úloha 22/3b: držané sedadlá → SOLD (v rámci tej istej PAID transakcie).
+      await tx.terminSeat.updateMany({
+        where: { orderId, status: SeatStatus.HELD },
+        data: { status: SeatStatus.SOLD },
+      });
       return created;
     });
 
@@ -526,13 +658,34 @@ export class OrdersService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async expirePendingOrders() {
-    const result = await this.prisma.order.updateMany({
+    const expiring = await this.prisma.order.findMany({
       where: { status: OrderStatus.PENDING, expiresAt: { lt: new Date() } },
-      data: { status: OrderStatus.CANCELLED },
+      select: { id: true },
     });
-    if (result.count > 0) {
-      this.logger.log(`Expired ${result.count} pending order(s)`);
-    }
+    if (expiring.length === 0) return;
+    const ids = expiring.map((o) => o.id);
+
+    await this.prisma.$transaction([
+      // Úloha 22/3b: uvoľni držané sedadlá (HELD → AVAILABLE) expirovaných objednávok.
+      this.prisma.terminSeat.updateMany({
+        where: { orderId: { in: ids }, status: SeatStatus.HELD },
+        data: { status: SeatStatus.AVAILABLE, orderId: null, orderItemId: null, heldAt: null },
+      }),
+      this.prisma.order.updateMany({
+        where: { id: { in: ids }, status: OrderStatus.PENDING },
+        data: { status: OrderStatus.CANCELLED },
+      }),
+    ]);
+    this.logger.log(`Expired ${ids.length} pending order(s)`);
+  }
+
+  /** Úloha 22/3b: uvoľní sedadlá objednávky späť na AVAILABLE (cancel/refund). */
+  async releaseSeatsForOrder(orderId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    await client.terminSeat.updateMany({
+      where: { orderId, status: { in: [SeatStatus.HELD, SeatStatus.SOLD] } },
+      data: { status: SeatStatus.AVAILABLE, orderId: null, orderItemId: null, heldAt: null },
+    });
   }
 
   // ── POS (pokladňa na mieste) ────────────────────────────────────────────────

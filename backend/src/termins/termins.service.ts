@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
-import { UserRole, TerminMode, OrderStatus, SectionMode } from '@prisma/client';
+import { UserRole, TerminMode, OrderStatus, SectionMode, SeatStatus } from '@prisma/client';
 import { CreateTerminDto, UpdateTerminDto, UpdateTerminSectionDto } from './dto/termin.dto';
 import { VenuesService } from '../venues/venues.service';
 
@@ -95,6 +95,7 @@ export class TerminsService {
     if (targetMode === TerminMode.GENERAL) {
       await this.assertNoSectionSales(current.id, 'Termín nie je možné prepnúť na GENERAL – na sekciách už existuje predaj.');
       await this.prisma.$transaction([
+        this.prisma.terminSeat.deleteMany({ where: { terminId: current.id } }),
         this.prisma.terminSection.deleteMany({ where: { terminId: current.id } }),
         this.prisma.termin.update({ where: { id: current.id }, data: { mode: TerminMode.GENERAL, seatMapId: null } }),
       ]);
@@ -108,7 +109,9 @@ export class TerminsService {
     }
     const seatMap = await this.prisma.seatMap.findUnique({
       where: { id: targetSeatMapId },
-      include: { sections: { select: { id: true } } },
+      include: {
+        sections: { include: { rows: { include: { seats: { select: { id: true } } } } } },
+      },
     });
     if (!seatMap) throw new BadRequestException('Zvolený plánik neexistuje.');
     if (seatMap.venueId !== current.venueId) {
@@ -118,14 +121,27 @@ export class TerminsService {
     const changingMap = current.seatMapId && current.seatMapId !== targetSeatMapId;
     if (changingMap) {
       await this.assertNoSectionSales(current.id, 'Plánik nie je možné zmeniť – na aktuálnom plániku už existuje predaj.');
-      await this.prisma.terminSection.deleteMany({ where: { terminId: current.id } });
+      await this.prisma.$transaction([
+        this.prisma.terminSeat.deleteMany({ where: { terminId: current.id } }),
+        this.prisma.terminSection.deleteMany({ where: { terminId: current.id } }),
+      ]);
     }
+
+    // Sedadlá SEATED sekcií → TerminSeat AVAILABLE (úloha 22/3b).
+    const seatRows = seatMap.sections
+      .filter((s) => s.mode === SectionMode.SEATED)
+      .flatMap((s) => s.rows.flatMap((r) => r.seats.map((seat) => ({ terminId: current.id, seatId: seat.id }))));
 
     await this.prisma.$transaction([
       this.prisma.termin.update({ where: { id: current.id }, data: { mode: TerminMode.SEATMAP, seatMapId: targetSeatMapId } }),
       // Vytvor chýbajúce TerminSection (cena 0); existujúce ostanú nedotknuté vďaka @@unique + skipDuplicates.
       this.prisma.terminSection.createMany({
         data: seatMap.sections.map((s) => ({ terminId: current.id, sectionId: s.id, price: 0 })),
+        skipDuplicates: true,
+      }),
+      // Vytvor TerminSeat (AVAILABLE) pre všetky sedadlá SEATED sekcií; existujúce ostanú vďaka @@unique.
+      this.prisma.terminSeat.createMany({
+        data: seatRows,
         skipDuplicates: true,
       }),
     ]);
@@ -159,6 +175,7 @@ export class TerminsService {
       orderBy: { section: { displayOrder: 'asc' } },
     });
     const ids = sections.map((s) => s.id);
+    // SECTIONED: predané = súčet quantity OrderItem (PENDING/PAID), ako GENERAL.
     const sold = ids.length
       ? await this.prisma.orderItem.groupBy({
           by: ['terminSectionId'],
@@ -168,23 +185,39 @@ export class TerminsService {
       : [];
     const soldMap = new Map(sold.map((r) => [r.terminSectionId, r._sum.quantity ?? 0]));
 
+    // SEATED (úloha 22/3b): obsadenosť z TerminSeat, zoskupené podľa sekcie sedadla.
+    const terminSeats = await this.prisma.terminSeat.findMany({
+      where: { terminId },
+      select: { status: true, seat: { select: { row: { select: { sectionId: true } } } } },
+    });
+    const seatAgg = new Map<string, { total: number; taken: number }>();
+    for (const tseat of terminSeats) {
+      const secId = tseat.seat.row.sectionId;
+      const e = seatAgg.get(secId) ?? { total: 0, taken: 0 };
+      e.total++;
+      if (tseat.status !== SeatStatus.AVAILABLE) e.taken++;
+      seatAgg.set(secId, e);
+    }
+
     return {
       mode: termin.mode,
       seatMapId: termin.seatMapId,
       sections: sections.map((ts) => {
-        const soldQty = soldMap.get(ts.id) ?? 0;
-        const sellable = ts.section.mode === SectionMode.SECTIONED;
+        const isSeated = ts.section.mode === SectionMode.SEATED;
+        const agg = seatAgg.get(ts.sectionId);
+        const soldQty = isSeated ? (agg?.taken ?? 0) : (soldMap.get(ts.id) ?? 0);
+        const capacity = isSeated ? (agg?.total ?? 0) : ts.section.capacity;
         return {
           id: ts.id,
           sectionId: ts.sectionId,
           name: ts.section.name,
           sectionMode: ts.section.mode,
-          capacity: ts.section.capacity,
+          capacity,
           price: Number(ts.price),
           currency: ts.currency,
           sold: soldQty,
-          remaining: sellable && ts.section.capacity != null ? Math.max(0, ts.section.capacity - soldQty) : null,
-          sellable, // SEATED v 3a nepredajné (výber sedadiel = fáza 3b)
+          remaining: capacity != null ? Math.max(0, capacity - soldQty) : null,
+          sellable: true, // SECTIONED aj SEATED predajné (3b)
         };
       }),
     };

@@ -358,6 +358,7 @@ model Termin {
   tickets        Ticket[]
   scanLogs       ScanLog[]
   terminSections TerminSection[]
+  terminSeats    TerminSeat[]
 
   @@index([showId])
   @@index([startsAt])
@@ -480,6 +481,7 @@ model Order {
   tickets       Ticket[]
   couponRedemption CouponRedemption?
   refundRequests RefundRequest[]
+  terminSeats   TerminSeat[]
 
   @@index([organizerId])
   @@index([userId])
@@ -599,7 +601,9 @@ model Ticket {
   status         TicketStatus @default(VALID)
   usedAt         DateTime?    // set on first successful scan
 
-  // Seat assignment (optional)
+  // Seat assignment (optional). seatId = väzba na konkrétne sedadlo (úloha 22 fáza 3b, SEATED).
+  seatId         String?
+  seat           Seat?        @relation(fields: [seatId], references: [id])
   seatSection    String?
   seatRow        String?
   seatNumber     String?
@@ -612,6 +616,7 @@ model Ticket {
   @@index([orderId])
   @@index([terminId])
   @@index([status])
+  @@index([seatId])
 }
 
 // ─────────────────────────────────────────────
@@ -847,6 +852,9 @@ model Seat {
   y            Float?
   isAccessible Boolean @default(false) // bezbariérové miesto
 
+  terminSeats  TerminSeat[]
+  tickets      Ticket[]
+
   @@index([rowId])
 }
 
@@ -873,4 +881,33 @@ model TerminSection {
   @@unique([terminId, sectionId])
   @@index([terminId])
   @@index([sectionId])
+}
+
+// ─────────────────────────────────────────────
+// TERMIN SEAT (obsadenosť konkrétneho sedadla per termín – úloha 22 fáza 3b, SEATED)
+// ─────────────────────────────────────────────
+
+enum SeatStatus {
+  AVAILABLE // voľné
+  HELD      // držané PENDING objednávkou (lock)
+  SOLD      // predané (PAID)
+}
+
+model TerminSeat {
+  id          String     @id @default(cuid())
+  terminId    String
+  termin      Termin     @relation(fields: [terminId], references: [id], onDelete: Cascade)
+  seatId      String
+  seat        Seat       @relation(fields: [seatId], references: [id])
+  status      SeatStatus @default(AVAILABLE)
+  orderId     String?    // objednávka ktorá sedadlo drží (HELD) / vlastní (SOLD)
+  order       Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  orderItemId String?    // pre fulfillment (sedadlá → ktorý OrderItem → tickety)
+  heldAt      DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([terminId, seatId])   // 1 riadok na sedadlo/termín – základ atomického claimu
+  @@index([orderId])
+  @@index([terminId, status])
 }

@@ -4,7 +4,7 @@ import {
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
-  // GENERAL termín: ticketTypeId. SEATMAP/SECTIONED termín: terminSectionId. Práve jeden z dvoch.
+  // GENERAL termín: ticketTypeId. SEATMAP termín: terminSectionId (SECTIONED s quantity / SEATED so seatIds).
   @IsOptional()
   @IsString()
   ticketTypeId?: string;
@@ -13,10 +13,18 @@ export class OrderItemDto {
   @IsString()
   terminSectionId?: string;
 
+  // GENERAL/SECTIONED: počet kusov. SEATED položka quantity neposiela (odvodí sa z seatIds.length).
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(50)
-  quantity: number;
+  quantity?: number;
+
+  // SEATED položka (úloha 22/3b): zoznam konkrétnych sedadiel (Seat.id) v rámci sekcie.
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  seatIds?: string[];
 }
 
 export class CreateOrderDto {

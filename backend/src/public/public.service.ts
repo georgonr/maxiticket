@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { ContactDto } from './contact.dto';
-import { EventStatus, TerminStatus } from '@prisma/client';
+import { EventStatus, TerminStatus, SectionMode } from '@prisma/client';
 
 const SALE_STATUSES: TerminStatus[] = [TerminStatus.ON_SALE, TerminStatus.COMING_SOON];
 const HERO_CAP = 8;
@@ -238,22 +238,78 @@ export class PublicService {
             ? Math.max(0, tt.totalQuantity - (soldMap.get(tt.id) ?? 0))
             : null,
         })),
-        // SEATMAP režim: sekcie s cenou + dostupnosťou. SEATED nepredajné v 3a.
+        // SEATMAP režim: sekcie s cenou. SECTIONED = množstvo (available z kapacity),
+        // SEATED = výber sedadiel (dostupnosť rieši seat-picker cez /termins/:id/seats).
         sections: t.terminSections.map((ts) => {
           const soldQty = sectionSoldMap.get(ts.id) ?? 0;
-          const sellable = ts.section.mode === 'SECTIONED';
+          const isSectioned = ts.section.mode === 'SECTIONED';
           return {
             id: ts.id,
             name: ts.section.name,
             sectionMode: ts.section.mode,
             price: Number(ts.price),
             currency: ts.currency,
-            available: sellable && ts.section.capacity != null
+            available: isSectioned && ts.section.capacity != null
               ? Math.max(0, ts.section.capacity - soldQty)
               : null,
-            sellable,
+            sellable: true, // SECTIONED aj SEATED sú v 3b predajné
           };
         }),
+      })),
+    };
+  }
+
+  /**
+   * Úloha 22/3b: sedadlá SEATED sekcií termínu so statusom (available/taken) – pre verejný picker.
+   * NEleakuje kto sedadlo drží (len taken/available). Cena = TerminSection.price danej sekcie.
+   */
+  async getTerminSeats(terminId: string) {
+    const termin = await this.prisma.termin.findFirst({
+      where: { id: terminId, status: { in: SALE_STATUSES }, visible: true },
+      include: {
+        terminSections: {
+          where: { section: { mode: SectionMode.SEATED } },
+          orderBy: { section: { displayOrder: 'asc' } },
+          include: {
+            section: {
+              include: {
+                rows: {
+                  orderBy: { displayOrder: 'asc' },
+                  include: { seats: { orderBy: { label: 'asc' } } },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!termin) throw new NotFoundException('Termín nie je dostupný.');
+
+    const seatStatuses = await this.prisma.terminSeat.findMany({
+      where: { terminId },
+      select: { seatId: true, status: true },
+    });
+    const statusMap = new Map(seatStatuses.map((s) => [s.seatId, s.status]));
+
+    return {
+      terminId,
+      sections: termin.terminSections.map((ts) => ({
+        id: ts.id, // terminSectionId – posiela sa späť pri objednávke
+        sectionId: ts.sectionId,
+        name: ts.section.name,
+        color: ts.section.color,
+        price: Number(ts.price),
+        currency: ts.currency,
+        rows: ts.section.rows.map((r) => ({
+          id: r.id,
+          label: r.label,
+          seats: r.seats.map((seat) => ({
+            id: seat.id,
+            label: seat.label,
+            isAccessible: seat.isAccessible,
+            taken: (statusMap.get(seat.id) ?? 'AVAILABLE') !== 'AVAILABLE',
+          })),
+        })),
       })),
     };
   }

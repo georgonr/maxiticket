@@ -35,6 +35,12 @@ export class PublicController {
     return this.svc.getShowBySlug(slug);
   }
 
+  // Úloha 22/3b: sedadlá SEATED sekcií termínu so statusom (pre verejný seat-picker)
+  @Get('termins/:terminId/seats')
+  getTerminSeats(@Param('terminId') terminId: string) {
+    return this.svc.getTerminSeats(terminId);
+  }
+
   @Post('contact')
   @HttpCode(200)
   @Throttle({ default: { limit: 5, ttl: 3_600_000 } })

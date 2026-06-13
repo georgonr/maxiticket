@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { publicApi, PublicShowDetail, PublicTerminDetail } from '@/lib/api';
+import { publicApi, PublicShowDetail, PublicTerminDetail, PublicSeatSection } from '@/lib/api';
 import { formatDate, formatPrice } from '@/lib/format';
 import { setCart, Cart, CartItem } from '@/lib/cart';
+import { SeatPicker } from '@/components/seatmaps/SeatPicker';
 import {
   Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart,
   ChevronRight, ChevronLeft, Tag, AlertCircle, CheckCircle2,
@@ -23,6 +24,10 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
   const [quantities, setQuantities]       = useState<Record<string, number>>({});
   const [coverIdx, setCoverIdx]           = useState(0);
   const [copied, setCopied]               = useState(false);
+  // Úloha 22/3b: SEATED sedadlá – načítané sekcie s plánikom + vybrané sedadlá per sekcia.
+  const [seatData, setSeatData]           = useState<PublicSeatSection[]>([]);
+  const [selectedSeats, setSelectedSeats] = useState<Record<string, Set<string>>>({});
+  const [openPicker, setOpenPicker]       = useState<string | null>(null);
 
   useEffect(() => {
     publicApi
@@ -35,6 +40,17 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
       .finally(() => setLoading(false));
   }, [slug]);
 
+  // Načítaj sedadlá SEATED sekcií pri zmene termínu (len SEATMAP).
+  useEffect(() => {
+    setSelectedSeats({});
+    setOpenPicker(null);
+    if (selectedTermin?.mode === 'SEATMAP') {
+      publicApi.getTerminSeats(selectedTermin.id).then((r) => setSeatData(r.sections)).catch(() => setSeatData([]));
+    } else {
+      setSeatData([]);
+    }
+  }, [selectedTermin]);
+
   function adjustQty(ttId: string, delta: number, max: number) {
     setQuantities((prev) => {
       const cur = prev[ttId] ?? 0;
@@ -43,32 +59,56 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
     });
   }
 
+  function toggleSeat(terminSectionId: string, seatId: string) {
+    setSelectedSeats((prev) => {
+      const cur = new Set(prev[terminSectionId] ?? []);
+      if (cur.has(seatId)) cur.delete(seatId); else cur.add(seatId);
+      return { ...prev, [terminSectionId]: cur };
+    });
+  }
+
+  function seatsTotalCount() {
+    return Object.values(selectedSeats).reduce((n, s) => n + s.size, 0);
+  }
+
   function canAddToCart() {
-    return Object.values(quantities).some((q) => q > 0);
+    return Object.values(quantities).some((q) => q > 0) || seatsTotalCount() > 0;
   }
 
   function addToCart() {
     if (!selectedTermin || !show || !canAddToCart()) return;
-    // SEATMAP termín predáva po sekciách (terminSectionId), GENERAL po typoch lístkov (ticketTypeId).
-    const items: CartItem[] = selectedTermin.mode === 'SEATMAP'
-      ? selectedTermin.sections
-          .filter((s) => s.sellable && (quantities[s.id] ?? 0) > 0)
-          .map((s) => ({
-            terminSectionId: s.id,
-            quantity: quantities[s.id],
-            name: s.name,
-            price: s.price,
-            currency: s.currency,
-          }))
-      : selectedTermin.ticketTypes
-          .filter((tt) => (quantities[tt.id] ?? 0) > 0)
-          .map((tt) => ({
-            ticketTypeId: tt.id,
-            quantity: quantities[tt.id],
-            name: tt.name,
-            price: tt.price,
-            currency: tt.currency,
-          }));
+    // SEATMAP: SECTIONED po množstve, SEATED po konkrétnych sedadlách. GENERAL po typoch lístkov.
+    let items: CartItem[];
+    if (selectedTermin.mode === 'SEATMAP') {
+      items = [];
+      // SECTIONED sekcie – stepper množstvo
+      for (const s of selectedTermin.sections) {
+        if (s.sectionMode === 'SECTIONED' && (quantities[s.id] ?? 0) > 0) {
+          items.push({ terminSectionId: s.id, quantity: quantities[s.id], name: s.name, price: s.price, currency: s.currency });
+        }
+      }
+      // SEATED sekcie – vybrané sedadlá
+      for (const sec of seatData) {
+        const sel = selectedSeats[sec.id];
+        if (sel && sel.size > 0) {
+          const seatIds = Array.from(sel);
+          const seatLabels = sec.rows.flatMap((r) =>
+            r.seats.filter((st) => sel.has(st.id)).map((st) => `${r.label}${st.label}`),
+          );
+          items.push({ terminSectionId: sec.id, seatIds, seatLabels, quantity: seatIds.length, name: sec.name, price: sec.price, currency: sec.currency });
+        }
+      }
+    } else {
+      items = selectedTermin.ticketTypes
+        .filter((tt) => (quantities[tt.id] ?? 0) > 0)
+        .map((tt) => ({
+          ticketTypeId: tt.id,
+          quantity: quantities[tt.id],
+          name: tt.name,
+          price: tt.price,
+          currency: tt.currency,
+        }));
+    }
     const cart: Cart = {
       terminId: selectedTermin.id,
       showSlug: show.slug,
@@ -120,7 +160,10 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
   const totalQty    = Object.values(quantities).reduce((a, b) => a + b, 0);
   const totalPrice  = selectedTermin
     ? (selectedTermin.mode === 'SEATMAP'
-        ? selectedTermin.sections.reduce((sum, s) => sum + s.price * (quantities[s.id] ?? 0), 0)
+        ? selectedTermin.sections
+            .filter((s) => s.sectionMode === 'SECTIONED')
+            .reduce((sum, s) => sum + s.price * (quantities[s.id] ?? 0), 0)
+          + seatData.reduce((sum, sec) => sum + sec.price * (selectedSeats[sec.id]?.size ?? 0), 0)
         : selectedTermin.ticketTypes.reduce((sum, tt) => sum + tt.price * (quantities[tt.id] ?? 0), 0))
     : 0;
   const totalCurrency = (selectedTermin?.mode === 'SEATMAP'
@@ -321,13 +364,49 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 <div className="space-y-2">
                   {(() => {
                     const now = new Date();
-                    // Úloha 22/3a: SEATMAP termín – predaj po sekciách (SECTIONED), SEATED nepredajné.
+                    // Úloha 22 SEATMAP: SECTIONED = stepper (3a), SEATED = výber sedadiel na plániku (3b).
                     if (selectedTermin.mode === 'SEATMAP') {
                       const terminNotOnSale = selectedTermin.status !== 'ON_SALE';
                       return selectedTermin.sections.map((s) => {
+                        // SEATED sekcia – picker
+                        if (s.sectionMode === 'SEATED') {
+                          const seatSection = seatData.find((d) => d.id === s.id);
+                          const selCount = selectedSeats[s.id]?.size ?? 0;
+                          const isOpen = openPicker === s.id;
+                          return (
+                            <div key={s.id} className="rounded-xl border border-slate-200 bg-white p-3.5">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-slate-900 text-sm">{s.name}</p>
+                                  <p className="text-base font-bold text-purple-700 mt-0.5">{formatPrice(s.price, s.currency)} / sedadlo</p>
+                                  {selCount > 0 && <p className="mt-1 text-xs text-emerald-600">{selCount} vybraných sedadiel</p>}
+                                </div>
+                                {!terminNotOnSale && seatSection && (
+                                  <button
+                                    onClick={() => setOpenPicker(isOpen ? null : s.id)}
+                                    className="flex-shrink-0 rounded-lg border border-purple-300 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50"
+                                  >
+                                    {isOpen ? 'Skryť plánik' : 'Vybrať sedadlá'}
+                                  </button>
+                                )}
+                                {terminNotOnSale && <p className="mt-1 text-xs text-blue-500">Čoskoro v predaji</p>}
+                              </div>
+                              {isOpen && seatSection && (
+                                <div className="mt-3">
+                                  <SeatPicker
+                                    section={seatSection}
+                                    selected={selectedSeats[s.id] ?? new Set()}
+                                    onToggle={(seatId) => toggleSeat(s.id, seatId)}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        // SECTIONED sekcia – stepper (3a)
                         const qty = quantities[s.id] ?? 0;
                         const isSoldOut = s.available === 0;
-                        const disabled = !s.sellable || isSoldOut || terminNotOnSale;
+                        const disabled = isSoldOut || terminNotOnSale;
                         return (
                           <div
                             key={s.id}
@@ -337,13 +416,10 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                               <div className="min-w-0">
                                 <p className="font-semibold text-slate-900 text-sm">{s.name}</p>
                                 <p className="text-base font-bold text-purple-700 mt-0.5">{formatPrice(s.price, s.currency)}</p>
-                                {!s.sellable && (
-                                  <p className="mt-1 text-xs text-amber-600">Výber sedadiel pripravujeme</p>
-                                )}
-                                {s.sellable && isSoldOut && (
+                                {isSoldOut && (
                                   <p className="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle size={11} /> Vypredané</p>
                                 )}
-                                {s.sellable && !isSoldOut && terminNotOnSale && (
+                                {!isSoldOut && terminNotOnSale && (
                                   <p className="mt-1 text-xs text-blue-500">Čoskoro v predaji</p>
                                 )}
                                 {!disabled && s.available != null && s.available > 0 && s.available <= 10 && (

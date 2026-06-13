@@ -390,7 +390,35 @@ export const publicApi = {
   getShow: (slug: string) => apiFetch<PublicShowDetail>(`/v1/public/shows/${slug}`),
   getFilters: () => apiFetch<{ categories: string[]; cities: string[] }>('/v1/public/filters'),
   getHero: () => apiFetch<HeroSlideType[]>('/v1/public/hero'),
+  // Úloha 22/3b: sedadlá SEATED sekcií termínu so statusom (pre seat-picker)
+  getTerminSeats: (terminId: string) => apiFetch<PublicTerminSeats>(`/v1/public/termins/${terminId}/seats`),
 };
+
+// ── Public seat picker (úloha 22/3b) ───────────────────────────────────────────
+export interface PublicSeat {
+  id: string;
+  label: string;
+  isAccessible: boolean;
+  taken: boolean;
+}
+export interface PublicSeatRow {
+  id: string;
+  label: string;
+  seats: PublicSeat[];
+}
+export interface PublicSeatSection {
+  id: string; // terminSectionId
+  sectionId: string;
+  name: string;
+  color: string | null;
+  price: number;
+  currency: string;
+  rows: PublicSeatRow[];
+}
+export interface PublicTerminSeats {
+  terminId: string;
+  sections: PublicSeatSection[];
+}
 
 // ── Customer auth ─────────────────────────────────────────────────────────────
 
@@ -407,8 +435,8 @@ export interface RegisterCustomerPayload {
 
 export interface CreateOrderPayload {
   terminId: string;
-  // GENERAL: ticketTypeId. SEATMAP/SECTIONED: terminSectionId. Práve jeden z dvoch.
-  items: { ticketTypeId?: string; terminSectionId?: string; quantity: number }[];
+  // GENERAL: ticketTypeId+quantity. SECTIONED: terminSectionId+quantity. SEATED: terminSectionId+seatIds.
+  items: { ticketTypeId?: string; terminSectionId?: string; quantity?: number; seatIds?: string[] }[];
   acceptTerms: true;
   // Guest checkout (required ak nie je prihlásený)
   buyerEmail?: string;

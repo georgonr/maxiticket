@@ -6,7 +6,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { OrderStatus, TicketStatus, Prisma } from '@prisma/client';
+import { OrderStatus, TicketStatus, SeatStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 
@@ -304,6 +304,11 @@ export class RefundsService {
           status: { in: [TicketStatus.VALID, TicketStatus.USED] },
         },
         data: { status: TicketStatus.REFUNDED },
+      });
+      // Úloha 22/3b: SEATED sedadlá späť do predaja (SOLD/HELD → AVAILABLE).
+      await tx.terminSeat.updateMany({
+        where: { orderId: order.id, status: { in: [SeatStatus.HELD, SeatStatus.SOLD] } },
+        data: { status: SeatStatus.AVAILABLE, orderId: null, orderItemId: null, heldAt: null },
       });
       // Vráť kupón do obehu (usedCount-- + zmaž redemption).
       if (order.couponId && order.couponRedemption) {

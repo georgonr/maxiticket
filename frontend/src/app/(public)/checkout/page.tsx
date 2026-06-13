@@ -93,9 +93,11 @@ function CheckoutContent() {
       const order = await ordersApi.create({
         terminId: cart.terminId,
         items: cart.items.map((i) =>
-          i.terminSectionId
-            ? { terminSectionId: i.terminSectionId, quantity: i.quantity }
-            : { ticketTypeId: i.ticketTypeId, quantity: i.quantity },
+          i.seatIds?.length
+            ? { terminSectionId: i.terminSectionId, seatIds: i.seatIds }
+            : i.terminSectionId
+              ? { terminSectionId: i.terminSectionId, quantity: i.quantity }
+              : { ticketTypeId: i.ticketTypeId, quantity: i.quantity },
         ),
         acceptTerms: true,
         ...(isLoggedIn
@@ -156,6 +158,9 @@ function CheckoutContent() {
               <div>
                 <p className="text-sm font-medium text-gray-800">{item.name}</p>
                 <p className="text-xs text-gray-400">{item.quantity} × {formatPrice(item.price, item.currency)}</p>
+                {item.seatLabels?.length ? (
+                  <p className="text-xs text-purple-600 mt-0.5">Sedadlá: {item.seatLabels.join(', ')}</p>
+                ) : null}
               </div>
               <span className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity, item.currency)}</span>
             </div>
