@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { MapPin, Plus, Pencil, Trash2, Globe } from 'lucide-react';
+import Link from 'next/link';
+import { MapPin, Plus, Pencil, Trash2, Globe, LayoutGrid } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError, venuesApi, Venue } from '@/lib/api';
@@ -171,6 +172,13 @@ export default function VenuesPage() {
                                   Aktivovať
                                 </button>
                               )}
+                              <Link
+                                href={`/organizer/venues/${v.id}/seatmaps`}
+                                className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700"
+                                title="Plániky sedenia"
+                              >
+                                <LayoutGrid size={15} />
+                              </Link>
                               <button
                                 onClick={() => setEditing(v)}
                                 disabled={!manage}
