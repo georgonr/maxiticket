@@ -248,6 +248,7 @@ model Venue {
   updatedAt    DateTime   @updatedAt
 
   termins      Termin[]
+  seatMaps     SeatMap[]
 
   @@index([organizerId])
   @@index([city])
@@ -761,4 +762,67 @@ model CouponRedemption {
 
   @@index([couponId])
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Seat maps (úloha 22 fáza 1/5)
+// Hala = Venue → viacero možných plánikov (SeatMap). Každá mapa má sekcie,
+// sekcia je buď SECTIONED (len kapacita) alebo SEATED (menované sedadlá v radoch).
+// Zatiaľ samostatná štruktúra na Venue – napojenie na Termin/predaj príde Fáza 3.
+// ─────────────────────────────────────────────
+
+enum SectionMode {
+  SECTIONED // len kapacita (číslo), bez menovaných sedadiel
+  SEATED    // menované sedadlá v radoch
+}
+
+model SeatMap {
+  id        String    @id @default(cuid())
+  venueId   String
+  venue     Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name      String // napr. "Divadelné usporiadanie", "Stojací koncert"
+  isDefault Boolean   @default(false)
+  isActive  Boolean   @default(true)
+  sections  Section[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([venueId])
+}
+
+model Section {
+  id           String      @id @default(cuid())
+  seatMapId    String
+  seatMap      SeatMap     @relation(fields: [seatMapId], references: [id], onDelete: Cascade)
+  name         String // "Parter", "Balkón", "VIP", "Státie"
+  mode         SectionMode
+  capacity     Int? // len pre SECTIONED (NULL pre SEATED – odvodí sa z počtu sedadiel)
+  displayOrder Int         @default(0)
+  color        String? // hex pre budúci vizuál (Fáza 2)
+  rows         Row[]
+
+  @@index([seatMapId])
+}
+
+model Row {
+  id           String  @id @default(cuid())
+  sectionId    String
+  section      Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  label        String // "A", "B", "1", "2"
+  displayOrder Int     @default(0)
+  seats        Seat[]
+
+  @@index([sectionId])
+}
+
+model Seat {
+  id           String  @id @default(cuid())
+  rowId        String
+  row          Row     @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  label        String // "A1", "12" – číslo sedadla v rade
+  x            Float? // pozícia pre vizuál (Fáza 2)
+  y            Float?
+  isAccessible Boolean @default(false) // bezbariérové miesto
+
+  @@index([rowId])
 }

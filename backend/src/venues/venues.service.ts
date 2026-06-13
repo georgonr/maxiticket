@@ -138,6 +138,28 @@ export class VenuesService {
     return venue;
   }
 
+  /**
+   * Načíta venue podľa id a overí ČÍTACÍ prístup (vlastné + globálne + super/staff).
+   * Reuse seat-mapami (úloha 22): prístup k mape sa rozhoduje cez jej venue.
+   */
+  async getVenueForRead(venueId: string, user: JwtPayload) {
+    const venue = await this.prisma.venue.findUnique({ where: { id: venueId } });
+    if (!venue) throw new NotFoundException('Miesto neexistuje.');
+    this.assertReadAccess(venue.organizerId, user);
+    return venue;
+  }
+
+  /**
+   * Načíta venue podľa id a overí MANAŽÉRSKY prístup (super/staff všetko; organizer
+   * len vlastné; globálne → 403). Reuse seat-mapami (úloha 22) pri mutáciách.
+   */
+  async getVenueForManage(venueId: string, user: JwtPayload) {
+    const venue = await this.prisma.venue.findUnique({ where: { id: venueId } });
+    if (!venue) throw new NotFoundException('Miesto neexistuje.');
+    this.assertManageAccess(venue.organizerId, user);
+    return venue;
+  }
+
   /** Čítanie: vlastné, globálne, alebo super/staff. */
   private assertReadAccess(organizerId: string | null, user: JwtPayload) {
     if (this.isSuperOrStaff(user)) return;

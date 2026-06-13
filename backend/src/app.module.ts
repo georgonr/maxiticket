@@ -30,6 +30,7 @@ import { ScannersModule } from './scanners/scanners.module';
 import { MembersModule } from './members/members.module';
 import { AccountModule } from './account/account.module';
 import { RefundsModule } from './refunds/refunds.module';
+import { SeatmapsModule } from './seatmaps/seatmaps.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -63,6 +64,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     MembersModule,
     AccountModule,
     RefundsModule,
+    SeatmapsModule,
   ],
   controllers: [HealthController],
   providers: [
