@@ -179,7 +179,7 @@ export class ScanService {
       ticketCode: ticket.id.slice(-12).toUpperCase(),
       showName: ticket.termin.show.name,
       terminStartsAt: ticket.termin.startsAt,
-      ticketTypeName: ticket.ticketType.name,
+      ticketTypeName: ticket.ticketType?.name ?? ticket.seatSection ?? 'Vstupenka',
       buyerName: ticket.order.buyerName ?? ticket.order.buyerEmail ?? null,
       seatSection: ticket.seatSection,
       seatRow: ticket.seatRow,

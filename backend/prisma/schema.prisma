@@ -53,6 +53,12 @@ enum TerminStatus {
   PAST
 }
 
+// Režim predaja termínu (úloha 22 fáza 3a)
+enum TerminMode {
+  GENERAL // dnešný predaj cez TicketType (nedotknutý)
+  SEATMAP // predaj cez plánik – sekcie (SECTIONED) / sedadlá (SEATED, fáza 3b)
+}
+
 enum OrderStatus {
   PENDING    // payment initiated
   PAID
@@ -339,13 +345,19 @@ model Termin {
   visible      Boolean      @default(true)
   capacity     Int?
 
+  // Režim predaja (úloha 22 fáza 3a) – default GENERAL = dnešné správanie
+  mode         TerminMode   @default(GENERAL)
+  seatMapId    String?
+  seatMap      SeatMap?     @relation(fields: [seatMapId], references: [id], onDelete: SetNull)
+
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  ticketTypes  TicketType[]
-  orderItems   OrderItem[]
-  tickets      Ticket[]
-  scanLogs     ScanLog[]
+  ticketTypes    TicketType[]
+  orderItems     OrderItem[]
+  tickets        Ticket[]
+  scanLogs       ScanLog[]
+  terminSections TerminSection[]
 
   @@index([showId])
   @@index([startsAt])
@@ -541,6 +553,10 @@ model OrderItem {
   productVariantId String?
   productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
 
+  // SEATMAP/SECTIONED položka (úloha 22 fáza 3a) – alternatíva k ticketTypeId
+  terminSectionId  String?
+  terminSection    TerminSection?  @relation(fields: [terminSectionId], references: [id])
+
   quantity         Int
   unitPrice        Decimal         @db.Decimal(10, 2)
   currency         String          @default("EUR")
@@ -554,6 +570,7 @@ model OrderItem {
 
   @@index([orderId])
   @@index([ticketTypeId])
+  @@index([terminSectionId])
 }
 
 // ─────────────────────────────────────────────
@@ -566,10 +583,14 @@ model Ticket {
   order          Order        @relation(fields: [orderId], references: [id])
   orderItemId    String
   orderItem      OrderItem    @relation(fields: [orderItemId], references: [id])
-  ticketTypeId   String
-  ticketType     TicketType   @relation(fields: [ticketTypeId], references: [id])
+  // ticketTypeId je nullable od úlohy 22/3a – SECTIONED lístok nemá TicketType (existujúce GENERAL dáta nedotknuté)
+  ticketTypeId   String?
+  ticketType     TicketType?  @relation(fields: [ticketTypeId], references: [id])
   terminId       String
   termin         Termin       @relation(fields: [terminId], references: [id])
+  // SEATMAP/SECTIONED lístok (úloha 22 fáza 3a)
+  terminSectionId String?
+  terminSection   TerminSection? @relation(fields: [terminSectionId], references: [id])
 
   // QR payload: HMAC-SHA256 signed token (ticketId + terminId + nonce)
   qrToken        String       @unique
@@ -784,6 +805,7 @@ model SeatMap {
   isDefault Boolean   @default(false)
   isActive  Boolean   @default(true)
   sections  Section[]
+  termins   Termin[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -800,6 +822,7 @@ model Section {
   displayOrder Int         @default(0)
   color        String? // hex pre budúci vizuál (Fáza 2)
   rows         Row[]
+  terminSections TerminSection[]
 
   @@index([seatMapId])
 }
@@ -825,4 +848,29 @@ model Seat {
   isAccessible Boolean @default(false) // bezbariérové miesto
 
   @@index([rowId])
+}
+
+// ─────────────────────────────────────────────
+// TERMIN SECTION (cena + dostupnosť sekcie per termín – úloha 22 fáza 3a)
+// ─────────────────────────────────────────────
+
+model TerminSection {
+  id         String      @id @default(cuid())
+  terminId   String
+  termin     Termin      @relation(fields: [terminId], references: [id], onDelete: Cascade)
+  sectionId  String
+  section    Section     @relation(fields: [sectionId], references: [id])
+
+  price      Decimal     @db.Decimal(10, 2) @default(0)
+  currency   String      @default("EUR")
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  orderItems OrderItem[]
+  tickets    Ticket[]
+
+  @@unique([terminId, sectionId])
+  @@index([terminId])
+  @@index([sectionId])
 }

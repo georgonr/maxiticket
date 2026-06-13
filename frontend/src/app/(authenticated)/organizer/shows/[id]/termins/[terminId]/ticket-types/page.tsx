@@ -4,7 +4,8 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
-import { ticketTypesApi, terminsApi, TicketType, CreateTicketTypeBody } from '@/lib/api';
+import { ticketTypesApi, terminsApi, TicketType, CreateTicketTypeBody, TerminSectionRow } from '@/lib/api';
+import { seatmapsApi, SeatMapSummary } from '@/lib/api/seatmaps';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -41,9 +42,24 @@ export default function TicketTypesPage() {
   const [startSaleNow, setStartSaleNow] = useState(false);
   const [terminStartsAt, setTerminStartsAt] = useState('');
 
+  // Úloha 22/3a: režim predaja (GENERAL/SEATMAP) + sekcie
+  const [mode, setMode] = useState<'GENERAL' | 'SEATMAP'>('GENERAL');
+  const [venueId, setVenueId] = useState('');
+  const [seatMapId, setSeatMapId] = useState<string | null>(null);
+  const [seatMaps, setSeatMaps] = useState<SeatMapSummary[]>([]);
+  const [sections, setSections] = useState<TerminSectionRow[]>([]);
+  const [priceDraft, setPriceDraft] = useState<Record<string, string>>({});
+  const [modeSaving, setModeSaving] = useState(false);
+
   async function loadTicketTypes(token: string) {
     const data = await ticketTypesApi.list(terminId, token);
     setTicketTypes(data);
+  }
+
+  async function loadSections(token: string) {
+    const res = await terminsApi.listSections(id, terminId, token);
+    setSections(res.sections);
+    setPriceDraft(Object.fromEntries(res.sections.map((s) => [s.id, String(s.price)])));
   }
 
   useEffect(() => {
@@ -55,6 +71,12 @@ export default function TicketTypesPage() {
           terminsApi.get(id, terminId, token),
         ]);
         setTerminStartsAt(termin.startsAt);
+        setVenueId(termin.venueId);
+        setMode(termin.mode ?? 'GENERAL');
+        setSeatMapId(termin.seatMapId ?? null);
+        const maps = await seatmapsApi.list(termin.venueId, token).catch(() => []);
+        setSeatMaps(maps);
+        if ((termin.mode ?? 'GENERAL') === 'SEATMAP') await loadSections(token);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Chyba pri načítaní');
       } finally {
@@ -116,6 +138,40 @@ export default function TicketTypesPage() {
     }
   }
 
+  async function handleSwitchMode(nextMode: 'GENERAL' | 'SEATMAP', nextSeatMapId?: string | null) {
+    setError('');
+    setModeSaving(true);
+    try {
+      const token = await getValidToken();
+      if (!token) { router.replace('/login'); return; }
+      const body: { mode: 'GENERAL' | 'SEATMAP'; seatMapId?: string | null } = { mode: nextMode };
+      if (nextMode === 'SEATMAP') body.seatMapId = nextSeatMapId ?? seatMapId ?? seatMaps[0]?.id;
+      await terminsApi.update(id, terminId, body, token);
+      setMode(nextMode);
+      setSeatMapId(nextMode === 'SEATMAP' ? (body.seatMapId ?? null) : null);
+      const token2 = await getValidToken();
+      if (token2 && nextMode === 'SEATMAP') await loadSections(token2);
+      else setSections([]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Nepodarilo sa zmeniť režim termínu');
+    } finally {
+      setModeSaving(false);
+    }
+  }
+
+  async function handleSavePrice(ts: TerminSectionRow) {
+    setError('');
+    const token = await getValidToken();
+    if (!token) { router.replace('/login'); return; }
+    try {
+      await terminsApi.setSectionPrice(id, terminId, ts.id, { price: Number(priceDraft[ts.id] ?? 0) }, token);
+      const token2 = await getValidToken();
+      if (token2) await loadSections(token2);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Nepodarilo sa uložiť cenu');
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -132,12 +188,91 @@ export default function TicketTypesPage() {
       </header>
 
       <main className="mx-auto max-w-2xl p-8 space-y-6">
-        <h1 className="text-2xl font-bold">Typy lístkov</h1>
+        <h1 className="text-2xl font-bold">Predaj na termíne</h1>
 
         {error && (
           <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
+        {/* Úloha 22/3a: režim predaja */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+          <h2 className="font-semibold">Režim predaja</h2>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              disabled={modeSaving}
+              onClick={() => mode !== 'GENERAL' && handleSwitchMode('GENERAL')}
+              className={`flex-1 rounded-lg border px-4 py-3 text-sm text-left ${mode === 'GENERAL' ? 'border-brand bg-brand/5 dark:bg-brand/10' : 'border-gray-200 dark:border-gray-700'}`}
+            >
+              <span className="font-medium block">Všeobecný (GENERAL)</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Typy lístkov s cenou a počtom</span>
+            </button>
+            <button
+              type="button"
+              disabled={modeSaving || seatMaps.length === 0}
+              onClick={() => mode !== 'SEATMAP' && handleSwitchMode('SEATMAP')}
+              className={`flex-1 rounded-lg border px-4 py-3 text-sm text-left disabled:opacity-50 ${mode === 'SEATMAP' ? 'border-brand bg-brand/5 dark:bg-brand/10' : 'border-gray-200 dark:border-gray-700'}`}
+            >
+              <span className="font-medium block">Plánik (SEATMAP)</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {seatMaps.length === 0 ? 'Najprv vytvorte plánik pre miesto konania' : 'Predaj po sekciách'}
+              </span>
+            </button>
+          </div>
+          {mode === 'SEATMAP' && seatMaps.length > 0 && (
+            <div>
+              <label className="text-sm font-medium block mb-1">Plánik</label>
+              <select
+                value={seatMapId ?? ''}
+                disabled={modeSaving}
+                onChange={(e) => handleSwitchMode('SEATMAP', e.target.value)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+              >
+                {seatMaps.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name} ({m.sectionCount} sekcií)</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Úloha 22/3a: SEATMAP – ceny sekcií */}
+        {mode === 'SEATMAP' && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+            <h2 className="font-semibold">Sekcie a ceny</h2>
+            {sections.length === 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Plánik nemá žiadne sekcie.</p>
+            )}
+            {sections.map((ts) => (
+              <div key={ts.id} className="flex items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0 last:pb-0">
+                <div>
+                  <p className="font-medium text-sm">{ts.name}</p>
+                  {ts.sellable ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Kapacita {ts.capacity ?? '—'} · predané {ts.sold}
+                      {ts.remaining != null ? ` · zostáva ${ts.remaining}` : ''}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-amber-600">Sedadlá – predaj sedadiel pripravujeme (Fáza 3b)</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id={`price-${ts.id}`} type="number" min={0} step="0.01"
+                    className="w-28"
+                    value={priceDraft[ts.id] ?? ''}
+                    onChange={(e) => setPriceDraft((d) => ({ ...d, [ts.id]: e.target.value }))}
+                  />
+                  <span className="text-xs text-gray-500">{ts.currency}</span>
+                  <Button size="sm" variant="outline" onClick={() => handleSavePrice(ts)}>Uložiť</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* GENERAL: typy lístkov */}
+        {mode === 'GENERAL' && (<>
         {/* Existing ticket types */}
         {ticketTypes.length > 0 && (
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
@@ -254,6 +389,7 @@ export default function TicketTypesPage() {
             </div>
           </form>
         </div>
+        </>)}
       </main>
     </div>
   );

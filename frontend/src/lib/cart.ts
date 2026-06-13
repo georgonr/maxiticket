@@ -1,7 +1,9 @@
 'use client';
 
 export interface CartItem {
-  ticketTypeId: string;
+  // GENERAL: ticketTypeId. SEATMAP/SECTIONED: terminSectionId. Práve jeden z dvoch.
+  ticketTypeId?: string;
+  terminSectionId?: string;
   quantity: number;
   name: string;
   price: number;

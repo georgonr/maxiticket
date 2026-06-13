@@ -1,6 +1,6 @@
-import { IsString, IsOptional, IsEnum, IsBoolean, IsNumber, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsBoolean, IsNumber, IsDateString, ValidateIf, Min } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
-import { TerminStatus } from '@prisma/client';
+import { TerminStatus, TerminMode } from '@prisma/client';
 
 export class CreateTerminDto {
   @IsString() venueId: string;
@@ -12,6 +12,15 @@ export class CreateTerminDto {
   @IsOptional() @IsEnum(TerminStatus) status?: TerminStatus;
   @IsOptional() @IsBoolean() visible?: boolean;
   @IsOptional() @IsNumber() capacity?: number;
+  // Úloha 22/3a: režim predaja + väzba na plánik (seatMapId povinný pri SEATMAP)
+  @IsOptional() @IsEnum(TerminMode) mode?: TerminMode;
+  @IsOptional() @ValidateIf((o) => o.seatMapId !== null) @IsString() seatMapId?: string | null;
 }
 
 export class UpdateTerminDto extends PartialType(CreateTerminDto) {}
+
+// Úloha 22/3a: nastavenie ceny sekcie pre termín (per TerminSection)
+export class UpdateTerminSectionDto {
+  @IsNumber() @Min(0) price: number;
+  @IsOptional() @IsString() currency?: string;
+}

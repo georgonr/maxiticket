@@ -58,7 +58,8 @@ function CheckoutContent() {
       .validate({
         code: couponParam,
         subtotal,
-        items: cart.items.map((i) => ({ ticketTypeId: i.ticketTypeId, quantity: i.quantity })),
+        // Kupón sa viaže na typy lístkov; SEATMAP/SECTIONED položky (bez ticketTypeId) sa do scope nepočítajú.
+        items: cart.items.filter((i) => i.ticketTypeId).map((i) => ({ ticketTypeId: i.ticketTypeId!, quantity: i.quantity })),
       })
       .then((res) => {
         if (res.valid) {
@@ -91,7 +92,11 @@ function CheckoutContent() {
       // 1. Create the order (guest posiela buyer údaje; prihlásený ich vynechá)
       const order = await ordersApi.create({
         terminId: cart.terminId,
-        items: cart.items.map((i) => ({ ticketTypeId: i.ticketTypeId, quantity: i.quantity })),
+        items: cart.items.map((i) =>
+          i.terminSectionId
+            ? { terminSectionId: i.terminSectionId, quantity: i.quantity }
+            : { ticketTypeId: i.ticketTypeId, quantity: i.quantity },
+        ),
         acceptTerms: true,
         ...(isLoggedIn
           ? {}
@@ -147,7 +152,7 @@ function CheckoutContent() {
 
         <div className="divide-y divide-gray-100">
           {cart.items.map((item) => (
-            <div key={item.ticketTypeId} className="flex items-center justify-between py-2.5">
+            <div key={item.ticketTypeId ?? item.terminSectionId} className="flex items-center justify-between py-2.5">
               <div>
                 <p className="text-sm font-medium text-gray-800">{item.name}</p>
                 <p className="text-xs text-gray-400">{item.quantity} × {formatPrice(item.price, item.currency)}</p>
@@ -195,7 +200,7 @@ function CheckoutContent() {
         <div className="mt-4 border-t pt-4">
           <CouponInput
             subtotal={total}
-            items={cart.items.map((i) => ({ ticketTypeId: i.ticketTypeId, quantity: i.quantity }))}
+            items={cart.items.filter((i) => i.ticketTypeId).map((i) => ({ ticketTypeId: i.ticketTypeId!, quantity: i.quantity }))}
             currency={currency}
             appliedCoupon={appliedCoupon}
             onApply={setAppliedCoupon}

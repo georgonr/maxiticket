@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { publicApi, PublicShowDetail, PublicTerminDetail } from '@/lib/api';
 import { formatDate, formatPrice } from '@/lib/format';
-import { setCart, Cart } from '@/lib/cart';
+import { setCart, Cart, CartItem } from '@/lib/cart';
 import {
   Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart,
   ChevronRight, ChevronLeft, Tag, AlertCircle, CheckCircle2,
@@ -49,15 +49,26 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
 
   function addToCart() {
     if (!selectedTermin || !show || !canAddToCart()) return;
-    const items = selectedTermin.ticketTypes
-      .filter((tt) => (quantities[tt.id] ?? 0) > 0)
-      .map((tt) => ({
-        ticketTypeId: tt.id,
-        quantity: quantities[tt.id],
-        name: tt.name,
-        price: tt.price,
-        currency: tt.currency,
-      }));
+    // SEATMAP termín predáva po sekciách (terminSectionId), GENERAL po typoch lístkov (ticketTypeId).
+    const items: CartItem[] = selectedTermin.mode === 'SEATMAP'
+      ? selectedTermin.sections
+          .filter((s) => s.sellable && (quantities[s.id] ?? 0) > 0)
+          .map((s) => ({
+            terminSectionId: s.id,
+            quantity: quantities[s.id],
+            name: s.name,
+            price: s.price,
+            currency: s.currency,
+          }))
+      : selectedTermin.ticketTypes
+          .filter((tt) => (quantities[tt.id] ?? 0) > 0)
+          .map((tt) => ({
+            ticketTypeId: tt.id,
+            quantity: quantities[tt.id],
+            name: tt.name,
+            price: tt.price,
+            currency: tt.currency,
+          }));
     const cart: Cart = {
       terminId: selectedTermin.id,
       showSlug: show.slug,
@@ -108,9 +119,13 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
   const coverImages = show.images.filter((i) => i.squareUrl || i.url);
   const totalQty    = Object.values(quantities).reduce((a, b) => a + b, 0);
   const totalPrice  = selectedTermin
-    ? selectedTermin.ticketTypes.reduce((sum, tt) => sum + tt.price * (quantities[tt.id] ?? 0), 0)
+    ? (selectedTermin.mode === 'SEATMAP'
+        ? selectedTermin.sections.reduce((sum, s) => sum + s.price * (quantities[s.id] ?? 0), 0)
+        : selectedTermin.ticketTypes.reduce((sum, tt) => sum + tt.price * (quantities[tt.id] ?? 0), 0))
     : 0;
-  const totalCurrency = selectedTermin?.ticketTypes[0]?.currency ?? 'EUR';
+  const totalCurrency = (selectedTermin?.mode === 'SEATMAP'
+    ? selectedTermin?.sections[0]?.currency
+    : selectedTermin?.ticketTypes[0]?.currency) ?? 'EUR';
 
   return (
     <div>
@@ -306,6 +321,59 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 <div className="space-y-2">
                   {(() => {
                     const now = new Date();
+                    // Úloha 22/3a: SEATMAP termín – predaj po sekciách (SECTIONED), SEATED nepredajné.
+                    if (selectedTermin.mode === 'SEATMAP') {
+                      const terminNotOnSale = selectedTermin.status !== 'ON_SALE';
+                      return selectedTermin.sections.map((s) => {
+                        const qty = quantities[s.id] ?? 0;
+                        const isSoldOut = s.available === 0;
+                        const disabled = !s.sellable || isSoldOut || terminNotOnSale;
+                        return (
+                          <div
+                            key={s.id}
+                            className={`rounded-xl border bg-white p-3.5 transition-all ${disabled ? 'border-slate-100 opacity-60' : 'border-slate-200 hover:border-slate-300'}`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm">{s.name}</p>
+                                <p className="text-base font-bold text-purple-700 mt-0.5">{formatPrice(s.price, s.currency)}</p>
+                                {!s.sellable && (
+                                  <p className="mt-1 text-xs text-amber-600">Výber sedadiel pripravujeme</p>
+                                )}
+                                {s.sellable && isSoldOut && (
+                                  <p className="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle size={11} /> Vypredané</p>
+                                )}
+                                {s.sellable && !isSoldOut && terminNotOnSale && (
+                                  <p className="mt-1 text-xs text-blue-500">Čoskoro v predaji</p>
+                                )}
+                                {!disabled && s.available != null && s.available > 0 && s.available <= 10 && (
+                                  <p className="mt-1 flex items-center gap-1 text-xs text-orange-500"><AlertCircle size={11} /> Posledné {s.available} ks</p>
+                                )}
+                              </div>
+                              {!disabled && (
+                                <div className="flex flex-shrink-0 items-center gap-2">
+                                  <button
+                                    onClick={() => adjustQty(s.id, -1, s.available ?? 50)}
+                                    disabled={qty === 0}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                                  >
+                                    <Minus size={13} />
+                                  </button>
+                                  <span className="w-5 text-center text-sm font-bold text-slate-900">{qty}</span>
+                                  <button
+                                    onClick={() => adjustQty(s.id, +1, s.available ?? 50)}
+                                    disabled={s.available != null && qty >= s.available}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-600 disabled:opacity-30 transition-colors"
+                                  >
+                                    <Plus size={13} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      });
+                    }
                     return selectedTermin.ticketTypes.map((tt) => {
                       const qty            = quantities[tt.id] ?? 0;
                       const isSoldOut      = tt.available === 0;

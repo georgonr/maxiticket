@@ -9,7 +9,7 @@ import { MailService } from '../mail/mail.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CompOrderDto } from './dto/comp-order.dto';
 import { PosOrderDto } from './dto/pos-order.dto';
-import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole } from '@prisma/client';
+import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole, TerminMode, SectionMode } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { sendTicketsForOrder } from './orders-mail.helper';
@@ -31,7 +31,12 @@ export class OrdersService {
   async createOrder(dto: CreateOrderDto, user?: JwtPayload) {
     const termin = await this.prisma.termin.findUnique({
       where: { id: dto.terminId },
-      include: { show: true, venue: true, ticketTypes: true },
+      include: {
+        show: true,
+        venue: true,
+        ticketTypes: true,
+        terminSections: { include: { section: true } },
+      },
     });
     if (!termin) throw new NotFoundException('Termin not found');
     if (termin.status !== TerminStatus.ON_SALE) {
@@ -39,41 +44,110 @@ export class OrdersService {
     }
 
     let totalAmount = 0;
-    const validatedItems: { ticketType: any; quantity: number }[] = [];
+    let currency = 'EUR';
+    // Položky na vytvorenie (jednotné pre GENERAL aj SEATMAP – ďalej už spoločný flow).
+    const itemCreates: Prisma.OrderItemCreateWithoutOrderInput[] = [];
 
-    for (const item of dto.items) {
-      const tt = termin.ticketTypes.find((t) => t.id === item.ticketTypeId);
-      if (!tt) throw new NotFoundException(`TicketType ${item.ticketTypeId} not found`);
-      if (!tt.isActive) throw new BadRequestException(`Ticket type ${tt.name} is not active`);
-      if (item.quantity > tt.maxPerOrder) {
-        throw new BadRequestException(`Max ${tt.maxPerOrder} tickets of type "${tt.name}" per order`);
-      }
-
-      const now = new Date();
-      if (tt.saleStartsAt && now < tt.saleStartsAt) {
-        throw new BadRequestException(`Sale for "${tt.name}" has not started yet`);
-      }
-      if (tt.saleEndsAt && now > tt.saleEndsAt) {
-        throw new BadRequestException(`Sale for "${tt.name}" has ended`);
-      }
-
-      // Availability check – PENDING orders also reserve capacity
-      if (tt.totalQuantity != null) {
-        const sold = await this.prisma.orderItem.aggregate({
-          where: {
-            ticketTypeId: tt.id,
-            order: { status: { in: [OrderStatus.PENDING, OrderStatus.PAID] } },
-          },
-          _sum: { quantity: true },
-        });
-        const remaining = tt.totalQuantity - (sold._sum.quantity ?? 0);
-        if (remaining < item.quantity) {
-          throw new BadRequestException(`Only ${remaining} ticket(s) of type "${tt.name}" remaining`);
+    if (termin.mode === TerminMode.SEATMAP) {
+      // Úloha 22/3a: SECTIONED predaj (sekcia + množstvo). SEATED výber sedadiel = fáza 3b.
+      for (const item of dto.items) {
+        if (!item.terminSectionId) {
+          throw new BadRequestException('Pre tento termín musíte vybrať sekciu (terminSectionId).');
         }
-      }
+        const ts = termin.terminSections.find((t) => t.id === item.terminSectionId);
+        if (!ts) throw new NotFoundException(`Sekcia ${item.terminSectionId} pre tento termín neexistuje.`);
+        if (ts.section.mode !== SectionMode.SECTIONED) {
+          throw new BadRequestException(`Sekcia "${ts.section.name}": výber sedadiel pripravujeme (fáza 3b).`);
+        }
 
-      totalAmount += Number(tt.price) * item.quantity;
-      validatedItems.push({ ticketType: tt, quantity: item.quantity });
+        // Dostupnosť – PENDING aj PAID rezervujú kapacitu (konzistentné s GENERAL).
+        if (ts.section.capacity != null) {
+          const sold = await this.prisma.orderItem.aggregate({
+            where: {
+              terminSectionId: ts.id,
+              order: { status: { in: [OrderStatus.PENDING, OrderStatus.PAID] } },
+            },
+            _sum: { quantity: true },
+          });
+          const remaining = ts.section.capacity - (sold._sum.quantity ?? 0);
+          if (remaining < item.quantity) {
+            throw new BadRequestException(`Sekcia "${ts.section.name}": zostáva len ${remaining} ks.`);
+          }
+        }
+
+        totalAmount += Number(ts.price) * item.quantity;
+        currency = ts.currency;
+        itemCreates.push({
+          terminSection: { connect: { id: ts.id } },
+          termin: { connect: { id: termin.id } },
+          quantity: item.quantity,
+          unitPrice: ts.price,
+          currency: ts.currency,
+          priceSnapshot: {
+            name: ts.section.name,
+            price: Number(ts.price),
+            currency: ts.currency,
+            showName: termin.show.name,
+            terminId: termin.id,
+            startsAt: termin.startsAt,
+            sectionId: ts.sectionId,
+          },
+        });
+      }
+    } else {
+      for (const item of dto.items) {
+        const tt = termin.ticketTypes.find((t) => t.id === item.ticketTypeId);
+        if (!tt) throw new NotFoundException(`TicketType ${item.ticketTypeId} not found`);
+        if (!tt.isActive) throw new BadRequestException(`Ticket type ${tt.name} is not active`);
+        if (item.quantity > tt.maxPerOrder) {
+          throw new BadRequestException(`Max ${tt.maxPerOrder} tickets of type "${tt.name}" per order`);
+        }
+
+        const now = new Date();
+        if (tt.saleStartsAt && now < tt.saleStartsAt) {
+          throw new BadRequestException(`Sale for "${tt.name}" has not started yet`);
+        }
+        if (tt.saleEndsAt && now > tt.saleEndsAt) {
+          throw new BadRequestException(`Sale for "${tt.name}" has ended`);
+        }
+
+        // Availability check – PENDING orders also reserve capacity
+        if (tt.totalQuantity != null) {
+          const sold = await this.prisma.orderItem.aggregate({
+            where: {
+              ticketTypeId: tt.id,
+              order: { status: { in: [OrderStatus.PENDING, OrderStatus.PAID] } },
+            },
+            _sum: { quantity: true },
+          });
+          const remaining = tt.totalQuantity - (sold._sum.quantity ?? 0);
+          if (remaining < item.quantity) {
+            throw new BadRequestException(`Only ${remaining} ticket(s) of type "${tt.name}" remaining`);
+          }
+        }
+
+        totalAmount += Number(tt.price) * item.quantity;
+        currency = tt.currency;
+        itemCreates.push({
+          ticketType: { connect: { id: tt.id } },
+          termin: { connect: { id: termin.id } },
+          quantity: item.quantity,
+          unitPrice: tt.price,
+          currency: tt.currency,
+          priceSnapshot: {
+            name: tt.name,
+            price: Number(tt.price),
+            currency: tt.currency,
+            showName: termin.show.name,
+            terminId: termin.id,
+            startsAt: termin.startsAt,
+          },
+        });
+      }
+    }
+
+    if (itemCreates.length === 0) {
+      throw new BadRequestException('Objednávka neobsahuje žiadne položky.');
     }
 
     const year = new Date().getFullYear();
@@ -100,27 +174,11 @@ export class OrdersService {
         buyerEmail,
         buyerName,
         buyerPhone: dto.buyerPhone,
-        currency: validatedItems[0]?.ticketType.currency ?? 'EUR',
+        currency,
         totalAmount,
         status: OrderStatus.PENDING,
         expiresAt,
-        items: {
-          create: validatedItems.map(({ ticketType, quantity }) => ({
-            ticketTypeId: ticketType.id,
-            terminId: termin.id,
-            quantity,
-            unitPrice: ticketType.price,
-            currency: ticketType.currency,
-            priceSnapshot: {
-              name: ticketType.name,
-              price: Number(ticketType.price),
-              currency: ticketType.currency,
-              showName: termin.show.name,
-              terminId: termin.id,
-              startsAt: termin.startsAt,
-            },
-          })),
-        },
+        items: { create: itemCreates },
       },
       include: { items: true },
     });
@@ -239,6 +297,7 @@ export class OrdersService {
           include: {
             ticketType: true,
             termin: { include: { show: true, venue: true } },
+            terminSection: { include: { section: true } },
           },
         },
       },
@@ -274,8 +333,11 @@ export class OrdersService {
               id: ticketId,
               orderId,
               orderItemId: item.id,
-              ticketTypeId: item.ticketTypeId!,
+              // GENERAL: ticketTypeId. SEATMAP/SECTIONED: ticketTypeId null + terminSectionId + názov sekcie.
+              ticketTypeId: item.ticketTypeId,
               terminId: item.terminId!,
+              terminSectionId: item.terminSectionId,
+              seatSection: item.terminSection?.section.name ?? null,
               nonce,
               qrToken,
               status: TicketStatus.VALID,

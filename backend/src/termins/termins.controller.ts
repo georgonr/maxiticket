@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { TerminsService } from './termins.service';
-import { CreateTerminDto, UpdateTerminDto } from './dto/termin.dto';
+import { CreateTerminDto, UpdateTerminDto, UpdateTerminSectionDto } from './dto/termin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -40,5 +40,22 @@ export class TerminsController {
   @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ORGANIZER_OWNER)
   remove(@Param('showId') showId: string, @Param('id') id: string, @CurrentUser() u: JwtPayload) {
     return this.svc.remove(showId, id, u);
+  }
+
+  // ── Úloha 22/3a: sekcie termínu (SEATMAP režim) ──────────────────────────────
+  @Get(':id/sections')
+  listSections(@Param('id') id: string, @CurrentUser() u: JwtPayload) {
+    return this.svc.listSections(id, u);
+  }
+
+  @Patch(':id/sections/:terminSectionId')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER)
+  setSectionPrice(
+    @Param('id') id: string,
+    @Param('terminSectionId') terminSectionId: string,
+    @Body() dto: UpdateTerminSectionDto,
+    @CurrentUser() u: JwtPayload,
+  ) {
+    return this.svc.setSectionPrice(id, terminSectionId, dto, u);
   }
 }

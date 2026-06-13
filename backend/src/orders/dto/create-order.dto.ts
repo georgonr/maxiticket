@@ -4,8 +4,14 @@ import {
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
+  // GENERAL termín: ticketTypeId. SEATMAP/SECTIONED termín: terminSectionId. Práve jeden z dvoch.
+  @IsOptional()
   @IsString()
-  ticketTypeId: string;
+  ticketTypeId?: string;
+
+  @IsOptional()
+  @IsString()
+  terminSectionId?: string;
 
   @IsInt()
   @Min(1)

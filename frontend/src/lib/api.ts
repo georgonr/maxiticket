@@ -151,7 +151,29 @@ export const terminsApi = {
   create: (showId: string, body: CreateTerminBody, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins', { method: 'POST', body: JSON.stringify(body), token }),
   update: (showId: string, id: string, body: Partial<CreateTerminBody>, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins/' + id, { method: 'PATCH', body: JSON.stringify(body), token }),
   delete: (showId: string, id: string, token: string) => apiFetch<void>('/v1/shows/' + showId + '/termins/' + id, { method: 'DELETE', token }),
+  // Úloha 22/3a: sekcie termínu (SEATMAP režim)
+  listSections: (showId: string, id: string, token: string) => apiFetch<TerminSectionsResponse>('/v1/shows/' + showId + '/termins/' + id + '/sections', { token }),
+  setSectionPrice: (showId: string, id: string, terminSectionId: string, body: { price: number; currency?: string }, token: string) => apiFetch<TerminSectionRow>('/v1/shows/' + showId + '/termins/' + id + '/sections/' + terminSectionId, { method: 'PATCH', body: JSON.stringify(body), token }),
 };
+
+export interface TerminSectionRow {
+  id: string;
+  sectionId: string;
+  name: string;
+  sectionMode: 'SECTIONED' | 'SEATED';
+  capacity: number | null;
+  price: number;
+  currency: string;
+  sold: number;
+  remaining: number | null;
+  sellable: boolean;
+}
+
+export interface TerminSectionsResponse {
+  mode: 'GENERAL' | 'SEATMAP';
+  seatMapId: string | null;
+  sections: TerminSectionRow[];
+}
 
 export const ticketTypesApi = {
   list: (terminId: string, token: string) => apiFetch<TicketType[]>('/v1/termins/' + terminId + '/ticket-types', { token }),
@@ -220,6 +242,8 @@ export interface Termin {
   visible: boolean;
   capacity?: number;
   ticketTypes?: TicketType[];
+  mode?: 'GENERAL' | 'SEATMAP';
+  seatMapId?: string | null;
 }
 
 export interface TicketType {
@@ -265,6 +289,8 @@ export interface CreateTerminBody {
   status?: string;
   visible?: boolean;
   notes?: string;
+  mode?: 'GENERAL' | 'SEATMAP';
+  seatMapId?: string | null;
 }
 
 export interface CreateTicketTypeBody {
@@ -315,6 +341,16 @@ export interface PublicTicketType {
   available: number | null;
 }
 
+export interface PublicSection {
+  id: string;
+  name: string;
+  sectionMode: 'SECTIONED' | 'SEATED';
+  price: number;
+  currency: string;
+  available: number | null;
+  sellable: boolean;
+}
+
 export interface PublicTerminDetail {
   id: string;
   startsAt: string;
@@ -324,6 +360,8 @@ export interface PublicTerminDetail {
   status: string;
   venue: { id: string; name: string; city?: string; street?: string };
   ticketTypes: PublicTicketType[];
+  mode: 'GENERAL' | 'SEATMAP';
+  sections: PublicSection[];
 }
 
 export interface PublicShowDetail {
@@ -369,7 +407,8 @@ export interface RegisterCustomerPayload {
 
 export interface CreateOrderPayload {
   terminId: string;
-  items: { ticketTypeId: string; quantity: number }[];
+  // GENERAL: ticketTypeId. SEATMAP/SECTIONED: terminSectionId. Práve jeden z dvoch.
+  items: { ticketTypeId?: string; terminSectionId?: string; quantity: number }[];
   acceptTerms: true;
   // Guest checkout (required ak nie je prihlásený)
   buyerEmail?: string;

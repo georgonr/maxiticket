@@ -191,13 +191,17 @@ export class PublicService {
               where: { isActive: true },
               orderBy: { sortOrder: 'asc' },
             },
+            terminSections: {
+              include: { section: true },
+              orderBy: { section: { displayOrder: 'asc' } },
+            },
           },
         },
       },
     });
     if (!show) throw new NotFoundException('Event not found');
 
-    // Compute sold counts for availability display
+    // Compute sold counts for availability display (GENERAL: per ticketType)
     const terminIds = show.termins.map((t) => t.id);
     const sold = await this.prisma.orderItem.groupBy({
       by: ['ticketTypeId'],
@@ -208,6 +212,20 @@ export class PublicService {
       _sum: { quantity: true },
     });
     const soldMap = new Map(sold.map((s) => [s.ticketTypeId!, s._sum.quantity ?? 0]));
+
+    // Úloha 22/3a: predané kusy per TerminSection (SEATMAP/SECTIONED dostupnosť)
+    const sectionIds = show.termins.flatMap((t) => t.terminSections.map((ts) => ts.id));
+    const sectionSold = sectionIds.length
+      ? await this.prisma.orderItem.groupBy({
+          by: ['terminSectionId'],
+          where: {
+            terminSectionId: { in: sectionIds },
+            order: { status: { in: ['PENDING', 'PAID'] } },
+          },
+          _sum: { quantity: true },
+        })
+      : [];
+    const sectionSoldMap = new Map(sectionSold.map((s) => [s.terminSectionId!, s._sum.quantity ?? 0]));
 
     return {
       ...show,
@@ -220,6 +238,22 @@ export class PublicService {
             ? Math.max(0, tt.totalQuantity - (soldMap.get(tt.id) ?? 0))
             : null,
         })),
+        // SEATMAP režim: sekcie s cenou + dostupnosťou. SEATED nepredajné v 3a.
+        sections: t.terminSections.map((ts) => {
+          const soldQty = sectionSoldMap.get(ts.id) ?? 0;
+          const sellable = ts.section.mode === 'SECTIONED';
+          return {
+            id: ts.id,
+            name: ts.section.name,
+            sectionMode: ts.section.mode,
+            price: Number(ts.price),
+            currency: ts.currency,
+            available: sellable && ts.section.capacity != null
+              ? Math.max(0, ts.section.capacity - soldQty)
+              : null,
+            sellable,
+          };
+        }),
       })),
     };
   }
