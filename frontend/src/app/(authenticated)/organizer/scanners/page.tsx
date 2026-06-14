@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { ScanLine, Plus, Trash2, Power } from 'lucide-react';
+import { ScanLine, Plus, Trash2, Power, KeyRound } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
 import { scannersApi, Scanner } from '@/lib/api/scanners';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { CreateScannerModal } from '@/components/scanners/CreateScannerModal';
+import { ChangeScannerPasswordModal } from '@/components/scanners/ChangeScannerPasswordModal';
 
 function readableError(e: unknown): string {
   if (e instanceof ApiError) {
@@ -37,6 +38,7 @@ export default function ScannersPage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [pwScanner, setPwScanner] = useState<Scanner | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -176,6 +178,14 @@ export default function ScannersPage() {
                         <td className="py-2.5 pl-3">
                           <div className="flex items-center justify-end gap-1">
                             <button
+                              onClick={() => setPwScanner(s)}
+                              disabled={busyId === s.id}
+                              className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40"
+                              title="Zmeniť heslo"
+                            >
+                              <KeyRound size={15} />
+                            </button>
+                            <button
                               onClick={() => toggleActive(s)}
                               disabled={busyId === s.id}
                               className="inline-flex items-center gap-1 rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40"
@@ -212,6 +222,17 @@ export default function ScannersPage() {
 
       {showCreate && (
         <CreateScannerModal onClose={() => setShowCreate(false)} onCreated={onCreated} />
+      )}
+
+      {pwScanner && (
+        <ChangeScannerPasswordModal
+          scanner={pwScanner}
+          onClose={() => setPwScanner(null)}
+          onChanged={(msg) => {
+            setPwScanner(null);
+            setToast({ msg, ok: true });
+          }}
+        />
       )}
     </div>
   );

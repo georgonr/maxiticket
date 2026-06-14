@@ -15,6 +15,7 @@ import { UserRole } from '@prisma/client';
 import { ScannersService } from './scanners.service';
 import { CreateScannerDto } from './dto/create-scanner.dto';
 import { UpdateScannerDto } from './dto/update-scanner.dto';
+import { ChangeScannerPasswordDto } from './dto/change-scanner-password.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -45,6 +46,16 @@ export class ScannersController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.svc.setActive(id, dto, user);
+  }
+
+  // Úloha 23: zmena hesla scanner účtu (OWNER+SUPERADMIN+STAFF; MEMBER 403 cez @Roles triedy).
+  @Patch(':id/password')
+  setPassword(
+    @Param('id') id: string,
+    @Body() dto: ChangeScannerPasswordDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.svc.setPassword(id, dto, user);
   }
 
   @Delete(':id')

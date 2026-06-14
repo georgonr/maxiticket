@@ -5,40 +5,29 @@ import { X, RefreshCw, Copy, Check, AlertTriangle } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { scannersApi, Scanner } from '@/lib/api/scanners';
 import { Button } from '@/components/ui/button';
+import { generatePassword } from './CreateScannerModal';
 
 const inputCls =
   'w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand';
 
-/** Náhodné heslo (14 znakov) cez crypto – bez zámen 0/O/1/l. */
-export function generatePassword(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
-  const bytes = new Uint32Array(14);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
-}
-
-export function CreateScannerModal({
+// Úloha 23: zmena hesla existujúceho scanner účtu. Reuse generátor + "zobrazenie raz" z create.
+export function ChangeScannerPasswordModal({
+  scanner,
   onClose,
-  onCreated,
+  onChanged,
 }: {
+  scanner: Scanner;
   onClose: () => void;
-  onCreated: (msg: string) => void;
+  onChanged: (msg: string) => void;
 }) {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [password, setPassword] = useState(generatePassword());
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [created, setCreated] = useState<Scanner | null>(null);
+  const [done, setDone] = useState(false);
   const [copied, setCopied] = useState(false);
 
   async function handleSubmit() {
     setError('');
-    const mail = email.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
-      setError('Zadajte platný e-mail.');
-      return;
-    }
     if (password.length < 8) {
       setError('Heslo musí mať aspoň 8 znakov.');
       return;
@@ -47,13 +36,10 @@ export function CreateScannerModal({
     try {
       const token = await getValidToken();
       if (!token) throw new Error('Vyžaduje sa prihlásenie.');
-      const scanner = await scannersApi.create(
-        { email: mail, password, name: name.trim() || undefined },
-        token,
-      );
-      setCreated(scanner);
+      await scannersApi.changePassword(scanner.id, password, token);
+      setDone(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Vytvorenie scannera zlyhalo.');
+      setError(e instanceof Error ? e.message : 'Zmena hesla zlyhala.');
       setSubmitting(false);
     }
   }
@@ -71,7 +57,7 @@ export function CreateScannerModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-      onClick={created ? undefined : onClose}
+      onClick={done ? undefined : onClose}
     >
       <div
         className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-xl"
@@ -79,7 +65,7 @@ export function CreateScannerModal({
       >
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-            {created ? 'Scanner vytvorený' : 'Pridať skenera'}
+            {done ? 'Heslo zmenené' : 'Zmeniť heslo skenera'}
           </h3>
           <button
             onClick={onClose}
@@ -91,23 +77,24 @@ export function CreateScannerModal({
         </div>
 
         <div className="px-5 py-4">
-          {created ? (
+          <div className="mb-4">
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Účet</span>
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100">
+              {scanner.email}
+            </div>
+          </div>
+
+          {done ? (
             <div className="space-y-4">
               <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
                 <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
                 <span>
-                  Heslo sa zobrazuje <strong>iba teraz</strong>. Skopírujte ho a odovzdajte
+                  Nové heslo sa zobrazuje <strong>iba teraz</strong>. Skopírujte ho a odovzdajte
                   skenerovi – už ho nebude možné zobraziť.
                 </span>
               </div>
               <div>
-                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">E-mail</span>
-                <div className="rounded-lg bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100">
-                  {created.email}
-                </div>
-              </div>
-              <div>
-                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Heslo</span>
+                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Nové heslo</span>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 rounded-lg bg-gray-50 dark:bg-gray-900 px-3 py-2 font-mono text-sm text-gray-900 dark:text-gray-100">
                     {password}
@@ -124,28 +111,8 @@ export function CreateScannerModal({
             </div>
           ) : (
             <div className="space-y-4">
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">E-mail *</span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="skener@example.sk"
-                  className={inputCls}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Meno</span>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="napr. Vstup – hlavný"
-                  className={inputCls}
-                />
-              </label>
               <div>
-                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Heslo *</span>
+                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Nové heslo *</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -172,15 +139,15 @@ export function CreateScannerModal({
         </div>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-gray-800 px-5 py-4">
-          {created ? (
-            <Button onClick={() => onCreated(`Scanner ${created.email} vytvorený.`)}>Hotovo</Button>
+          {done ? (
+            <Button onClick={() => onChanged('Heslo skenera zmenené.')}>Hotovo</Button>
           ) : (
             <>
               <Button variant="outline" onClick={onClose} disabled={submitting}>
                 Zrušiť
               </Button>
               <Button onClick={handleSubmit} loading={submitting} disabled={submitting}>
-                Vytvoriť
+                Uložiť heslo
               </Button>
             </>
           )}

@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
 import { CreateScannerDto } from './dto/create-scanner.dto';
 import { UpdateScannerDto } from './dto/update-scanner.dto';
+import { ChangeScannerPasswordDto } from './dto/change-scanner-password.dto';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -105,6 +106,19 @@ export class ScannersService {
       data: { isActive: dto.isActive },
       select: SCANNER_SELECT,
     });
+  }
+
+  /** Úloha 23: zmena hesla scanner účtu – mení LEN passwordHash (email/meno/rola nedotknuté). */
+  async setPassword(id: string, dto: ChangeScannerPasswordDto, user: JwtPayload) {
+    const target = await this.findScannerOr404(id);
+    this.assertOwns(target, user);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+      select: { id: true },
+    });
+    return { id, passwordChanged: true };
   }
 
   async remove(id: string, user: JwtPayload) {

@@ -44,4 +44,12 @@ export const scannersApi = {
       method: 'DELETE',
       token,
     }),
+
+  // Úloha 23: zmena hesla scanner účtu (mení sa len passwordHash).
+  changePassword: (id: string, password: string, token: string) =>
+    apiFetch<{ id: string; passwordChanged: boolean }>('/v1/organizer/scanners/' + id + '/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ password }),
+      token,
+    }),
 };
