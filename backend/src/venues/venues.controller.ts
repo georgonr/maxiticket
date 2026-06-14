@@ -1,10 +1,10 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Query, Body,
+  Controller, Get, Post, Patch, Put, Delete, Param, Query, Body,
   UseGuards, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { VenuesService } from './venues.service';
-import { CreateVenueDto, UpdateVenueDto } from './dto/venue.dto';
+import { CreateVenueDto, UpdateVenueDto, SetVenueAccessDto } from './dto/venue.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -35,6 +35,19 @@ export class VenuesController {
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() u: JwtPayload) {
     return this.svc.findOne(id, u);
+  }
+
+  // ── Úloha 24: zdieľanie miesta (SUPERADMIN/STAFF) ────────────────────────────
+  @Get(':id/access')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF)
+  getAccess(@Param('id') id: string, @CurrentUser() u: JwtPayload) {
+    return this.svc.getAccess(id, u);
+  }
+
+  @Put(':id/access')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF)
+  setAccess(@Param('id') id: string, @Body() dto: SetVenueAccessDto, @CurrentUser() u: JwtPayload) {
+    return this.svc.setAccess(id, dto.organizerIds, u);
   }
 
   @Post()

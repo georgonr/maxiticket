@@ -163,6 +163,7 @@ model Organizer {
   termsVersions    TermsVersion[]
   coupons          Coupon[]
   posClosures      PosClosure[]
+  venueAccesses    VenueAccess[]
 
   @@index([status])
 }
@@ -255,9 +256,28 @@ model Venue {
 
   termins      Termin[]
   seatMaps     SeatMap[]
+  accesses     VenueAccess[]
 
   @@index([organizerId])
   @@index([city])
+}
+
+// ─────────────────────────────────────────────
+// VENUE ACCESS (úloha 24): explicitné sprístupnenie miesta organizátorovi.
+// Organizer vidí vlastné + sprístupnené; globálne (organizerId=null) už nie sú
+// auto-viditeľné všetkým – iba ak ich SUPERADMIN sprístupní cez VenueAccess.
+// ─────────────────────────────────────────────
+
+model VenueAccess {
+  id          String    @id @default(cuid())
+  venueId     String
+  venue       Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  organizerId String
+  organizer   Organizer @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([venueId, organizerId])
+  @@index([organizerId])
 }
 
 // ─────────────────────────────────────────────

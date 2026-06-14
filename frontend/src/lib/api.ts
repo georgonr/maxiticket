@@ -143,6 +143,25 @@ export const venuesApi = {
       method: 'DELETE',
       token,
     }),
+  // Úloha 24: zdieľanie miesta (SUPERADMIN/STAFF)
+  getAccess: (id: string, token: string) =>
+    apiFetch<{ venueId: string; organizerIds: string[] }>('/v1/venues/' + id + '/access', { token }),
+  setAccess: (id: string, organizerIds: string[], token: string) =>
+    apiFetch<{ venueId: string; organizerIds: string[] }>('/v1/venues/' + id + '/access', {
+      method: 'PUT',
+      body: JSON.stringify({ organizerIds }),
+      token,
+    }),
+};
+
+// Úloha 24: zoznam organizátorov pre multi-select zdieľania (SUPERADMIN).
+export interface OrganizerLite {
+  id: string;
+  name: string;
+  slug: string;
+}
+export const organizersApi = {
+  list: (token: string) => apiFetch<OrganizerLite[]>('/v1/organizers', { token }),
 };
 
 export const terminsApi = {

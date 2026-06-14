@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import Link from 'next/link';
-import { MapPin, Plus, Pencil, Trash2, Globe, LayoutGrid } from 'lucide-react';
+import { MapPin, Plus, Pencil, Trash2, Globe, LayoutGrid, Share2 } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError, venuesApi, Venue } from '@/lib/api';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { VenueFormModal } from '@/components/venues/VenueFormModal';
+import { VenueAccessModal } from '@/components/venues/VenueAccessModal';
 
 function readableError(e: unknown): string {
   if (e instanceof ApiError) {
@@ -29,12 +30,14 @@ export default function VenuesPage() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<Venue | null>(null);
+  const [sharing, setSharing] = useState<Venue | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const isGlobal = (v: Venue) => v.organizerId == null;
-  // Mutácie smie super/staff (všetko) alebo OWNER (len vlastné, nie globálne) – nie MEMBER.
+  const isOwn = (v: Venue) => v.organizerId != null && v.organizerId === user?.organizerId;
+  // Mutácie smie super/staff (všetko) alebo OWNER (len vlastné, nie globálne/sprístupnené) – nie MEMBER.
   const canManage = (v: Venue) =>
-    isSuper || (user?.role === 'ORGANIZER_OWNER' && v.organizerId != null && v.organizerId === user?.organizerId);
+    isSuper || (user?.role === 'ORGANIZER_OWNER' && isOwn(v));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,6 +95,7 @@ export default function VenuesPage() {
   function onSaved(msg: string) {
     setShowCreate(false);
     setEditing(null);
+    setSharing(null);
     setToast({ msg, ok: true });
     load();
   }
@@ -152,12 +156,20 @@ export default function VenuesPage() {
                           <td className="px-3 text-gray-500 dark:text-gray-400">{v.street ?? '—'}</td>
                           <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{v.capacity ?? '—'}</td>
                           <td className="px-3">
-                            {isGlobal(v) ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
-                                <Globe size={11} /> Globálne
-                              </span>
-                            ) : (
+                            {isSuper ? (
+                              isGlobal(v) ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
+                                  <Globe size={11} /> Globálne
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">Organizátor</span>
+                              )
+                            ) : isOwn(v) ? (
                               <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">Vlastné</span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                <Share2 size={11} /> Sprístupnené
+                              </span>
                             )}
                           </td>
                           <td className="px-3">
@@ -179,11 +191,20 @@ export default function VenuesPage() {
                               >
                                 <LayoutGrid size={15} />
                               </Link>
+                              {isSuper && (
+                                <button
+                                  onClick={() => setSharing(v)}
+                                  className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-amber-50 hover:text-amber-600"
+                                  title="Sprístupniť organizátorom"
+                                >
+                                  <Share2 size={15} />
+                                </button>
+                              )}
                               <button
                                 onClick={() => setEditing(v)}
                                 disabled={!manage}
                                 className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
-                                title={manage ? 'Upraviť' : 'Globálne miesto – len na čítanie'}
+                                title={manage ? 'Upraviť' : 'Len na čítanie'}
                               >
                                 <Pencil size={15} />
                               </button>
@@ -191,7 +212,7 @@ export default function VenuesPage() {
                                 onClick={() => remove(v)}
                                 disabled={!manage || busyId === v.id}
                                 className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
-                                title={manage ? 'Zmazať' : 'Globálne miesto – len na čítanie'}
+                                title={manage ? 'Zmazať' : 'Len na čítanie'}
                               >
                                 <Trash2 size={15} />
                               </button>
@@ -208,12 +229,13 @@ export default function VenuesPage() {
         )}
 
         <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-          <MapPin size={15} /> Globálne miesta (napr. veľké arény) spravuje administrátor a sú dostupné všetkým.
+          <MapPin size={15} /> Sprístupnené miesta spravuje administrátor a sú pre vás len na čítanie (môžete na nich vytvárať termíny).
         </div>
       </main>
 
       {showCreate && <VenueFormModal isSuperAdmin={isSuper} onClose={() => setShowCreate(false)} onSaved={onSaved} />}
       {editing && <VenueFormModal initial={editing} isSuperAdmin={isSuper} onClose={() => setEditing(null)} onSaved={onSaved} />}
+      {sharing && <VenueAccessModal venue={sharing} onClose={() => setSharing(null)} onSaved={onSaved} />}
     </div>
   );
 }
