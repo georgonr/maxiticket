@@ -21,8 +21,20 @@ import { generateCouponBatchPdf, CouponPdfData } from './coupon-pdf.helper';
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CODE_LENGTH = 10;
 
+// Doľaďovák 2: stabilné kódy dôvodov pre i18n na frontende (popri SK `reason`,
+// ktorý ostáva kvôli spätnej kompatibilite konzumentov).
+export type CouponReasonCode =
+  | 'NOT_FOUND'
+  | 'NOT_YET_VALID'
+  | 'EXPIRED'
+  | 'EXHAUSTED'
+  | 'MAX_USES_PER_USER'
+  | 'MIN_ORDER_AMOUNT'
+  | 'SCOPE_MISMATCH_ALL'
+  | 'SCOPE_MISMATCH_NONE';
+
 type ValidateResult =
-  | { valid: false; reason: string }
+  | { valid: false; reason: string; reasonCode: CouponReasonCode; minOrderAmount?: number }
   | {
       valid: true;
       discount: number;
@@ -403,30 +415,32 @@ export class CouponsService {
   async validate(dto: ValidateCouponDto): Promise<ValidateResult> {
     const code = dto.code.trim().toUpperCase();
     const coupon = await this.prisma.coupon.findUnique({ where: { code } });
-    if (!coupon) return { valid: false, reason: 'Kupón neexistuje' };
+    if (!coupon) return { valid: false, reason: 'Kupón neexistuje', reasonCode: 'NOT_FOUND' };
 
     const now = new Date();
     if (coupon.validFrom && coupon.validFrom > now) {
-      return { valid: false, reason: 'Kupón ešte nie je platný' };
+      return { valid: false, reason: 'Kupón ešte nie je platný', reasonCode: 'NOT_YET_VALID' };
     }
     if (coupon.validUntil && coupon.validUntil < now) {
-      return { valid: false, reason: 'Kupón už expiroval' };
+      return { valid: false, reason: 'Kupón už expiroval', reasonCode: 'EXPIRED' };
     }
     if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
-      return { valid: false, reason: 'Kupón je vyčerpaný' };
+      return { valid: false, reason: 'Kupón je vyčerpaný', reasonCode: 'EXHAUSTED' };
     }
     if (coupon.maxUsesPerUser != null && dto.userId) {
       const used = await this.prisma.couponRedemption.count({
         where: { couponId: coupon.id, userId: dto.userId },
       });
       if (used >= coupon.maxUsesPerUser) {
-        return { valid: false, reason: 'Tento kupón ste už použili maximálny počet krát' };
+        return { valid: false, reason: 'Tento kupón ste už použili maximálny počet krát', reasonCode: 'MAX_USES_PER_USER' };
       }
     }
     if (coupon.minOrderAmount != null && dto.subtotal < Number(coupon.minOrderAmount)) {
       return {
         valid: false,
         reason: `Minimálna suma objednávky je ${Number(coupon.minOrderAmount)} €`,
+        reasonCode: 'MIN_ORDER_AMOUNT',
+        minOrderAmount: Number(coupon.minOrderAmount),
       };
     }
 
@@ -445,19 +459,19 @@ export class CouponsService {
         (i) => ttMap.get(i.ticketTypeId)?.termin.show.organizerId === coupon.organizerId,
       );
       if (!allMatch) {
-        return { valid: false, reason: 'Kupón sa nevzťahuje na všetky položky v košíku' };
+        return { valid: false, reason: 'Kupón sa nevzťahuje na všetky položky v košíku', reasonCode: 'SCOPE_MISMATCH_ALL' };
       }
     } else if (coupon.scope === CouponScope.SHOW) {
       const allMatch = dto.items.every(
         (i) => ttMap.get(i.ticketTypeId)?.termin.show.id === coupon.showId,
       );
       if (!allMatch) {
-        return { valid: false, reason: 'Kupón sa nevzťahuje na všetky položky v košíku' };
+        return { valid: false, reason: 'Kupón sa nevzťahuje na všetky položky v košíku', reasonCode: 'SCOPE_MISMATCH_ALL' };
       }
     } else if (coupon.scope === CouponScope.TICKET_TYPE) {
       const matchItem = dto.items.find((i) => i.ticketTypeId === coupon.ticketTypeId);
       if (!matchItem) {
-        return { valid: false, reason: 'Kupón sa nevzťahuje na žiadnu položku v košíku' };
+        return { valid: false, reason: 'Kupón sa nevzťahuje na žiadnu položku v košíku', reasonCode: 'SCOPE_MISMATCH_NONE' };
       }
       // zľava sa aplikuje IBA na daný typ vstupenky
       const tt = ttMap.get(coupon.ticketTypeId!);

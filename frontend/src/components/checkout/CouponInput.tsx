@@ -57,7 +57,16 @@ export function CouponInput({
         });
         setCode('');
       } else {
-        setError(result.reason);
+        // Doľaďovák 2: preferuj lokalizovaný kód; SK `reason` len ako fallback.
+        if (result.reasonCode === 'MIN_ORDER_AMOUNT' && result.minOrderAmount != null) {
+          setError(t('reason.MIN_ORDER_AMOUNT', {
+            amount: format.number(result.minOrderAmount, { style: 'currency', currency }),
+          }));
+        } else if (result.reasonCode) {
+          setError(t(`reason.${result.reasonCode}`));
+        } else {
+          setError(result.reason);
+        }
       }
     } catch {
       setError(t('error'));

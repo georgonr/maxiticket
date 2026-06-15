@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Res, UseGuards } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { UserRole } from '@prisma/client';
-import { AssistantService } from './assistant.service';
+import { AssistantService, assistantErrorMessage } from './assistant.service';
 import { ChatDto } from './dto/chat.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -30,9 +30,9 @@ export class AssistantController {
 
     const emit = (ev: unknown) => raw.write(`data: ${JSON.stringify(ev)}\n\n`);
     try {
-      await this.svc.runChat(user.sub, dto.messages, emit);
+      await this.svc.runChat(user.sub, dto.messages, emit, dto.locale ?? 'sk');
     } catch {
-      emit({ type: 'error', message: 'Asistent narazil na chybu.' });
+      emit({ type: 'error', message: assistantErrorMessage(dto.locale ?? 'sk') });
     } finally {
       raw.end();
     }

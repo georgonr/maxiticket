@@ -1,4 +1,4 @@
-import { IsArray, IsIn, IsString, MaxLength, ArrayMaxSize, ValidateNested } from 'class-validator';
+import { IsArray, IsIn, IsOptional, IsString, MaxLength, ArrayMaxSize, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ChatMessageDto {
@@ -16,4 +16,9 @@ export class ChatDto {
   @ValidateNested({ each: true })
   @Type(() => ChatMessageDto)
   messages: ChatMessageDto[];
+
+  // Doľaďovák 2: jazyk stránky – asistent odpovedá v ňom (sk/en/cs). Default sk.
+  @IsOptional()
+  @IsIn(['sk', 'en', 'cs'])
+  locale?: 'sk' | 'en' | 'cs';
 }

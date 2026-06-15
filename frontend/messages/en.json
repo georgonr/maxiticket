@@ -343,7 +343,17 @@
     "error": "Couldn't verify the coupon. Please try again.",
     "remove": "Remove",
     "placeholder": "Have a coupon? Enter code",
-    "apply": "Apply"
+    "apply": "Apply",
+    "reason": {
+      "NOT_FOUND": "This coupon does not exist",
+      "NOT_YET_VALID": "This coupon is not valid yet",
+      "EXPIRED": "This coupon has expired",
+      "EXHAUSTED": "This coupon has been used up",
+      "MAX_USES_PER_USER": "You've already used this coupon the maximum number of times",
+      "MIN_ORDER_AMOUNT": "The minimum order amount is {amount}",
+      "SCOPE_MISMATCH_ALL": "This coupon doesn't apply to all items in your cart",
+      "SCOPE_MISMATCH_NONE": "This coupon doesn't apply to any item in your cart"
+    }
   },
   "faq": {
     "title": "Frequently Asked Questions",

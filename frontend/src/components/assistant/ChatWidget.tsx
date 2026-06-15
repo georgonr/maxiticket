@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { MessageCircle, X, Send, Download, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getValidToken } from '@/lib/auth';
@@ -20,6 +20,7 @@ interface ChatMsg {
 
 export function ChatWidget() {
   const t = useTranslations('chat');
+  const locale = useLocale();
   const quickReplies = [
     t('quickTicketNotReceived'),
     t('quickShowQr'),
@@ -72,7 +73,7 @@ export function ChatWidget() {
       const res = await fetch(`${API_BASE}/v1/assistant/chat`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history.map((m) => ({ role: m.role, content: m.content })) }),
+        body: JSON.stringify({ messages: history.map((m) => ({ role: m.role, content: m.content })), locale }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 

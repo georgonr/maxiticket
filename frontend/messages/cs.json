@@ -343,7 +343,17 @@
     "error": "Kupón se nepodařilo ověřit. Zkuste to znovu.",
     "remove": "Odstranit",
     "placeholder": "Máte kupón? Zadejte kód",
-    "apply": "Použít"
+    "apply": "Použít",
+    "reason": {
+      "NOT_FOUND": "Kupón neexistuje",
+      "NOT_YET_VALID": "Kupón ještě není platný",
+      "EXPIRED": "Kupón již vypršel",
+      "EXHAUSTED": "Kupón je vyčerpán",
+      "MAX_USES_PER_USER": "Tento kupón jste už použili maximálně možný počet krát",
+      "MIN_ORDER_AMOUNT": "Minimální částka objednávky je {amount}",
+      "SCOPE_MISMATCH_ALL": "Kupón se nevztahuje na všechny položky v košíku",
+      "SCOPE_MISMATCH_NONE": "Kupón se nevztahuje na žádnou položku v košíku"
+    }
   },
   "faq": {
     "title": "Často kladené otázky",

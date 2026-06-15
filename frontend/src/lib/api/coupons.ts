@@ -16,6 +16,17 @@ export interface ValidateCouponPayload {
   userId?: string;
 }
 
+// Doľaďovák 2: stabilné kódy dôvodov (i18n na frontende cez namespace coupon.reason.*).
+export type CouponReasonCode =
+  | 'NOT_FOUND'
+  | 'NOT_YET_VALID'
+  | 'EXPIRED'
+  | 'EXHAUSTED'
+  | 'MAX_USES_PER_USER'
+  | 'MIN_ORDER_AMOUNT'
+  | 'SCOPE_MISMATCH_ALL'
+  | 'SCOPE_MISMATCH_NONE';
+
 export type CouponValidationResult =
   | {
       valid: true;
@@ -25,7 +36,8 @@ export type CouponValidationResult =
       discount: number;
       finalAmount: number;
     }
-  | { valid: false; reason: string };
+  // `reason` (SK) ostáva ako fallback; `reasonCode` je preferovaný pre i18n.
+  | { valid: false; reason: string; reasonCode?: CouponReasonCode; minOrderAmount?: number };
 
 /** Surová podoba kupónu (backend serialize()) – vracia ju create. */
 export interface CouponRecord {
