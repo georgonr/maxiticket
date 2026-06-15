@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { clsx } from 'clsx';
 import { QrCode, LogOut } from 'lucide-react';
 import { logout } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { buildNavGroups, showsScanCta, SCANNER_URL, ROLE_LABELS } from './navConfig';
+import { StaffLangSwitch } from './StaffLangSwitch';
+import { buildNavGroups, showsScanCta, SCANNER_URL, ROLE_KEYS } from './navConfig';
 
 /**
  * Vnútorný obsah navigácie – zdieľaný desktop sidebar aj mobilný drawer.
@@ -17,7 +19,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
+  const t = useTranslations('organizer.nav');
+  const tRoles = useTranslations('organizer.roles');
   const role = user?.role ?? 'UNKNOWN';
+  const roleLabel = ROLE_KEYS.includes(role) ? tRoles(role) : role;
   const groups = buildNavGroups(role);
 
   async function handleLogout() {
@@ -45,16 +50,16 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Nav skupiny */}
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
         {groups.map((g, gi) => (
-          <div key={g.title ?? `g${gi}`} className="space-y-1">
-            {g.title && (
+          <div key={g.titleKey ?? `g${gi}`} className="space-y-1">
+            {g.titleKey && (
               <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                {g.title}
+                {t(g.titleKey)}
               </p>
             )}
             {g.items.map((item) => (
-              <Link key={item.label} href={item.href} onClick={onNavigate} className={linkCls(item.href)}>
+              <Link key={item.labelKey} href={item.href} onClick={onNavigate} className={linkCls(item.href)}>
                 {item.icon}
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
           </div>
@@ -68,7 +73,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className="flex items-center gap-2 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-dark"
           >
-            <QrCode className="h-4 w-4" /> Skenovať
+            <QrCode className="h-4 w-4" /> {t('scan')}
           </a>
         )}
       </nav>
@@ -78,16 +83,17 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-gray-700 dark:text-gray-200">{user?.email ?? '—'}</div>
           <span className="mt-1 inline-block rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand dark:bg-brand/20">
-            {ROLE_LABELS[role] ?? role}
+            {roleLabel}
           </span>
         </div>
+        <StaffLangSwitch />
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
             onClick={handleLogout}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
           >
-            <LogOut size={15} /> Odhlásiť
+            <LogOut size={15} /> {t('logout')}
           </button>
         </div>
       </div>

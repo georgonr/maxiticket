@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { clsx } from 'clsx';
 import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -9,13 +10,14 @@ import { SidebarContent } from './Sidebar';
 
 /** Mobilný (a tablet) top bar + slide-in drawer. Skrytý na lg, kde je fixná sidebar. */
 export function MobileTopBar() {
+  const t = useTranslations('organizer.nav');
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden dark:border-gray-800 dark:bg-gray-900 print:hidden">
         <button
-          aria-label="Otvoriť menu"
+          aria-label={t('openMenu')}
           onClick={() => setOpen(true)}
           className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
         >
@@ -42,7 +44,7 @@ export function MobileTopBar() {
           )}
         >
           <button
-            aria-label="Zavrieť menu"
+            aria-label={t('closeMenu')}
             onClick={() => setOpen(false)}
             className="absolute right-3 top-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           >

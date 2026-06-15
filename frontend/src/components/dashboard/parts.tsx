@@ -1,11 +1,21 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { clsx } from 'clsx';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 // ── pozdrav podľa hodiny ──────────────────────────────────────────────────────
+// Krok 31c1: vracia kľúč do organizer.dashboard.* (preklad rieši volajúci cez t()).
 
+export function greetingKey(): 'greetingMorning' | 'greetingAfternoon' | 'greetingEvening' {
+  const h = new Date().getHours();
+  if (h < 12) return 'greetingMorning';
+  if (h < 18) return 'greetingAfternoon';
+  return 'greetingEvening';
+}
+
+// SK pozdrav – ponechaný pre admin dashboard (preklad admin oblasti až krok 31d).
 export function greeting(): string {
   const h = new Date().getHours();
   if (h < 12) return 'Dobré ráno';
@@ -102,22 +112,25 @@ export function SectionCard({
 
 // ── stavové badge pre objednávky ───────────────────────────────────────────────
 
-const ORDER_STATUS: Record<string, { label: string; cls: string }> = {
-  PAID: { label: 'Zaplatené', cls: 'bg-emerald-50 text-emerald-700' },
-  PENDING: { label: 'Čaká', cls: 'bg-amber-50 text-amber-700' },
-  REFUND_REQUESTED: { label: 'Žiadosť o vrátenie', cls: 'bg-amber-50 text-amber-700' },
-  REFUND_APPROVED: { label: 'Vrátenie schválené', cls: 'bg-sky-50 text-sky-700' },
-  REFUND_REJECTED: { label: 'Vrátenie zamietnuté', cls: 'bg-gray-100 text-gray-500' },
-  REFUNDED: { label: 'Refundované', cls: 'bg-orange-50 text-orange-700' },
-  CANCELLED: { label: 'Zrušené', cls: 'bg-gray-100 text-gray-500' },
-  FAILED: { label: 'Zlyhalo', cls: 'bg-red-50 text-red-700' },
+// Krok 31c1: farby ostávajú v kóde, label sa prekladá (organizer.orderStatus.*).
+const ORDER_STATUS_CLS: Record<string, string> = {
+  PAID: 'bg-emerald-50 text-emerald-700',
+  PENDING: 'bg-amber-50 text-amber-700',
+  REFUND_REQUESTED: 'bg-amber-50 text-amber-700',
+  REFUND_APPROVED: 'bg-sky-50 text-sky-700',
+  REFUND_REJECTED: 'bg-gray-100 text-gray-500',
+  REFUNDED: 'bg-orange-50 text-orange-700',
+  CANCELLED: 'bg-gray-100 text-gray-500',
+  FAILED: 'bg-red-50 text-red-700',
 };
 
 export function OrderStatusBadge({ status }: { status: string }) {
-  const s = ORDER_STATUS[status] ?? { label: status, cls: 'bg-gray-100 text-gray-600' };
+  const t = useTranslations('organizer.orderStatus');
+  const cls = ORDER_STATUS_CLS[status] ?? 'bg-gray-100 text-gray-600';
+  const label = status in ORDER_STATUS_CLS ? t(status) : status;
   return (
-    <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', s.cls)}>
-      {s.label}
+    <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', cls)}>
+      {label}
     </span>
   );
 }

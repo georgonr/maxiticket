@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
 import {
   TrendingUp,
   Ticket,
@@ -16,7 +17,6 @@ import {
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/lib/api';
-import { formatPrice } from '@/lib/format';
 import {
   organizerMetricsApi,
   adminMetricsApi,
@@ -34,23 +34,27 @@ import {
   SectionCard,
   Skeleton,
   ErrorState,
-  greeting,
+  greetingKey,
 } from '@/components/dashboard/parts';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
-function readableError(e: unknown): string {
+// Krok 31c1: chybové hlášky cez i18n (t = organizer.dashboard.*); e.message (backend) ostáva raw.
+function readableError(t: (k: string) => string, e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.status === 401 || e.status === 403) return 'Nemáte oprávnenie zobraziť tieto dáta.';
-    if (e.status === 400) return 'Pre zobrazenie metrík vyberte organizátora.';
-    if (e.status >= 500) return 'Nastala chyba na strane servera. Skúste neskôr.';
-    return e.message || 'Niečo sa pokazilo.';
+    if (e.status === 401 || e.status === 403) return t('errPermission');
+    if (e.status === 400) return t('errSelectOrg');
+    if (e.status >= 500) return t('errServer');
+    return e.message || t('errGeneric');
   }
-  return 'Nemôžeme sa pripojiť k serveru. Skontrolujte pripojenie.';
+  return t('errConnect');
 }
 
 export default function OrganizerDashboardPage() {
   const { user, isSuperAdmin } = useAuth();
+  const t = useTranslations('organizer.dashboard');
+  const format = useFormatter();
+  const fmtPrice = (amount: number) => format.number(amount, { style: 'currency', currency: 'EUR' });
 
   // SUPERADMIN cross-cutting: switcher organizátora
   const [orgList, setOrgList] = useState<OrganizerRow[]>([]);
@@ -83,12 +87,12 @@ export default function OrganizerDashboardPage() {
       setTopShows(ts);
       setRecentOrders(ro);
     } catch (e) {
-      setError(readableError(e));
+      setError(readableError(t, e));
       setOverview(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Inicializácia: SUPERADMIN najprv načíta zoznam organizátorov a auto-vyberie prvého.
   useEffect(() => {
@@ -111,7 +115,7 @@ export default function OrganizerDashboardPage() {
           }
         } catch (e) {
           if (active) {
-            setError(readableError(e));
+            setError(readableError(t, e));
             setLoading(false);
           }
         }
@@ -122,7 +126,7 @@ export default function OrganizerDashboardPage() {
     return () => {
       active = false;
     };
-  }, [user, isSuperAdmin, load]);
+  }, [user, isSuperAdmin, load, t]);
 
   function onSwitchOrg(id: string) {
     setSelectedOrg(id);
@@ -141,9 +145,9 @@ export default function OrganizerDashboardPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {greeting()}, {user?.email}
+              {t(greetingKey())}, {user?.email}
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Prehľad vašich podujatí a predajov</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-2">
             {isSuperAdmin && orgList.length > 0 && (
@@ -161,7 +165,7 @@ export default function OrganizerDashboardPage() {
               disabled={loading}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Obnoviť
+              {t('refresh')}
             </Button>
           </div>
         </div>
@@ -175,35 +179,35 @@ export default function OrganizerDashboardPage() {
           ) : (
             <>
               <KpiCard
-                title="Moje podujatia"
+                title={t('kpiMyShows')}
                 value={String(overview.myShowsCount)}
                 icon={<Calendar className="h-5 w-5" />}
-                hint={`${overview.myPublishedShowsCount} publikované`}
+                hint={t('kpiPublishedHint', { count: overview.myPublishedShowsCount })}
               />
               <KpiCard
-                title="Dnešné tržby"
-                value={formatPrice(overview.myTodayRevenue)}
+                title={t('kpiTodayRevenue')}
+                value={fmtPrice(overview.myTodayRevenue)}
                 icon={<TrendingUp className="h-5 w-5" />}
               />
               <KpiCard
-                title="Predané dnes"
+                title={t('kpiSoldToday')}
                 value={String(overview.myTicketsSoldToday)}
                 icon={<Ticket className="h-5 w-5" />}
               />
               <KpiCard
-                title="Celkové tržby"
-                value={formatPrice(overview.myTotalRevenue)}
+                title={t('kpiTotalRevenue')}
+                value={fmtPrice(overview.myTotalRevenue)}
                 icon={<Wallet className="h-5 w-5" />}
-                hint={`${overview.myTotalTicketsSold} vstupeniek celkovo`}
+                hint={t('kpiTotalTicketsHint', { count: overview.myTotalTicketsSold })}
               />
               <KpiCard
-                title="Najbližšie termíny"
+                title={t('kpiUpcoming')}
                 value={String(overview.myUpcomingTermins)}
                 icon={<CalendarClock className="h-5 w-5" />}
               />
               <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Obsadenosť</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{t('capacity')}</span>
                   <span className="text-brand">
                     <Users className="h-5 w-5" />
                   </span>
@@ -218,7 +222,7 @@ export default function OrganizerDashboardPage() {
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                  {capacityPct}% obsadené (najbližšie termíny)
+                  {t('capacityHint', { pct: capacityPct })}
                 </p>
               </div>
             </>
@@ -227,23 +231,23 @@ export default function OrganizerDashboardPage() {
 
         {/* Graf + top podujatia */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <SectionCard title="Tržby za posledných 7 dní" className="lg:col-span-2">
+          <SectionCard title={t('salesTrend7d')} className="lg:col-span-2">
             {loading ? <Skeleton className="h-64" /> : <SalesTrendChart data={trend} />}
           </SectionCard>
-          <SectionCard title="Najpredávanejšie podujatia">
+          <SectionCard title={t('topShows')}>
             {loading ? <Skeleton className="h-48" /> : <TopShowsChart data={topShows} />}
           </SectionCard>
         </div>
 
         {/* Posledné objednávky */}
         <SectionCard
-          title="Posledné objednávky"
+          title={t('recentOrders')}
           action={
             <Link
               href="/organizer/orders"
               className="flex items-center gap-0.5 text-xs text-brand hover:underline"
             >
-              Všetky <ArrowRight className="h-3 w-3" />
+              {t('viewAll')} <ArrowRight className="h-3 w-3" />
             </Link>
           }
         >
@@ -260,8 +264,8 @@ export default function OrganizerDashboardPage() {
               <Plus className="h-5 w-5" />
             </span>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Pridať podujatie</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Vytvorte a spravujte svoje show</p>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('addEvent')}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('addEventDesc')}</p>
             </div>
           </Link>
           <a
@@ -276,8 +280,8 @@ export default function OrganizerDashboardPage() {
               </svg>
             </span>
             <div>
-              <h3 className="font-semibold text-brand">Skenovať vstupenky</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Otvorí mobilný skener pre kontrolu QR kódov</p>
+              <h3 className="font-semibold text-brand">{t('scanTickets')}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{t('scanTicketsDesc')}</p>
             </div>
           </a>
         </div>

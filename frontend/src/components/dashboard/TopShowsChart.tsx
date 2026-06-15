@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useTranslations } from 'next-intl';
 import { formatPrice } from '@/lib/format';
 import { TopShow } from '@/lib/api/metrics';
 import { EmptyState } from './parts';
@@ -23,13 +24,14 @@ interface Row {
 }
 
 function ShowTooltip({ active, payload }: { active?: boolean; payload?: { payload: Row }[] }) {
+  const t = useTranslations('organizer.dashboard');
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
     <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-md dark:border-gray-700 dark:bg-gray-800">
       <div className="font-medium text-gray-900 dark:text-gray-100">{p.name}</div>
       <div className="text-gray-500 dark:text-gray-400">{p.organizerName}</div>
-      <div className="mt-1 text-emerald-600 dark:text-emerald-400">{p.ticketsSold} vstupeniek</div>
+      <div className="mt-1 text-emerald-600 dark:text-emerald-400">{t('chartTickets', { count: p.ticketsSold })}</div>
       <div className="text-gray-500 dark:text-gray-400">{formatPrice(p.revenue)}</div>
     </div>
   );
@@ -41,8 +43,9 @@ function truncate(s: string, n = 22): string {
 }
 
 export function TopShowsChart({ data }: { data: TopShow[] }) {
+  const t = useTranslations('organizer.dashboard');
   if (!data.length) {
-    return <EmptyState message="Zatiaľ žiadne predané vstupenky." />;
+    return <EmptyState message={t('emptyTopShows')} />;
   }
 
   const rows: Row[] = data.map((d) => ({

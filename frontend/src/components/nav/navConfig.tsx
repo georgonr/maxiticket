@@ -1,24 +1,21 @@
 import { ReactNode } from 'react';
 import { Ticket } from 'lucide-react';
 
-export const ROLE_LABELS: Record<string, string> = {
-  SUPERADMIN: 'Superadmin',
-  STAFF: 'Interný operátor',
-  ORGANIZER_OWNER: 'Organizátor (vlastník)',
-  ORGANIZER_MEMBER: 'Organizátor (člen)',
-  SCANNER: 'Skener',
-  CUSTOMER: 'Zákazník',
-};
+// Krok 31c1: i18n – role + nav labely sa prekladajú v Sidebare cez useTranslations
+// (namespace organizer.roles.* / organizer.nav.*). Tu sú už len kľúče.
+export const ROLE_KEYS = ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER', 'CUSTOMER'];
 
 export interface NavItem {
-  label: string;
+  /** kľúč do organizer.nav.* */
+  labelKey: string;
   href: string;
   roles: string[];
   icon?: ReactNode;
 }
 
 export interface NavGroup {
-  title: string | null;
+  /** kľúč do organizer.nav.* (group*) alebo null pre neoznačenú skupinu */
+  titleKey: string | null;
   items: NavItem[];
 }
 
@@ -31,49 +28,49 @@ export function buildNavGroups(role: string): NavGroup[] {
   const isSuper = role === 'SUPERADMIN';
   const groups: NavGroup[] = [
     {
-      title: null,
-      items: [{ label: 'Prehľad platformy', href: '/admin/dashboard', roles: ['SUPERADMIN'] }],
+      titleKey: null,
+      items: [{ labelKey: 'platformOverview', href: '/admin/dashboard', roles: ['SUPERADMIN'] }],
     },
     {
-      title: 'Podujatia',
+      titleKey: 'groupEvents',
       items: [
-        { label: 'Podujatia', href: isSuper ? '/admin/shows' : '/organizer/shows', roles: ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER'] },
-        { label: 'Objednávky', href: isSuper ? '/admin/orders' : '/organizer/orders', roles: ['SUPERADMIN', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER'] },
-        { label: 'Refundy', href: isSuper ? '/admin/refunds' : '/organizer/refunds', roles: ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER'] },
-        { label: 'Miesta', href: '/organizer/venues', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
+        { labelKey: 'shows', href: isSuper ? '/admin/shows' : '/organizer/shows', roles: ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER'] },
+        { labelKey: 'orders', href: isSuper ? '/admin/orders' : '/organizer/orders', roles: ['SUPERADMIN', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER'] },
+        { labelKey: 'refunds', href: isSuper ? '/admin/refunds' : '/organizer/refunds', roles: ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER'] },
+        { labelKey: 'venues', href: '/organizer/venues', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
       ],
     },
     {
-      title: 'Predaj',
+      titleKey: 'groupSales',
       items: [
-        { label: 'Pokladňa', href: '/organizer/pos', roles: ['ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'STAFF', 'SUPERADMIN'] },
+        { labelKey: 'pos', href: '/organizer/pos', roles: ['ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'STAFF', 'SUPERADMIN'] },
       ],
     },
     {
-      title: 'Tím',
+      titleKey: 'groupTeam',
       items: [
-        { label: 'Tím', href: '/organizer/members', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
-        { label: 'Skeneri', href: '/organizer/scanners', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
+        { labelKey: 'members', href: '/organizer/members', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
+        { labelKey: 'scanners', href: '/organizer/scanners', roles: ['ORGANIZER_OWNER', 'SUPERADMIN'] },
       ],
     },
     {
-      title: 'Platforma',
+      titleKey: 'groupPlatform',
       items: [
-        { label: 'Hero slider', href: '/admin/hero', roles: ['SUPERADMIN'] },
-        { label: 'Platforma', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
-        { label: 'Platobné brány', href: '/admin/payment-gateways', roles: ['SUPERADMIN', 'STAFF'] },
+        { labelKey: 'heroSlider', href: '/admin/hero', roles: ['SUPERADMIN'] },
+        { labelKey: 'platformInfo', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
+        { labelKey: 'paymentGateways', href: '/admin/payment-gateways', roles: ['SUPERADMIN', 'STAFF'] },
       ],
     },
     {
-      title: 'Organizátor',
+      titleKey: 'groupOrganizer',
       items: [
-        { label: 'Údaje firmy', href: '/organizer/settings', roles: ['ORGANIZER_OWNER'] },
+        { labelKey: 'companyData', href: '/organizer/settings', roles: ['ORGANIZER_OWNER'] },
       ],
     },
     {
-      title: null,
+      titleKey: null,
       items: [
-        { label: 'Moje lístky', href: '/account/tickets', roles: ['STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER', 'CUSTOMER'], icon: <Ticket className="h-4 w-4" /> },
+        { labelKey: 'myTickets', href: '/account/tickets', roles: ['STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER', 'CUSTOMER'], icon: <Ticket className="h-4 w-4" /> },
       ],
     },
   ];
