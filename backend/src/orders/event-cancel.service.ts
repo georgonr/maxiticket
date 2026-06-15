@@ -4,6 +4,7 @@ import {
 import { OrderStatus, TicketStatus, TerminStatus, SeatStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { mailMessages, normalizeMailLocale } from '../mail/mail-i18n';
 import { JwtPayload } from '../casl/casl-ability.factory';
 
 /**
@@ -21,11 +22,13 @@ export class EventCancelService {
     return user.role === UserRole.SUPERADMIN || user.role === UserRole.STAFF;
   }
 
-  private refundInfo(provider: string | null): string {
-    if (provider === 'stripe') return 'Peniaze vám vrátime na pôvodnú platobnú kartu (spracujeme manuálne, môže trvať niekoľko dní).';
-    if (provider === 'pos_cash' || provider === 'pos_card') return 'Vrátenie peňazí zabezpečí organizátor (platba prebehla na mieste).';
-    if (provider === 'comp') return 'Lístok bol komplimentárny (zdarma) – vrátenie peňazí sa neuplatňuje.';
-    return 'O spôsobe vrátenia peňazí vás bude kontaktovať organizátor.';
+  // Krok 31e1: lokalizovaný info text o refunde podľa Order.locale + platobnej brány.
+  private refundInfo(provider: string | null, locale: string): string {
+    const r = mailMessages[normalizeMailLocale(locale)].terminCancelled.refundInfo;
+    if (provider === 'stripe') return r.stripe;
+    if (provider === 'pos_cash' || provider === 'pos_card') return r.pos;
+    if (provider === 'comp') return r.comp;
+    return r.default;
   }
 
   async cancelOccurrence(eventId: string, occurrenceId: string, user: JwtPayload) {
@@ -47,7 +50,7 @@ export class EventCancelService {
         items: { some: { terminId: occurrenceId } },
         status: { in: [OrderStatus.PAID, OrderStatus.REFUND_REQUESTED, OrderStatus.REFUND_APPROVED] },
       },
-      select: { id: true, orderNumber: true, buyerEmail: true, paymentProvider: true },
+      select: { id: true, orderNumber: true, buyerEmail: true, paymentProvider: true, locale: true },
     });
 
     const ownsTermin = { items: { some: { terminId: occurrenceId } } };
@@ -95,11 +98,12 @@ export class EventCancelService {
       try {
         await this.mail.sendTerminCancelled({
           to: o.buyerEmail,
+          locale: o.locale,
           showName: termin.show.name,
           startsAt: termin.startsAt,
           timezone: termin.timezone,
           orderNumber: o.orderNumber,
-          refundInfo: this.refundInfo(o.paymentProvider),
+          refundInfo: this.refundInfo(o.paymentProvider, o.locale),
         });
         emailsSent++;
       } catch (e: any) {

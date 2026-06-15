@@ -77,6 +77,7 @@ export class RefundsService {
     try {
       await this.mail.sendRefundRequested({
         to: order.organizer.email,
+        locale: order.locale,
         orderNumber: order.orderNumber,
         buyerEmail: order.buyerEmail,
         amount: Number(order.totalAmount),
@@ -220,6 +221,7 @@ export class RefundsService {
       try {
         await this.mail.sendRefundApproved({
           to: contact.to,
+          locale: order.locale,
           firstName: contact.firstName,
           orderNumber: order.orderNumber,
           amount: Number(amount),
@@ -256,6 +258,7 @@ export class RefundsService {
     try {
       await this.mail.sendRefundRejected({
         to: contact.to,
+        locale: order.locale,
         firstName: contact.firstName,
         orderNumber: order.orderNumber,
         reviewNote: note,

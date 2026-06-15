@@ -224,6 +224,7 @@ export class OrdersService {
       buyerName,
       buyerPhone: dto.buyerPhone,
       currency,
+      locale: dto.locale ?? 'sk',  // Krok 31e1: jazyk pre e-maily (aj async Stripe webhook)
       totalAmount,
       status: OrderStatus.PENDING,
       expiresAt,

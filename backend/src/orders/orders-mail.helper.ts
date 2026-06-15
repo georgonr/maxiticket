@@ -68,6 +68,7 @@ export async function sendTicketsForOrder(
 
   await mail.sendTickets({
     to: order.buyerEmail,
+    locale: order.locale,
     buyerName: order.buyerName ?? undefined,
     orderNumber: order.orderNumber,
     showName: show.name,

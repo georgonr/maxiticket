@@ -3,6 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
+import {
+  MailLocale, normalizeMailLocale, mailMessages, mailFormatDate, mailFormatPrice,
+} from './mail-i18n';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
 
@@ -25,6 +28,7 @@ export interface PlatformPdfInfo {
 
 export interface TicketEmailData {
   to: string;
+  locale?: string;  // sk/en/cs – jazyk objednávky (default sk)
   buyerName?: string;
   orderNumber: string;
   showName: string;
@@ -79,6 +83,8 @@ export class MailService {
 
   async sendTickets(data: TicketEmailData): Promise<void> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].tickets;
 
     const attachments: nodemailer.SendMailOptions['attachments'] = [];
     const ticketHtmlParts: string[] = [];
@@ -89,7 +95,7 @@ export class MailService {
 
       attachments.push({ filename: `qr_${ticket.id}.png`, content: qrPng, cid: cidKey });
 
-      const pdfBuf = await this.generateTicketPdf({ ...data, ticket, qrPng });
+      const pdfBuf = await this.generateTicketPdf({ ...data, ticket, qrPng }, locale);
       attachments.push({
         filename: `vstupenka_${ticket.id.slice(-6).toUpperCase()}.pdf`,
         content: pdfBuf,
@@ -99,7 +105,7 @@ export class MailService {
       ticketHtmlParts.push(`
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:16px 0;text-align:center;">
           <p style="font-size:14px;color:#6b7280;margin:0 0 4px;">${ticket.typeName}</p>
-          <img src="cid:${cidKey}" style="width:200px;height:200px;" alt="QR kód vstupenky"/>
+          <img src="cid:${cidKey}" style="width:200px;height:200px;" alt="${m.qrAlt}"/>
           <p style="font-size:11px;color:#9ca3af;margin:8px 0 0;font-family:monospace;">${ticket.id.slice(-12).toUpperCase()}</p>
         </div>
       `);
@@ -109,24 +115,24 @@ export class MailService {
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
   <div style="text-align:center;margin-bottom:24px;">
     <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
-    <h1 style="font-size:22px;margin:12px 0 4px;">Vaše vstupenky</h1>
-    <p style="color:#6b7280;margin:0;">Objednávka <strong>${data.orderNumber}</strong></p>
+    <h1 style="font-size:22px;margin:12px 0 4px;">${m.heading}</h1>
+    <p style="color:#6b7280;margin:0;">${m.orderLabel} <strong>${data.orderNumber}</strong></p>
   </div>
   <div style="background:#f9fafb;border-radius:8px;padding:16px;margin-bottom:20px;">
     <h2 style="font-size:18px;margin:0 0 8px;">${data.showName}</h2>
-    <p style="color:#374151;margin:4px 0;">📅 ${this.formatDate(data.startsAt, data.timezone)}</p>
+    <p style="color:#374151;margin:4px 0;">📅 ${mailFormatDate(data.startsAt, data.timezone, locale)}</p>
     <p style="color:#374151;margin:4px 0;">📍 ${data.venueName}${data.venueCity ? `, ${data.venueCity}` : ''}</p>
   </div>
   ${ticketHtmlParts.join('')}
   <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
-    Vstupenku predložte pri vstupe. Každý QR kód je jednorazový.
+    ${m.footer}
   </p>
 </body></html>`;
 
     await this.transporter.sendMail({
       from,
       to: data.to,
-      subject: `Vaše vstupenky – ${data.showName}`,
+      subject: `${m.subjectPrefix} – ${data.showName}`,
       html,
       attachments,
     });
@@ -137,6 +143,7 @@ export class MailService {
   /** Krok 27: notifikácia o zrušení termínu (lístky zneplatnené + info o refunde). */
   async sendTerminCancelled(data: {
     to: string;
+    locale?: string;
     showName: string;
     startsAt: Date;
     timezone: string;
@@ -144,30 +151,32 @@ export class MailService {
     refundInfo: string;
   }): Promise<void> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].terminCancelled;
     const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
   <div style="text-align:center;margin-bottom:24px;">
     <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
-    <h1 style="font-size:22px;margin:12px 0 4px;">Termín bol zrušený</h1>
-    <p style="color:#6b7280;margin:0;">Objednávka <strong>${data.orderNumber}</strong></p>
+    <h1 style="font-size:22px;margin:12px 0 4px;">${m.heading}</h1>
+    <p style="color:#6b7280;margin:0;">${m.orderLabel} <strong>${data.orderNumber}</strong></p>
   </div>
   <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:20px;">
     <h2 style="font-size:18px;margin:0 0 8px;">${data.showName}</h2>
-    <p style="color:#374151;margin:4px 0;">📅 ${this.formatDate(data.startsAt, data.timezone)}</p>
-    <p style="color:#b91c1c;margin:12px 0 0;font-weight:600;">Tento termín bol zrušený a vaše lístky boli zneplatnené.</p>
+    <p style="color:#374151;margin:4px 0;">📅 ${mailFormatDate(data.startsAt, data.timezone, locale)}</p>
+    <p style="color:#b91c1c;margin:12px 0 0;font-weight:600;">${m.cancelledNotice}</p>
   </div>
   <div style="background:#f9fafb;border-radius:8px;padding:16px;margin-bottom:20px;">
-    <p style="color:#374151;margin:0;"><strong>Vrátenie peňazí:</strong> ${data.refundInfo}</p>
+    <p style="color:#374151;margin:0;"><strong>${m.refundLabel}</strong> ${data.refundInfo}</p>
   </div>
   <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
-    V prípade otázok kontaktujte organizátora podujatia.
+    ${m.footer}
   </p>
 </body></html>`;
 
     await this.transporter.sendMail({
       from,
       to: data.to,
-      subject: `Termín zrušený – ${data.showName}`,
+      subject: `${m.subjectPrefix} – ${data.showName}`,
       html,
     });
     this.logger.log(`Sent termin-cancelled notice to ${data.to} (order ${data.orderNumber})`);
@@ -178,7 +187,9 @@ export class MailService {
       ticket: TicketEmailData['tickets'][0];
       qrPng: Buffer;
     },
+    locale: MailLocale = 'sk',
   ): Promise<Buffer> {
+    const m = mailMessages[locale].pdf;
     return new Promise((resolve, reject) => {
       // A6 landscape: 420 × 298 pt (≈148×105mm)
       const W = 420;
@@ -212,7 +223,7 @@ export class MailService {
       doc.translate(STUB_W / 2, H / 2);
       doc.rotate(-90);
       doc.fillColor(WHITE).font('Bebas').fontSize(26)
-        .text('VSTUPENKA', -70, -13, { width: 140, align: 'center' });
+        .text(m.ticketWord, -70, -13, { width: 140, align: 'center' });
       doc.restore();
 
       // TicketAll logo text in stub bottom
@@ -240,7 +251,7 @@ export class MailService {
         .text(data.showName, BODY_X, 16, { width: TEXT_W, lineGap: -2 });
 
       // Date + venue
-      const dateStr = this.formatDate(data.startsAt, data.timezone);
+      const dateStr = mailFormatDate(data.startsAt, data.timezone, locale);
       doc.fillColor(TEAL).font('GeistBold').fontSize(9)
         .text(dateStr, BODY_X, 68, { width: TEXT_W });
 
@@ -250,7 +261,7 @@ export class MailService {
 
       // Ticket type + price
       const priceStr = data.ticket.price != null
-        ? this.formatPrice(data.ticket.price, data.ticket.currency ?? 'EUR')
+        ? mailFormatPrice(data.ticket.price, data.ticket.currency ?? 'EUR', locale)
         : '';
       doc.fillColor(BLACK).font('GeistBold').fontSize(11)
         .text(data.ticket.typeName + (priceStr ? `  ${priceStr}` : ''), BODY_X, 100, { width: TEXT_W });
@@ -269,7 +280,7 @@ export class MailService {
 
       // Order number
       doc.fillColor(LGRAY).font('Geist').fontSize(7)
-        .text(`Obj: ${data.orderNumber}`, QR_X - 4, 16 + QR_W + 14, { width: QR_W + 8, align: 'center' });
+        .text(`${m.orderPrefix} ${data.orderNumber}`, QR_X - 4, 16 + QR_W + 14, { width: QR_W + 8, align: 'center' });
 
       // ── Legal footer ─────────────────────────────────────────────────────
       const FOOTER_Y = H - 62;
@@ -282,7 +293,7 @@ export class MailService {
 
       // Line 1: organizer identity
       if (org?.companyName) {
-        let orgLine = `Organizátor: ${org.companyName}`;
+        let orgLine = `${m.organizerLabel} ${org.companyName}`;
         if (org.ico) orgLine += ` | IČO: ${org.ico}`;
         if (org.icDph) orgLine += ` | IČ DPH: ${org.icDph}`;
         doc.fillColor(LGRAY).font('Geist').fontSize(7)
@@ -291,7 +302,7 @@ export class MailService {
 
       // Line 2: organizer address
       if (org?.addressStreet && org?.addressCity) {
-        const addrLine = `Adresa: ${org.addressStreet}, ${org.addressZip ?? ''} ${org.addressCity}, ${org.addressCountry ?? 'SK'}`;
+        const addrLine = `${m.addressLabel} ${org.addressStreet}, ${org.addressZip ?? ''} ${org.addressCity}, ${org.addressCountry ?? 'SK'}`;
         doc.fillColor(LGRAY).font('Geist').fontSize(7)
           .text(addrLine, BODY_X, FOOTER_Y + 14, { width: BODY_W });
       }
@@ -299,16 +310,16 @@ export class MailService {
       // Line 3: price + VAT
       if (data.ticket.price != null) {
         const vatNote = effectiveVat > 0
-          ? `zahŕňa DPH ${effectiveVat} %`
-          : 'neplatca DPH';
-        const priceLine = `Cena: ${this.formatPrice(data.ticket.price, data.ticket.currency ?? 'EUR')} (${vatNote})`;
+          ? `${m.vatIncludedPrefix} ${effectiveVat} %`
+          : m.vatNonPayer;
+        const priceLine = `${m.priceLabel} ${mailFormatPrice(data.ticket.price, data.ticket.currency ?? 'EUR', locale)} (${vatNote})`;
         doc.fillColor(LGRAY).font('Geist').fontSize(7)
           .text(priceLine, BODY_X, FOOTER_Y + 24, { width: BODY_W });
       }
 
       // Line 4: platform
       if (plat?.legalName) {
-        let platLine = `Predaj v mene a na účet organizátora: ${plat.legalName}`;
+        let platLine = `${m.platformLinePrefix} ${plat.legalName}`;
         if (plat.ico) platLine += ` | IČO: ${plat.ico}`;
         doc.fillColor(LGRAY).font('Geist').fontSize(7)
           .text(platLine, BODY_X, FOOTER_Y + 34, { width: BODY_W });
@@ -461,35 +472,12 @@ export class MailService {
     return 20; // SK default – platform default not available here (used pre-computed value)
   }
 
-  formatDate(date: Date, timezone: string): string {
-    try {
-      return new Intl.DateTimeFormat('sk-SK', {
-        timeZone: timezone,
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(date);
-    } catch {
-      return date.toISOString();
-    }
-  }
-
-  private formatPrice(amount: number, currency: string): string {
-    try {
-      return new Intl.NumberFormat('sk-SK', { style: 'currency', currency }).format(amount);
-    } catch {
-      return `${amount} ${currency}`;
-    }
-  }
-
   // ─────────────────────── REFUND (Úloha 20) ───────────────────────
 
   /** Organizátorovi: nová zákaznícka žiadosť o vrátenie peňazí. */
   async sendRefundRequested(data: {
     to: string;
+    locale?: string;
     orderNumber: string;
     buyerEmail: string;
     amount: number;
@@ -498,28 +486,30 @@ export class MailService {
     reviewLink?: string;
   }): Promise<void> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
-    const amount = this.formatPrice(data.amount, data.currency ?? 'EUR');
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].refundRequested;
+    const amount = mailFormatPrice(data.amount, data.currency ?? 'EUR', locale);
     const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
 <body style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
   <div style="text-align:center;margin-bottom:24px;">
     <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
   </div>
-  <h2 style="font-size:20px;margin:0 0 12px;">Nová žiadosť o vrátenie peňazí</h2>
-  <p style="color:#374151;">Zákazník požiadal o vrátenie peňazí pre objednávku <strong>${data.orderNumber}</strong>.</p>
+  <h2 style="font-size:20px;margin:0 0 12px;">${m.heading}</h2>
+  <p style="color:#374151;">${m.introPrefix} <strong>${data.orderNumber}</strong>${m.introSuffix}</p>
   <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
-    <tr><td style="padding:6px 0;color:#6b7280;width:130px;">Objednávka:</td><td style="padding:6px 0;color:#111827;">${data.orderNumber}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Zákazník:</td><td style="padding:6px 0;color:#111827;">${data.buyerEmail}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;">Suma:</td><td style="padding:6px 0;color:#111827;">${amount}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;width:130px;">${m.orderLabel}</td><td style="padding:6px 0;color:#111827;">${data.orderNumber}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">${m.customerLabel}</td><td style="padding:6px 0;color:#111827;">${data.buyerEmail}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">${m.amountLabel}</td><td style="padding:6px 0;color:#111827;">${amount}</td></tr>
   </table>
-  <div style="margin:8px 0 16px;padding:14px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;"><strong>Dôvod:</strong><br/>${data.reason}</div>
-  ${data.reviewLink ? `<div style="text-align:center;margin:24px 0;"><a href="${data.reviewLink}" style="background:#10B981;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">Spravovať žiadosti o vrátenie</a></div>` : ''}
-  <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">TicketAll · žiadosť spracujete v administrácii.</p>
+  <div style="margin:8px 0 16px;padding:14px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;"><strong>${m.reasonLabel}</strong><br/>${data.reason}</div>
+  ${data.reviewLink ? `<div style="text-align:center;margin:24px 0;"><a href="${data.reviewLink}" style="background:#10B981;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">${m.cta}</a></div>` : ''}
+  <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">${m.footer}</p>
 </body></html>`;
     await this.transporter.sendMail({
       from,
       to: data.to,
-      subject: `Nová žiadosť o vrátenie – ${data.orderNumber}`,
+      subject: `${m.subjectPrefix} – ${data.orderNumber}`,
       html,
     });
     this.logger.log(`Refund request email sent to organizer ${data.to} (order ${data.orderNumber})`);
@@ -528,6 +518,7 @@ export class MailService {
   /** Zákazníkovi: žiadosť o vrátenie bola schválená. */
   async sendRefundApproved(data: {
     to: string;
+    locale?: string;
     orderNumber: string;
     firstName?: string | null;
     amount: number;
@@ -535,24 +526,26 @@ export class MailService {
     manualStripe?: boolean;
   }): Promise<void> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].refundApproved;
     const name = data.firstName ? `, ${data.firstName}` : '';
-    const amount = this.formatPrice(data.amount, data.currency ?? 'EUR');
+    const amount = mailFormatPrice(data.amount, data.currency ?? 'EUR', locale);
     const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
 <body style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
   <div style="text-align:center;margin-bottom:24px;">
     <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
   </div>
-  <h2 style="font-size:20px;margin:0 0 12px;">Žiadosť o vrátenie bola schválená</h2>
-  <p style="color:#374151;">Dobrý deň${name},</p>
-  <p style="color:#374151;">Vaša žiadosť o vrátenie peňazí pre objednávku <strong>${data.orderNumber}</strong> (${amount}) bola <strong style="color:#10B981;">schválená</strong>.</p>
-  <p style="color:#374151;">Vrátenie peňazí bude spracované a suma vám bude vrátená pôvodným spôsobom platby. Vaše vstupenky z tejto objednávky boli zneplatnené.</p>
+  <h2 style="font-size:20px;margin:0 0 12px;">${m.heading}</h2>
+  <p style="color:#374151;">${m.greeting}${name},</p>
+  <p style="color:#374151;">${m.bodyPrefix} <strong>${data.orderNumber}</strong> (${amount}) ${m.bodyConnector} <strong style="color:#10B981;">${m.approvedWord}</strong>.</p>
+  <p style="color:#374151;">${m.body2}</p>
   <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">TicketAll</p>
 </body></html>`;
     await this.transporter.sendMail({
       from,
       to: data.to,
-      subject: `Žiadosť o vrátenie schválená – ${data.orderNumber}`,
+      subject: `${m.subjectPrefix} – ${data.orderNumber}`,
       html,
     });
     this.logger.log(`Refund approved email sent to ${data.to} (order ${data.orderNumber})`);
@@ -561,11 +554,14 @@ export class MailService {
   /** Zákazníkovi: žiadosť o vrátenie bola zamietnutá (s dôvodom). */
   async sendRefundRejected(data: {
     to: string;
+    locale?: string;
     orderNumber: string;
     firstName?: string | null;
     reviewNote?: string | null;
   }): Promise<void> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].refundRejected;
     const name = data.firstName ? `, ${data.firstName}` : '';
     const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
@@ -573,17 +569,17 @@ export class MailService {
   <div style="text-align:center;margin-bottom:24px;">
     <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
   </div>
-  <h2 style="font-size:20px;margin:0 0 12px;">Žiadosť o vrátenie bola zamietnutá</h2>
-  <p style="color:#374151;">Dobrý deň${name},</p>
-  <p style="color:#374151;">Vaša žiadosť o vrátenie peňazí pre objednávku <strong>${data.orderNumber}</strong> bola, žiaľ, zamietnutá. Vaša objednávka a vstupenky zostávajú platné.</p>
-  ${data.reviewNote ? `<div style="margin:8px 0 16px;padding:14px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;"><strong>Poznámka:</strong><br/>${data.reviewNote}</div>` : ''}
-  <p style="color:#374151;">V prípade otázok kontaktujte organizátora podujatia.</p>
+  <h2 style="font-size:20px;margin:0 0 12px;">${m.heading}</h2>
+  <p style="color:#374151;">${m.greeting}${name},</p>
+  <p style="color:#374151;">${m.bodyPrefix} <strong>${data.orderNumber}</strong> ${m.bodySuffix}</p>
+  ${data.reviewNote ? `<div style="margin:8px 0 16px;padding:14px;background:#f9fafb;border-radius:8px;font-size:14px;color:#374151;"><strong>${m.noteLabel}</strong><br/>${data.reviewNote}</div>` : ''}
+  <p style="color:#374151;">${m.footer}</p>
   <p style="color:#9ca3af;font-size:11px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">TicketAll</p>
 </body></html>`;
     await this.transporter.sendMail({
       from,
       to: data.to,
-      subject: `Žiadosť o vrátenie zamietnutá – ${data.orderNumber}`,
+      subject: `${m.subjectPrefix} – ${data.orderNumber}`,
       html,
     });
     this.logger.log(`Refund rejected email sent to ${data.to} (order ${data.orderNumber})`);

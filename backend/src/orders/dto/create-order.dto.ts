@@ -51,4 +51,9 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   buyerPhone?: string;
+
+  // Krok 31e1: jazyk kupujúceho (frontend pošle aktuálne locale) → Order.locale pre e-maily.
+  @IsOptional()
+  @IsIn(['sk', 'en', 'cs'])
+  locale?: 'sk' | 'en' | 'cs';
 }

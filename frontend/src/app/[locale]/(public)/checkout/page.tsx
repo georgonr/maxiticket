@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import NextLink from 'next/link';
-import { useTranslations, useFormatter } from 'next-intl';
+import { useTranslations, useFormatter, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { getCart, clearCart, cartTotal, Cart } from '@/lib/cart';
 import { ordersApi } from '@/lib/api';
@@ -32,6 +32,7 @@ export default function CheckoutPage() {
 function CheckoutContent() {
   const t = useTranslations('checkout');
   const format = useFormatter();
+  const locale = useLocale() as 'sk' | 'en' | 'cs';
   const fmtPrice = (amount: number, currency: string) => format.number(amount, { style: 'currency', currency });
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -104,6 +105,7 @@ function CheckoutContent() {
               : { ticketTypeId: i.ticketTypeId, quantity: i.quantity },
         ),
         acceptTerms: true,
+        locale,
         ...(isLoggedIn
           ? {}
           : {

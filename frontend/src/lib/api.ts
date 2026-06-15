@@ -508,6 +508,8 @@ export interface CreateOrderPayload {
   buyerEmail?: string;
   buyerName?: string;
   buyerPhone?: string;
+  // Krok 31e1: jazyk kupujúceho → Order.locale (lokalizované e-maily)
+  locale?: 'sk' | 'en' | 'cs';
 }
 
 export interface OrderItem {
