@@ -1,14 +1,15 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import NextLink from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
+import { Link, useRouter } from '@/i18n/navigation';
 import { getCart, clearCart, cartTotal, Cart } from '@/lib/cart';
 import { ordersApi } from '@/lib/api';
 import { couponsApi } from '@/lib/api/coupons';
 import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
-import { formatDate, formatPrice } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { CouponInput, AppliedCoupon } from '@/components/checkout/CouponInput';
 import { Calendar, MapPin, ShoppingBag, Loader2, Lock } from 'lucide-react';
@@ -29,6 +30,9 @@ export default function CheckoutPage() {
 }
 
 function CheckoutContent() {
+  const t = useTranslations('checkout');
+  const format = useFormatter();
+  const fmtPrice = (amount: number, currency: string) => format.number(amount, { style: 'currency', currency });
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, isLoading } = usePublicAuth();
@@ -117,7 +121,7 @@ function CheckoutContent() {
       clearCart();
       window.location.href = url;
     } catch (e: any) {
-      setError(e.message ?? 'Nastala chyba. Skúste znova.');
+      setError(e.message ?? t('genericError'));
       setSubmitting(false);
     }
   }
@@ -136,7 +140,7 @@ function CheckoutContent() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Potvrdenie objednávky</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">{t('title')}</h1>
 
       {/* Order summary */}
       <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -144,7 +148,7 @@ function CheckoutContent() {
           <h2 className="font-semibold text-gray-900 text-lg">{cart.showName}</h2>
           <p className="flex items-center gap-1 mt-1 text-sm text-gray-500">
             <Calendar size={13} />
-            {formatDate(cart.startsAt, cart.timezone)}
+            {format.dateTime(new Date(cart.startsAt), { timeZone: cart.timezone, weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </p>
           <p className="flex items-center gap-1 text-sm text-gray-500">
             <MapPin size={13} />
@@ -157,12 +161,12 @@ function CheckoutContent() {
             <div key={item.ticketTypeId ?? item.terminSectionId} className="flex items-center justify-between py-2.5">
               <div>
                 <p className="text-sm font-medium text-gray-800">{item.name}</p>
-                <p className="text-xs text-gray-400">{item.quantity} × {formatPrice(item.price, item.currency)}</p>
+                <p className="text-xs text-gray-400">{item.quantity} × {fmtPrice(item.price, item.currency)}</p>
                 {item.seatLabels?.length ? (
-                  <p className="text-xs text-purple-600 mt-0.5">Sedadlá: {item.seatLabels.join(', ')}</p>
+                  <p className="text-xs text-purple-600 mt-0.5">{t('seats')}: {item.seatLabels.join(', ')}</p>
                 ) : null}
               </div>
-              <span className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity, item.currency)}</span>
+              <span className="font-semibold text-gray-900">{fmtPrice(item.price * item.quantity, item.currency)}</span>
             </div>
           ))}
         </div>
@@ -170,32 +174,32 @@ function CheckoutContent() {
         {/* Guest – buyer údaje (prihlásení berú z účtu) */}
         {!isLoggedIn && (
           <div className="mt-4 space-y-3 border-t pt-4">
-            <p className="text-sm font-medium text-gray-700">Kontaktné údaje</p>
+            <p className="text-sm font-medium text-gray-700">{t('contactInfo')}</p>
             <input
               type="email"
               value={buyerEmail}
               onChange={(e) => setBuyerEmail(e.target.value)}
-              placeholder="E-mail (vstupenky pošleme sem) *"
+              placeholder={t('emailPlaceholder')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
             <input
               type="text"
               value={buyerName}
               onChange={(e) => setBuyerName(e.target.value)}
-              placeholder="Meno a priezvisko *"
+              placeholder={t('namePlaceholder')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
             <input
               type="tel"
               value={buyerPhone}
               onChange={(e) => setBuyerPhone(e.target.value)}
-              placeholder="Telefón (voliteľné)"
+              placeholder={t('phonePlaceholder')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
             <p className="text-xs text-gray-400">
-              Máte účet?{' '}
+              {t('haveAccount')}{' '}
               <Link href="/account/login?next=/checkout" className="text-indigo-600 hover:underline">
-                Prihláste sa
+                {t('signIn')}
               </Link>
             </p>
           </div>
@@ -218,18 +222,18 @@ function CheckoutContent() {
           {appliedCoupon && (
             <>
               <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>Medzisúčet</span>
-                <span>{formatPrice(total, currency)}</span>
+                <span>{t('subtotal')}</span>
+                <span>{fmtPrice(total, currency)}</span>
               </div>
               <div className="flex items-center justify-between text-sm text-emerald-600">
-                <span>Zľava ({appliedCoupon.code})</span>
-                <span>−{formatPrice(appliedCoupon.discount, currency)}</span>
+                <span>{t('discount', { code: appliedCoupon.code })}</span>
+                <span>−{fmtPrice(appliedCoupon.discount, currency)}</span>
               </div>
             </>
           )}
           <div className="flex items-center justify-between pt-1">
-            <span className="font-semibold text-gray-900">Spolu</span>
-            <span className="text-xl font-bold text-indigo-600">{formatPrice(finalTotal, currency)}</span>
+            <span className="font-semibold text-gray-900">{t('total')}</span>
+            <span className="text-xl font-bold text-indigo-600">{fmtPrice(finalTotal, currency)}</span>
           </div>
         </div>
       </div>
@@ -237,7 +241,7 @@ function CheckoutContent() {
       {/* Payment info */}
       <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
         <Lock size={14} />
-        Platba prebieha cez zabezpečenú platobnú bránu Stripe
+        {t('securePayment')}
       </div>
 
       {/* Terms */}
@@ -249,9 +253,9 @@ function CheckoutContent() {
           className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-indigo-600"
         />
         <span className="text-sm text-gray-600">
-          Súhlasím s{' '}
-          <Link href="#" className="text-indigo-600 hover:underline">obchodnými podmienkami</Link>
-          {' '}a beriem na vedomie, že vstupenky sú nevratné.
+          {t('agreeStart')}{' '}
+          <NextLink href="#" className="text-indigo-600 hover:underline">{t('terms')}</NextLink>
+          {' '}{t('agreeEnd')}
         </span>
       </label>
 
@@ -267,13 +271,13 @@ function CheckoutContent() {
         className="w-full gap-2"
       >
         <ShoppingBag size={16} />
-        {submitting ? 'Presmerovávam na platbu...' : `Zaplatiť ${formatPrice(finalTotal, currency)}`}
+        {submitting ? t('redirecting') : t('pay', { amount: fmtPrice(finalTotal, currency) })}
       </Button>
 
       <p className="mt-3 text-center text-xs text-gray-400">
-        Zrušiť?{' '}
+        {t('cancelQ')}{' '}
         <Link href={`/events/${cart.showSlug}`} className="text-indigo-600 hover:underline">
-          Vrátiť sa na podujatie
+          {t('backToEvent')}
         </Link>
       </p>
     </div>

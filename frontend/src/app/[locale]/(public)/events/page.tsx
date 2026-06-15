@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef, useMemo } from 'react';
-import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { publicApi, PublicShow, PublicTermin } from '@/lib/api';
-import { formatDate, formatPrice } from '@/lib/format';
 import { HeroSlider } from '@/components/public/HeroSlider';
 import {
   Search, Calendar, MapPin, LayoutGrid, CalendarDays,
@@ -16,48 +16,33 @@ import {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// labelKey → key under `events` namespace (resolved via t() at render)
 const DATE_CHIPS = [
-  { value: '',         label: 'Všetky dátumy' },
-  { value: 'today',   label: 'Dnes' },
-  { value: 'week',    label: 'Tento týždeň' },
-  { value: 'weekend', label: 'Víkend' },
+  { value: '',        labelKey: 'dateAll' },
+  { value: 'today',   labelKey: 'dateToday' },
+  { value: 'week',    labelKey: 'dateWeek' },
+  { value: 'weekend', labelKey: 'dateWeekend' },
 ];
 
+// `value` is the API filter value (do NOT translate); `labelKey` is the UI label key.
 const FIXED_CATEGORIES = [
-  { value: '',            label: 'Všetko',     Icon: Star },
-  { value: 'Koncerty',    label: 'Koncerty',    Icon: Music },
-  { value: 'Festivaly',   label: 'Festivaly',   Icon: Users },
-  { value: 'Šport',       label: 'Šport',       Icon: Dumbbell },
-  { value: 'Konferencie', label: 'Konferencie', Icon: Briefcase },
-  { value: 'Divadlo',     label: 'Divadlo',     Icon: Drama },
-  { value: 'Ostatné',     label: 'Ostatné',     Icon: Sparkles },
-];
-
-const SK_MONTHS = [
-  'Január','Február','Marec','Apríl','Máj','Jún',
-  'Júl','August','September','Október','November','December',
-];
-const SK_DAYS_SHORT  = ['Po','Ut','St','Šv','Pi','So','Ne'];
-const SK_DAYS_LONG   = ['pondelok','utorok','streda','štvrtok','piatok','sobota','nedeľa'];
-const SK_MONTHS_GEN  = [
-  'januára','februára','marca','apríla','mája','júna',
-  'júla','augusta','septembra','októbra','novembra','decembra',
+  { value: '',            labelKey: 'cat.all',         Icon: Star },
+  { value: 'Koncerty',    labelKey: 'cat.concerts',    Icon: Music },
+  { value: 'Festivaly',   labelKey: 'cat.festivals',   Icon: Users },
+  { value: 'Šport',       labelKey: 'cat.sport',       Icon: Dumbbell },
+  { value: 'Konferencie', labelKey: 'cat.conferences', Icon: Briefcase },
+  { value: 'Divadlo',     labelKey: 'cat.theatre',     Icon: Drama },
+  { value: 'Ostatné',     labelKey: 'cat.other',       Icon: Sparkles },
 ];
 
 function toDateStr(iso: string) {
   return iso.slice(0, 10); // YYYY-MM-DD
 }
 
-function formatCalDay(dateStr: string) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const dow = new Date(y, m - 1, d).getDay();
-  const dowSk = SK_DAYS_LONG[(dow + 6) % 7];
-  return `${dowSk.charAt(0).toUpperCase() + dowSk.slice(1)}, ${d}. ${SK_MONTHS_GEN[m - 1]} ${y}`;
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function EventsPage() {
+  const t = useTranslations('events');
   const [shows, setShows]           = useState<PublicShow[]>([]);
   const [loading, setLoading]       = useState(true);
   const [cities, setCities]         = useState<string[]>([]);
@@ -90,7 +75,8 @@ export default function EventsPage() {
   }, [filterCat, filterDate, filterCity, view]);
 
   const allCategories = [
-    ...FIXED_CATEGORIES,
+    // Fixed categories: translate label via labelKey. Extra (DB) categories: keep raw value as label.
+    ...FIXED_CATEGORIES.map(({ value, labelKey, Icon }) => ({ value, label: t(labelKey), Icon })),
     ...extraCats.map((c) => ({ value: c, label: c, Icon: Sparkles })),
   ];
 
@@ -104,7 +90,7 @@ export default function EventsPage() {
       <section className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
           <h1 className="text-lg sm:text-xl font-bold text-slate-900">
-            Najbližšie podujatia
+            {t('title')}
           </h1>
           <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
             <button
@@ -114,7 +100,7 @@ export default function EventsPage() {
               }`}
             >
               <LayoutGrid size={13} />
-              <span className="hidden sm:inline">Grid</span>
+              <span className="hidden sm:inline">{t('viewGrid')}</span>
             </button>
             <button
               onClick={() => setView('calendar')}
@@ -123,7 +109,7 @@ export default function EventsPage() {
               }`}
             >
               <CalendarDays size={13} />
-              <span className="hidden sm:inline">Kalendár</span>
+              <span className="hidden sm:inline">{t('viewCalendar')}</span>
             </button>
           </div>
         </div>
@@ -172,7 +158,7 @@ export default function EventsPage() {
                     }`}
                   >
                     {chip.value && <Calendar size={11} />}
-                    {chip.label}
+                    {t(chip.labelKey)}
                   </button>
                 );
               })}
@@ -186,7 +172,7 @@ export default function EventsPage() {
                   onChange={(e) => setFilterCity(e.target.value)}
                   className="appearance-none rounded-full border border-slate-200 bg-white pl-7 pr-7 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 focus:outline-none focus:border-purple-400 transition-colors cursor-pointer"
                 >
-                  <option value="">Všetky mestá</option>
+                  <option value="">{t('allCities')}</option>
                   {cities.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -216,24 +202,33 @@ export default function EventsPage() {
           ) : shows.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-24 text-center">
               <Search size={40} className="mb-4 text-slate-300" />
-              <p className="text-lg font-semibold text-slate-500">Žiadne podujatia nenájdené</p>
-              <p className="mt-1 text-sm text-slate-400">Skúste zmeniť filter alebo sa vráťte neskôr.</p>
+              <p className="text-lg font-semibold text-slate-500">{t('emptyTitle')}</p>
+              <p className="mt-1 text-sm text-slate-400">{t('emptyHint')}</p>
               {(filterCat || filterDate || filterCity) && (
                 <button
                   onClick={() => { setFilterCat(''); setFilterDate(''); setFilterCity(''); }}
                   className="mt-5 rounded-xl bg-purple-700 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
                 >
-                  Zrušiť filtre
+                  {t('clearFilters')}
                 </button>
               )}
             </div>
           ) : (
             <>
               <p className="mb-5 text-sm text-slate-500">
-                Zobrazených{' '}
-                <span className="font-semibold text-slate-700">{shows.length}</span>{' '}
-                {shows.length === 1 ? 'podujatie' : shows.length < 5 ? 'podujatia' : 'podujatí'}
-                {filterCat && <> v kategórii <span className="font-semibold text-purple-700">{filterCat}</span></>}
+                {t.rich('resultsCount', {
+                  count: shows.length,
+                  b: (chunks) => <span className="font-semibold text-slate-700">{chunks}</span>,
+                })}
+                {filterCat && (
+                  <>
+                    {' '}
+                    {t.rich('inCategory', {
+                      cat: filterCat,
+                      b: (chunks) => <span className="font-semibold text-purple-700">{chunks}</span>,
+                    })}
+                  </>
+                )}
               </p>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {shows.map((show) => (
@@ -261,6 +256,8 @@ function CalendarView({
   cities: string[];
   setFilterCity: (c: string) => void;
 }) {
+  const t = useTranslations('events');
+  const format = useFormatter();
   const today = new Date();
   const [calMonth, setCalMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -293,6 +290,14 @@ function CalendarView({
     return arr;
   }, [year, month]);
 
+  // Locale-aware short weekday headers, Monday-first (2024-01-01 is a Monday).
+  const dayHeaders = useMemo(
+    () => Array.from({ length: 7 }, (_, i) =>
+      format.dateTime(new Date(2024, 0, 1 + i), { weekday: 'short' }),
+    ),
+    [format],
+  );
+
   function dayStr(d: number) {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
@@ -316,17 +321,17 @@ function CalendarView({
             <button
               onClick={prevMonth}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
-              aria-label="Predchádzajúci mesiac"
+              aria-label={t('prevMonth')}
             >
               <ChevronLeft size={16} />
             </button>
             <h2 className="text-sm font-semibold text-slate-900">
-              {SK_MONTHS[month]} {year}
+              {format.dateTime(calMonth, { month: 'long', year: 'numeric' })}
             </h2>
             <button
               onClick={nextMonth}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
-              aria-label="Nasledujúci mesiac"
+              aria-label={t('nextMonth')}
             >
               <ChevronRight size={16} />
             </button>
@@ -334,8 +339,8 @@ function CalendarView({
 
           {/* Day-of-week headers */}
           <div className="grid grid-cols-7 mb-1">
-            {SK_DAYS_SHORT.map((d) => (
-              <div key={d} className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+            {dayHeaders.map((d, i) => (
+              <div key={i} className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                 {d}
               </div>
             ))}
@@ -380,10 +385,10 @@ function CalendarView({
           {/* Legend */}
           <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-4 text-[10px] text-slate-400">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" /> Podujatia
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" /> {t('legendEvents')}
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3.5 w-3.5 rounded-full ring-2 ring-purple-400" /> Dnes
+              <span className="inline-block h-3.5 w-3.5 rounded-full ring-2 ring-purple-400" /> {t('legendToday')}
             </span>
           </div>
         </div>
@@ -397,7 +402,7 @@ function CalendarView({
               onChange={(e) => setFilterCity(e.target.value)}
               className="w-full appearance-none rounded-xl border border-slate-200 bg-white pl-8 pr-8 py-2.5 text-sm text-slate-600 hover:border-slate-300 focus:outline-none focus:border-purple-400 transition-colors cursor-pointer"
             >
-              <option value="">Všetky mestá</option>
+              <option value="">{t('allCities')}</option>
               {cities.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
             <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -410,19 +415,22 @@ function CalendarView({
         {!selectedDay ? (
           <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 text-center p-8">
             <CalendarDays size={40} className="mb-3 text-slate-300" />
-            <p className="text-sm font-medium text-slate-500">Kliknite na deň v kalendári</p>
-            <p className="mt-1 text-xs text-slate-400">Zobrazíme podujatia pre vybraný deň</p>
+            <p className="text-sm font-medium text-slate-500">{t('calPickDay')}</p>
+            <p className="mt-1 text-xs text-slate-400">{t('calPickDayHint')}</p>
           </div>
         ) : (
           <div>
             <h3 className="mb-4 text-sm font-semibold text-slate-700">
-              {formatCalDay(selectedDay)}
+              {format.dateTime(
+                (() => { const [y, m, d] = selectedDay.split('-').map(Number); return new Date(y, m - 1, d); })(),
+                { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
+              )}
             </h3>
 
             {selectedShows.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-12 text-center">
                 <Search size={32} className="mb-3 text-slate-300" />
-                <p className="text-sm text-slate-500">Žiadne podujatia v tento deň</p>
+                <p className="text-sm text-slate-500">{t('noEventsThisDay')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -441,8 +449,10 @@ function CalendarView({
 // ─── CalendarShowRow ──────────────────────────────────────────────────────────
 
 function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay: string }) {
+  const t = useTranslations('events');
+  const format = useFormatter();
   // Find the termin matching the selected day
-  const termin = show.termins.find((t) => toDateStr(t.startsAt) === selectedDay) ?? show.termins[0];
+  const termin = show.termins.find((tm) => toDateStr(tm.startsAt) === selectedDay) ?? show.termins[0];
 
   return (
     <Link
@@ -475,8 +485,8 @@ function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay:
           {termin && (
             <span className="flex items-center gap-1 text-xs text-slate-500">
               <Calendar size={10} className="text-purple-400" />
-              {formatDate(termin.startsAt, termin.timezone, {
-                weekday: undefined, year: undefined, month: undefined, day: undefined,
+              {format.dateTime(new Date(termin.startsAt), {
+                timeZone: termin.timezone,
                 hour: '2-digit', minute: '2-digit',
               })}
             </span>
@@ -494,11 +504,13 @@ function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay:
       <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
         {termin?.minPrice != null && (
           <span className="text-sm font-bold text-slate-900">
-            od {formatPrice(termin.minPrice, termin.currency)}
+            {t('priceFrom', {
+              price: format.number(termin.minPrice, { style: 'currency', currency: termin.currency }),
+            })}
           </span>
         )}
         <span className="flex items-center gap-0.5 text-xs font-medium text-purple-600 group-hover:gap-1.5 transition-all">
-          Detail <ChevronRight size={12} />
+          {t('detail')} <ChevronRight size={12} />
         </span>
       </div>
     </Link>
@@ -508,6 +520,8 @@ function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay:
 // ─── ShowCard ─────────────────────────────────────────────────────────────────
 
 function ShowCard({ show }: { show: PublicShow }) {
+  const t = useTranslations('events');
+  const format = useFormatter();
   const [shareOpen, setShareOpen] = useState(false);
   const [qrOpen, setQrOpen]       = useState(false);
   const [copied, setCopied]       = useState(false);
@@ -536,8 +550,14 @@ function ShowCard({ show }: { show: PublicShow }) {
   }
 
   function openWhatsApp() {
-    const datum = termin ? formatDate(termin.startsAt, termin.timezone) : '';
-    const text = `Pozri si toto podujatie: ${show.name} – ${eventUrl}${datum ? ' ' + datum : ''}`;
+    const datum = termin
+      ? format.dateTime(new Date(termin.startsAt), {
+          timeZone: termin.timezone,
+          weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        })
+      : '';
+    const text = `${t('shareText', { name: show.name, url: eventUrl })}${datum ? ' ' + datum : ''}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
 
@@ -575,7 +595,7 @@ function ShowCard({ show }: { show: PublicShow }) {
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShareOpen((s) => !s); }}
             className="absolute top-3 right-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60 md:hidden"
-            aria-label="Zdieľať"
+            aria-label={t('share')}
           >
             <Share2 size={13} />
           </button>
@@ -585,11 +605,11 @@ function ShowCard({ show }: { show: PublicShow }) {
             shareOpen ? 'translate-y-0' : 'translate-y-full group-hover:translate-y-0'
           }`}>
             <div className="border-t border-slate-100 bg-white/95 p-3 shadow-xl backdrop-blur-md">
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Zdieľať</p>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t('share')}</p>
               <div className="grid grid-cols-3 gap-1.5">
-                <ShareBtn icon={copied ? Check : Copy} label={copied ? 'Skopírované!' : 'Kopírovať'} active={copied} onClick={copyLink} />
-                <ShareBtn icon={MessageCircle} label="WhatsApp" onClick={openWhatsApp} />
-                <ShareBtn icon={QrCode} label="QR kód" onClick={() => { setQrOpen(true); setShareOpen(false); }} />
+                <ShareBtn icon={copied ? Check : Copy} label={copied ? t('copied') : t('copy')} active={copied} onClick={copyLink} />
+                <ShareBtn icon={MessageCircle} label={t('whatsapp')} onClick={openWhatsApp} />
+                <ShareBtn icon={QrCode} label={t('qrCode')} onClick={() => { setQrOpen(true); setShareOpen(false); }} />
               </div>
             </div>
           </div>
@@ -604,7 +624,11 @@ function ShowCard({ show }: { show: PublicShow }) {
             <div className="mt-2 space-y-1">
               <p className="flex items-center gap-1.5 text-xs text-slate-500">
                 <Calendar size={11} className="flex-shrink-0 text-purple-400" />
-                {formatDate(termin.startsAt, termin.timezone, { weekday: 'short', year: undefined })}
+                {format.dateTime(new Date(termin.startsAt), {
+                  timeZone: termin.timezone,
+                  weekday: 'short', day: 'numeric', month: 'long',
+                  hour: '2-digit', minute: '2-digit',
+                })}
               </p>
               {termin.city && (
                 <p className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -615,13 +639,15 @@ function ShowCard({ show }: { show: PublicShow }) {
             </div>
           )}
           {show.termins.length > 1 && (
-            <p className="mt-1.5 text-xs font-medium text-purple-600">{show.termins.length} termínov</p>
+            <p className="mt-1.5 text-xs font-medium text-purple-600">{t('terminCount', { count: show.termins.length })}</p>
           )}
           <div className="mt-3 flex items-center justify-between gap-2">
             {termin?.minPrice != null ? (
-              <span className="text-sm font-bold text-slate-900">od {formatPrice(termin.minPrice, termin.currency)}</span>
+              <span className="text-sm font-bold text-slate-900">{t('priceFrom', {
+                price: format.number(termin.minPrice, { style: 'currency', currency: termin.currency }),
+              })}</span>
             ) : (
-              <span className="text-xs text-slate-400">Cena neuvedená</span>
+              <span className="text-xs text-slate-400">{t('priceUnspecified')}</span>
             )}
             <StatusBadge status={termin?.status} />
           </div>
@@ -655,13 +681,14 @@ function ShareBtn({ icon: Icon, label, onClick, disabled = false, active = false
 // ─── StatusBadge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status?: string }) {
+  const t = useTranslations('events');
   if (!status) return null;
   const map: Record<string, { label: string; cls: string }> = {
-    ON_SALE:    { label: 'V predaji', cls: 'bg-emerald-100 text-emerald-700' },
-    COMING_SOON:{ label: 'Čoskoro',   cls: 'bg-blue-100 text-blue-700' },
-    SOLD_OUT:   { label: 'Vypredané', cls: 'bg-red-100 text-red-600' },
-    CANCELLED:  { label: 'Zrušené',  cls: 'bg-slate-100 text-slate-500' },
-    PAST:       { label: 'Ukončené', cls: 'bg-slate-100 text-slate-500' },
+    ON_SALE:    { label: t('status.onSale'),     cls: 'bg-emerald-100 text-emerald-700' },
+    COMING_SOON:{ label: t('status.comingSoon'), cls: 'bg-blue-100 text-blue-700' },
+    SOLD_OUT:   { label: t('status.soldOut'),    cls: 'bg-red-100 text-red-600' },
+    CANCELLED:  { label: t('status.cancelled'),  cls: 'bg-slate-100 text-slate-500' },
+    PAST:       { label: t('status.past'),       cls: 'bg-slate-100 text-slate-500' },
   };
   const s = map[status] ?? { label: status, cls: 'bg-slate-100 text-slate-500' };
   return (
@@ -693,6 +720,7 @@ function CardSkeleton() {
 // ─── QrModal ─────────────────────────────────────────────────────────────────
 
 function QrModal({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
+  const t = useTranslations('events');
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -722,11 +750,11 @@ function QrModal({ url, name, onClose }: { url: string; name: string; onClose: (
         className="relative w-full max-w-xs rounded-2xl bg-white p-6 shadow-2xl animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onClose} className="absolute right-3 top-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600" aria-label="Zavrieť">
+        <button onClick={onClose} className="absolute right-3 top-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600" aria-label={t('close')}>
           <X size={16} />
         </button>
         <h3 className="pr-6 text-sm font-semibold text-slate-900 line-clamp-2 leading-snug">{name}</h3>
-        <p className="mt-0.5 text-xs text-slate-400">Naskenujte QR kód na zdieľanie</p>
+        <p className="mt-0.5 text-xs text-slate-400">{t('qrScanHint')}</p>
         <div className="mt-4 flex justify-center">
           <canvas ref={canvasRef} className="rounded-xl" />
         </div>

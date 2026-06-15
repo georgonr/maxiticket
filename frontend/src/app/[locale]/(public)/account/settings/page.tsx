@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { clsx } from 'clsx';
 import { Settings, Loader2, Mail } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
@@ -10,6 +11,7 @@ import { accountApi, AccountProfile } from '@/lib/api/account';
 import { AccountTabs } from '@/components/account/AccountTabs';
 
 export default function AccountSettingsPage() {
+  const t = useTranslations('accountSettings');
   const router = useRouter();
   const { isLoggedIn, isLoading: authLoading } = usePublicAuth();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
@@ -25,7 +27,7 @@ export default function AccountSettingsPage() {
       try {
         setProfile(await accountApi.profile(token));
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Načítanie profilu zlyhalo.');
+        setError(e instanceof Error ? e.message : t('errorLoadProfile'));
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,10 +48,10 @@ export default function AccountSettingsPage() {
       if (!token) return;
       const res = await accountApi.updateNotifications(next, token);
       setProfile((p) => (p ? { ...p, marketingOptIn: res.marketingOptIn } : p));
-      setToast('Nastavenia uložené.');
+      setToast(t('savedToast'));
     } catch (e) {
       setProfile((p) => (p ? { ...p, marketingOptIn: !next } : p)); // revert
-      setError(e instanceof Error ? e.message : 'Uloženie zlyhalo.');
+      setError(e instanceof Error ? e.message : t('errorSave'));
     } finally {
       setSaving(false);
     }
@@ -69,7 +71,7 @@ export default function AccountSettingsPage() {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
           <Settings size={20} className="text-purple-700" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Nastavenia</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('title')}</h1>
       </div>
 
       {toast && <div className="mb-4 rounded-lg bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700">{toast}</div>}
@@ -77,21 +79,21 @@ export default function AccountSettingsPage() {
       <div className="space-y-5">
         {/* Profil */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 p-5">
-          <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-100">Účet</h2>
+          <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-100">{t('accountSectionTitle')}</h2>
           <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">E-mail</dt><dd className="font-medium text-slate-800 dark:text-slate-100">{profile.email}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">Meno</dt><dd className="font-medium text-slate-800 dark:text-slate-100">{profile.name ?? '—'}</dd></div>
-            {profile.phone && <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">Telefón</dt><dd className="font-medium text-slate-800 dark:text-slate-100">{profile.phone}</dd></div>}
+            <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">{t('emailLabel')}</dt><dd className="font-medium text-slate-800 dark:text-slate-100">{profile.email}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">{t('nameLabel')}</dt><dd className="font-medium text-slate-800 dark:text-slate-100">{profile.name ?? '—'}</dd></div>
+            {profile.phone && <div className="flex justify-between"><dt className="text-slate-500 dark:text-slate-400">{t('phoneLabel')}</dt><dd className="font-medium text-slate-800 dark:text-slate-100">{profile.phone}</dd></div>}
           </dl>
         </div>
 
         {/* Notifikácie */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 p-5">
-          <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100"><Mail size={16} /> Notifikácie</h2>
+          <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100"><Mail size={16} /> {t('notificationsSectionTitle')}</h2>
           <label className="flex cursor-pointer items-start justify-between gap-4">
             <span>
-              <span className="block text-sm font-medium text-slate-800 dark:text-slate-100">Marketingové novinky a ponuky</span>
-              <span className="block text-xs text-slate-400 dark:text-slate-500">Občasné e-maily o nových podujatiach a akciách.</span>
+              <span className="block text-sm font-medium text-slate-800 dark:text-slate-100">{t('marketingOptInLabel')}</span>
+              <span className="block text-xs text-slate-400 dark:text-slate-500">{t('marketingOptInHint')}</span>
             </span>
             <button
               type="button"
@@ -105,7 +107,7 @@ export default function AccountSettingsPage() {
             </button>
           </label>
           <p className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs text-slate-400 dark:text-slate-500">
-            Potvrdenia objednávok a vstupenky vám zašleme vždy, bez ohľadu na toto nastavenie.
+            {t('transactionalNote')}
           </p>
         </div>
       </div>

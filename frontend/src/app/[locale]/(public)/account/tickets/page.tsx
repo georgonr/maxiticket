@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { myApi, MyTicket } from '@/lib/api';
 import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
-import { formatDate } from '@/lib/format';
 import { Calendar, MapPin, Ticket, QrCode, ChevronRight } from 'lucide-react';
 import { AccountTabs } from '@/components/account/AccountTabs';
 
 export default function MyTicketsPage() {
+  const t = useTranslations('account');
+  const format = useFormatter();
   const router = useRouter();
   const { isLoggedIn, isLoading } = usePublicAuth();
   const [tickets, setTickets] = useState<MyTicket[]>([]);
@@ -54,9 +56,9 @@ export default function MyTicketsPage() {
           <Ticket size={20} className="text-purple-700" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Moje lístky</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('ticketsTitle')}</h1>
           {tickets.length > 0 && (
-            <p className="text-sm text-slate-400 dark:text-slate-500">{tickets.length} {tickets.length === 1 ? 'vstupenka' : tickets.length < 5 ? 'vstupenky' : 'vstupeniek'}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{t('ticketsCount', { count: tickets.length })}</p>
           )}
         </div>
       </div>
@@ -66,13 +68,13 @@ export default function MyTicketsPage() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
             <Ticket size={28} className="text-slate-300" />
           </div>
-          <p className="font-semibold text-slate-500 dark:text-slate-400">Zatiaľ nemáte žiadne vstupenky</p>
-          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">Kúpte si lístky na niektoré z našich podujatí</p>
+          <p className="font-semibold text-slate-500 dark:text-slate-400">{t('noTickets')}</p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{t('noTicketsHint')}</p>
           <Link
             href="/events"
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
           >
-            Prehliadnuť podujatia
+            {t('browseEvents')}
           </Link>
         </div>
       ) : (
@@ -97,7 +99,7 @@ export default function MyTicketsPage() {
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                   <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                     <Calendar size={10} className="text-purple-400" />
-                    {formatDate(ticket.termin.startsAt, ticket.termin.timezone, { year: undefined })}
+                    {format.dateTime(new Date(ticket.termin.startsAt), { timeZone: ticket.termin.timezone, weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
                   </span>
                   {ticket.termin.venue.city && (
                     <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
@@ -115,7 +117,7 @@ export default function MyTicketsPage() {
                     ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}>
-                  {ticket.status === 'VALID' ? 'Platná' : ticket.status}
+                  {ticket.status === 'VALID' ? t('ticketStatus.VALID') : ticket.status}
                 </span>
                 <ChevronRight size={15} className="text-slate-400 dark:text-slate-500 group-hover:text-purple-600 transition-colors" />
               </div>

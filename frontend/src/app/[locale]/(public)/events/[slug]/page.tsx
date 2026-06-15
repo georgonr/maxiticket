@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
 import Image from 'next/image';
+import { Link, useRouter } from '@/i18n/navigation';
 import { publicApi, PublicShowDetail, PublicTerminDetail, PublicSeatSection } from '@/lib/api';
-import { formatDate, formatPrice } from '@/lib/format';
 import { setCart, Cart, CartItem } from '@/lib/cart';
 import { SeatPicker } from '@/components/seatmaps/SeatPicker';
 import {
@@ -17,6 +16,8 @@ import {
 export default function EventDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const router = useRouter();
+  const t = useTranslations('eventDetail');
+  const format = useFormatter();
 
   const [show, setShow]                   = useState<PublicShowDetail | null>(null);
   const [loading, setLoading]             = useState(true);
@@ -144,13 +145,13 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
         <AlertCircle size={48} className="mb-4 text-slate-300" />
-        <h1 className="text-xl font-semibold text-slate-700">Podujatie nenájdené</h1>
-        <p className="mt-1 text-sm text-slate-400">Odkaz môže byť neplatný alebo podujatie bolo odstránené.</p>
+        <h1 className="text-xl font-semibold text-slate-700">{t('notFoundTitle')}</h1>
+        <p className="mt-1 text-sm text-slate-400">{t('notFoundDesc')}</p>
         <Link
           href="/events"
           className="mt-6 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
         >
-          Späť na podujatia
+          {t('backToEvents')}
         </Link>
       </div>
     );
@@ -174,7 +175,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
     <div>
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-1.5 text-sm text-slate-400">
-        <Link href="/events" className="hover:text-purple-700 transition-colors">Podujatia</Link>
+        <Link href="/events" className="hover:text-purple-700 transition-colors">{t('breadcrumbEvents')}</Link>
         <ChevronRight size={14} />
         <span className="text-slate-600 font-medium line-clamp-1">{show.name}</span>
       </nav>
@@ -207,14 +208,14 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 <button
                   onClick={() => setCoverIdx((i) => (i - 1 + coverImages.length) % coverImages.length)}
                   className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
-                  aria-label="Predchádzajúci obrázok"
+                  aria-label={t('prevImage')}
                 >
                   <ChevronLeft size={18} />
                 </button>
                 <button
                   onClick={() => setCoverIdx((i) => (i + 1) % coverImages.length)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
-                  aria-label="Nasledujúci obrázok"
+                  aria-label={t('nextImage')}
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -228,7 +229,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                       className={`h-1.5 rounded-full transition-all ${
                         idx === coverIdx ? 'w-5 bg-white' : 'w-1.5 bg-white/50'
                       }`}
-                      aria-label={`Obrázok ${idx + 1}`}
+                      aria-label={t('imageN', { n: idx + 1 })}
                     />
                   ))}
                 </div>
@@ -264,7 +265,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
           {/* Description */}
           {show.description && (
             <div className="rounded-2xl border border-slate-100 bg-white p-6">
-              <h2 className="mb-3 text-base font-semibold text-slate-900">O podujatí</h2>
+              <h2 className="mb-3 text-base font-semibold text-slate-900">{t('aboutEvent')}</h2>
               <p className="whitespace-pre-line text-sm text-slate-600 leading-relaxed">
                 {show.description}
               </p>
@@ -291,10 +292,10 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 <button
                   onClick={copyLink}
                   className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-purple-300 hover:text-purple-700 transition-colors"
-                  title="Kopírovať odkaz"
+                  title={t('copyLink')}
                 >
                   {copied ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
-                  {copied ? 'Skopírované' : 'Zdieľať'}
+                  {copied ? t('copied') : t('share')}
                 </button>
               </div>
             </div>
@@ -302,7 +303,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
             {/* Termin selector (multiple termins) */}
             {show.termins.length > 1 && (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Vyberte termín</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{t('selectDate')}</p>
                 <div className="space-y-2">
                   {show.termins.map((t) => (
                     <button
@@ -316,8 +317,10 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                     >
                       <span className="flex items-center gap-1.5 font-semibold text-slate-900">
                         <Calendar size={13} className="text-purple-500" />
-                        {formatDate(t.startsAt, t.timezone, {
-                          weekday: 'short', year: undefined, hour: '2-digit', minute: '2-digit',
+                        {format.dateTime(new Date(t.startsAt), {
+                          timeZone: t.timezone,
+                          weekday: 'short', day: 'numeric', month: 'numeric',
+                          hour: '2-digit', minute: '2-digit',
                         })}
                       </span>
                       <span className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
@@ -335,14 +338,19 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
               <div className="rounded-xl border border-slate-100 bg-white p-4 space-y-2.5">
                 <div className="flex items-center gap-2 text-sm text-slate-700">
                   <Calendar size={15} className="flex-shrink-0 text-purple-500" />
-                  <span>{formatDate(selectedTermin.startsAt, selectedTermin.timezone)}</span>
+                  <span>{format.dateTime(new Date(selectedTermin.startsAt), {
+                    timeZone: selectedTermin.timezone,
+                    weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}</span>
                 </div>
                 {selectedTermin.doorsOpenAt && (
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Clock size={13} className="flex-shrink-0" />
-                    <span>Dvere:{' '}
-                      {formatDate(selectedTermin.doorsOpenAt, selectedTermin.timezone, {
-                        weekday: undefined, year: undefined, month: undefined, day: undefined,
+                    <span>{t('doors')}:{' '}
+                      {format.dateTime(new Date(selectedTermin.doorsOpenAt), {
+                        timeZone: selectedTermin.timezone,
+                        hour: '2-digit', minute: '2-digit',
                       })}
                     </span>
                   </div>
@@ -360,7 +368,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
             {/* Ticket types */}
             {selectedTermin && (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Vstupenky</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{t('tickets')}</p>
                 <div className="space-y-2">
                   {(() => {
                     const now = new Date();
@@ -378,18 +386,18 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="font-semibold text-slate-900 text-sm">{s.name}</p>
-                                  <p className="text-base font-bold text-purple-700 mt-0.5">{formatPrice(s.price, s.currency)} / sedadlo</p>
-                                  {selCount > 0 && <p className="mt-1 text-xs text-emerald-600">{selCount} vybraných sedadiel</p>}
+                                  <p className="text-base font-bold text-purple-700 mt-0.5">{format.number(s.price, { style: 'currency', currency: s.currency })} / {t('perSeat')}</p>
+                                  {selCount > 0 && <p className="mt-1 text-xs text-emerald-600">{t('seatsSelected', { count: selCount })}</p>}
                                 </div>
                                 {!terminNotOnSale && seatSection && (
                                   <button
                                     onClick={() => setOpenPicker(isOpen ? null : s.id)}
                                     className="flex-shrink-0 rounded-lg border border-purple-300 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50"
                                   >
-                                    {isOpen ? 'Skryť plánik' : 'Vybrať sedadlá'}
+                                    {isOpen ? t('hideMap') : t('selectSeats')}
                                   </button>
                                 )}
-                                {terminNotOnSale && <p className="mt-1 text-xs text-blue-500">Čoskoro v predaji</p>}
+                                {terminNotOnSale && <p className="mt-1 text-xs text-blue-500">{t('comingSoon')}</p>}
                               </div>
                               {isOpen && seatSection && (
                                 <div className="mt-3">
@@ -415,15 +423,15 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <p className="font-semibold text-slate-900 text-sm">{s.name}</p>
-                                <p className="text-base font-bold text-purple-700 mt-0.5">{formatPrice(s.price, s.currency)}</p>
+                                <p className="text-base font-bold text-purple-700 mt-0.5">{format.number(s.price, { style: 'currency', currency: s.currency })}</p>
                                 {isSoldOut && (
-                                  <p className="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle size={11} /> Vypredané</p>
+                                  <p className="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle size={11} /> {t('soldOut')}</p>
                                 )}
                                 {!isSoldOut && terminNotOnSale && (
-                                  <p className="mt-1 text-xs text-blue-500">Čoskoro v predaji</p>
+                                  <p className="mt-1 text-xs text-blue-500">{t('comingSoon')}</p>
                                 )}
                                 {!disabled && s.available != null && s.available > 0 && s.available <= 10 && (
-                                  <p className="mt-1 flex items-center gap-1 text-xs text-orange-500"><AlertCircle size={11} /> Posledné {s.available} ks</p>
+                                  <p className="mt-1 flex items-center gap-1 text-xs text-orange-500"><AlertCircle size={11} /> {t('lastN', { n: s.available })}</p>
                                 )}
                               </div>
                               {!disabled && (
@@ -469,7 +477,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                             <div className="min-w-0">
                               <p className="font-semibold text-slate-900 text-sm">{tt.name}</p>
                               <p className="text-base font-bold text-purple-700 mt-0.5">
-                                {formatPrice(tt.price, tt.currency)}
+                                {format.number(tt.price, { style: 'currency', currency: tt.currency })}
                               </p>
                               {tt.description && (
                                 <p className="mt-0.5 text-xs text-slate-400">{tt.description}</p>
@@ -478,18 +486,18 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                               {/* Status messages */}
                               {isSoldOut && (
                                 <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
-                                  <AlertCircle size={11} /> Vypredané
+                                  <AlertCircle size={11} /> {t('soldOut')}
                                 </p>
                               )}
                               {!isSoldOut && saleEnded && (
-                                <p className="mt-1 text-xs text-slate-400">Predaj ukončený</p>
+                                <p className="mt-1 text-xs text-slate-400">{t('saleEnded')}</p>
                               )}
                               {!isSoldOut && !saleEnded && (terminNotOnSale || saleNotStarted) && (
-                                <p className="mt-1 text-xs text-blue-500">Čoskoro v predaji</p>
+                                <p className="mt-1 text-xs text-blue-500">{t('comingSoon')}</p>
                               )}
                               {!disabled && tt.available != null && tt.available > 0 && tt.available <= 10 && (
                                 <p className="mt-1 flex items-center gap-1 text-xs text-orange-500">
-                                  <AlertCircle size={11} /> Posledné {tt.available} ks
+                                  <AlertCircle size={11} /> {t('lastN', { n: tt.available })}
                                 </p>
                               )}
                             </div>
@@ -535,10 +543,10 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 <div className="flex items-center justify-between rounded-xl bg-purple-50 px-4 py-3 text-sm">
                   <span className="text-slate-600 flex items-center gap-1.5">
                     <CheckCircle2 size={14} className="text-purple-600" />
-                    {totalQty} {totalQty === 1 ? 'vstupenka' : totalQty < 5 ? 'vstupenky' : 'vstupeniek'}
+                    {t('ticketCount', { count: totalQty })}
                   </span>
                   <span className="font-bold text-slate-900">
-                    {formatPrice(totalPrice, totalCurrency)}
+                    {format.number(totalPrice, { style: 'currency', currency: totalCurrency })}
                   </span>
                 </div>
 
@@ -548,7 +556,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500 px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-rose-600 hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <ShoppingCart size={18} />
-                  Pokračovať k objednávke
+                  {t('continueToOrder')}
                 </button>
               </div>
             )}

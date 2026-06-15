@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { ordersApi, Order } from '@/lib/api';
 import { getValidToken } from '@/lib/auth';
-import { formatPrice } from '@/lib/format';
 import { CheckCircle2, Ticket, Mail, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -13,6 +13,9 @@ const POLL_MAX_ATTEMPTS = 40; // ~100 s
 
 export default function SuccessPage({ params }: { params: { id: string } }) {
   const { id } = params;
+  const t = useTranslations('checkout');
+  const format = useFormatter();
+  const fmtPrice = (amount: number, currency: string) => format.number(amount, { style: 'currency', currency });
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
@@ -74,9 +77,9 @@ export default function SuccessPage({ params }: { params: { id: string } }) {
                 <Clock size={40} className="text-yellow-600 animate-pulse" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Spracúvame platbu…</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('processing')}</h1>
             <p className="text-gray-500 mb-4">
-              Čakáme na potvrdenie od platobnej brány. Prosím, nezatváraje toto okno.
+              {t('processingDesc')}
             </p>
             <div className="flex justify-center">
               <Loader2 className="animate-spin text-indigo-500" size={24} />
@@ -84,13 +87,13 @@ export default function SuccessPage({ params }: { params: { id: string } }) {
           </>
         ) : (
           <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Platba sa ešte nepotvrdila</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('notConfirmed')}</h1>
             <p className="text-gray-500 mb-6">
-              Ak ste platbu dokončili, lístky dorazíte emailom do niekoľkých minút. Stav objednávky si môžete skontrolovať v sekcii Moje lístky.
+              {t('notConfirmedDesc')}
             </p>
             <Link href="/account/tickets">
               <Button size="lg" className="w-full gap-2">
-                <Ticket size={16} /> Moje lístky
+                <Ticket size={16} /> {t('myTickets')}
               </Button>
             </Link>
           </>
@@ -106,39 +109,39 @@ export default function SuccessPage({ params }: { params: { id: string } }) {
           <CheckCircle2 size={48} className="text-green-600" />
         </div>
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Platba úspešná!</h1>
-      <p className="text-gray-500 mb-1">Objednávka <strong>{order.orderNumber}</strong></p>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('successTitle')}</h1>
+      <p className="text-gray-500 mb-1">{t('orderLabel')} <strong>{order.orderNumber}</strong></p>
       <p className="text-gray-500 mb-8">
-        Vstupenky sme odoslali na váš e-mail. Nájdete ich aj v sekcii Moje lístky.
+        {t('ticketsSent')}
       </p>
 
       <div className="flex items-center justify-center gap-2 rounded-lg bg-blue-50 px-5 py-3 text-sm text-blue-700 mb-6">
         <Mail size={16} />
-        Skontrolujte si e-mail s vstupenkami a QR kódmi
+        {t('checkEmail')}
       </div>
 
       <div className="mb-8 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm">
-        <p className="text-sm font-medium text-gray-500 mb-2">Zakúpené vstupenky</p>
+        <p className="text-sm font-medium text-gray-500 mb-2">{t('purchasedTickets')}</p>
         {order.items.map((item) => (
           <div key={item.id} className="flex justify-between py-1.5 text-sm">
             <span className="text-gray-700">{item.priceSnapshot.name} × {item.quantity}</span>
-            <span className="font-medium">{formatPrice(Number(item.unitPrice) * item.quantity, item.currency)}</span>
+            <span className="font-medium">{fmtPrice(Number(item.unitPrice) * item.quantity, item.currency)}</span>
           </div>
         ))}
         <div className="mt-2 flex justify-between border-t pt-2 font-semibold">
-          <span>Celkom</span>
-          <span className="text-indigo-600">{formatPrice(Number(order.totalAmount), order.currency)}</span>
+          <span>{t('totalLabel')}</span>
+          <span className="text-indigo-600">{fmtPrice(Number(order.totalAmount), order.currency)}</span>
         </div>
       </div>
 
       <div className="flex flex-col gap-3">
         <Link href="/account/tickets">
           <Button size="lg" className="w-full gap-2">
-            <Ticket size={16} /> Zobraziť moje lístky
+            <Ticket size={16} /> {t('viewMyTickets')}
           </Button>
         </Link>
         <Link href="/events">
-          <Button size="lg" variant="outline" className="w-full">Ďalšie podujatia</Button>
+          <Button size="lg" variant="outline" className="w-full">{t('moreEvents')}</Button>
         </Link>
       </div>
     </div>

@@ -1,25 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useFormatter } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { clsx } from 'clsx';
 import { Receipt, Loader2, ChevronRight, RefreshCw } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
 import { accountApi, AccountOrderListItem } from '@/lib/api/account';
-import { formatPrice, formatDate } from '@/lib/format';
 import { AccountTabs } from '@/components/account/AccountTabs';
 
-const STATUS: Record<string, { label: string; cls: string }> = {
-  PAID: { label: 'Zaplatené', cls: 'bg-emerald-50 text-emerald-700' },
-  PENDING: { label: 'Čaká na platbu', cls: 'bg-amber-50 text-amber-700' },
-  REFUNDED: { label: 'Refundované', cls: 'bg-orange-50 text-orange-700' },
-  CANCELLED: { label: 'Zrušené', cls: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' },
-  FAILED: { label: 'Zlyhalo', cls: 'bg-red-50 text-red-700' },
+const STATUS_CLS: Record<string, string> = {
+  PAID: 'bg-emerald-50 text-emerald-700',
+  PENDING: 'bg-amber-50 text-amber-700',
+  REFUNDED: 'bg-orange-50 text-orange-700',
+  CANCELLED: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400',
+  FAILED: 'bg-red-50 text-red-700',
 };
 
 export default function AccountOrdersPage() {
+  const t = useTranslations('account');
+  const format = useFormatter();
   const router = useRouter();
   const { isLoggedIn, isLoading: authLoading } = usePublicAuth();
   const [orders, setOrders] = useState<AccountOrderListItem[]>([]);
@@ -42,7 +44,7 @@ export default function AccountOrdersPage() {
       const res = await accountApi.orders(token);
       setOrders(res.items);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Načítanie objednávok zlyhalo.');
+      setError(e instanceof Error ? e.message : t('ordersLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ export default function AccountOrdersPage() {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
           <Receipt size={20} className="text-purple-700" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Moje objednávky</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('ordersTitle')}</h1>
       </div>
 
       {loading ? (
@@ -63,19 +65,20 @@ export default function AccountOrdersPage() {
       ) : error ? (
         <div className="flex flex-col items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
           <span>{error}</span>
-          <button onClick={load} className="inline-flex items-center gap-1 font-medium underline"><RefreshCw size={13} /> Skúsiť znova</button>
+          <button onClick={load} className="inline-flex items-center gap-1 font-medium underline"><RefreshCw size={13} /> {t('tryAgain')}</button>
         </div>
       ) : orders.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 p-10 text-center">
-          <p className="text-slate-500 dark:text-slate-400">Zatiaľ ste nenakúpili žiadne vstupenky.</p>
+          <p className="text-slate-500 dark:text-slate-400">{t('noOrders')}</p>
           <Link href="/events" className="mt-3 inline-block rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">
-            Prehliadať podujatia
+            {t('browseEvents')}
           </Link>
         </div>
       ) : (
         <div className="space-y-3">
           {orders.map((o) => {
-            const st = STATUS[o.status] ?? { label: o.status, cls: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' };
+            const stLabel = STATUS_CLS[o.status] ? t(`status.${o.status}` as never) : o.status;
+            const stCls = STATUS_CLS[o.status] ?? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
             return (
               <Link
                 key={o.orderId}
@@ -85,18 +88,18 @@ export default function AccountOrdersPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">{o.orderNumber}</span>
-                    <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', st.cls)}>{st.label}</span>
+                    <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', stCls)}>{stLabel}</span>
                   </div>
                   <p className="mt-0.5 truncate text-sm text-slate-600 dark:text-slate-300">
                     {o.showTitles.length ? o.showTitles.join(', ') : '—'}{o.extraShows > 0 ? ` +${o.extraShows}` : ''}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">{formatDate(o.createdAt)} · {o.ticketCount} {o.ticketCount === 1 ? 'lístok' : 'lístkov'}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{format.dateTime(new Date(o.createdAt), { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {t('ticketCount', { count: o.ticketCount })}</p>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-2 text-right">
                   <div>
-                    <div className="font-semibold text-slate-900 dark:text-slate-100">{formatPrice(o.totalAmount)}</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">{format.number(o.totalAmount, { style: 'currency', currency: 'EUR' })}</div>
                     {o.discountAmount > 0 && (
-                      <div className="text-xs text-emerald-600">−{formatPrice(o.discountAmount)}{o.couponCode ? ` ${o.couponCode}` : ''}</div>
+                      <div className="text-xs text-emerald-600">−{format.number(o.discountAmount, { style: 'currency', currency: 'EUR' })}{o.couponCode ? ` ${o.couponCode}` : ''}</div>
                     )}
                   </div>
                   <ChevronRight size={18} className="text-slate-300" />
