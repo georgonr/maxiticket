@@ -113,7 +113,7 @@ export function ChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-purple-700 text-white shadow-lg hover:bg-purple-600"
+          className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-coral text-white shadow-lg hover:bg-coral-dark"
           aria-label="Otvoriť asistenta"
         >
           <MessageCircle size={24} />
@@ -123,7 +123,7 @@ export function ChatWidget() {
       {/* Panel */}
       {open && (
         <div className="fixed bottom-5 right-5 z-50 flex h-[32rem] max-h-[80vh] w-[22rem] max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <div className="flex items-center justify-between bg-purple-700 px-4 py-3 text-white">
+          <div className="flex items-center justify-between bg-coral px-4 py-3 text-white">
             <div className="flex items-center gap-2">
               <MessageCircle size={18} />
               <span className="font-semibold text-sm">Asistent TicketAll</span>
@@ -139,7 +139,7 @@ export function ChatWidget() {
             )}
             {messages.map((m, i) => (
               <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-                <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.role === 'user' ? 'bg-purple-700 text-white' : 'bg-white text-slate-800 shadow-sm'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.role === 'user' ? 'bg-coral text-white' : 'bg-white text-slate-800 shadow-sm'}`}>
                   {m.content && <p className="whitespace-pre-wrap">{m.content}</p>}
                   {m.attachments?.map((att, j) => (
                     <div key={j} className="mt-2">
@@ -156,7 +156,7 @@ export function ChatWidget() {
                       {att.type === 'pdf' && (
                         <button
                           onClick={() => downloadPdf(att.url, att.orderNumber)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-purple-300 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-coral/30 px-3 py-1.5 text-xs font-medium text-coral hover:bg-coral/5"
                         >
                           <Download size={14} /> {att.label}
                         </button>
@@ -191,9 +191,9 @@ export function ChatWidget() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Napíšte správu…"
               disabled={busy}
-              className="flex-1 rounded-full border border-slate-300 px-3 py-2 text-sm outline-none focus:border-purple-500"
+              className="flex-1 rounded-full border border-slate-300 bg-white text-slate-900 px-3 py-2 text-sm outline-none focus:border-coral"
             />
-            <button type="submit" disabled={busy || !input.trim()} className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-600 disabled:opacity-40" aria-label="Odoslať">
+            <button type="submit" disabled={busy || !input.trim()} className="flex h-9 w-9 items-center justify-center rounded-full bg-coral text-white hover:bg-coral-dark disabled:opacity-40" aria-label="Odoslať">
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             </button>
           </form>

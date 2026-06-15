@@ -7,9 +7,16 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--font-fraunces)', 'Fraunces', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
         brand: { DEFAULT: '#e63946', dark: '#c1121f' },
+        // Krok 29: marketingová paleta (homepage landing)
+        cream: '#FBF6EE',
+        coral: { DEFAULT: '#E8442E', dark: '#C9351F' },
+        plum: '#211A2B',
+        amber: { DEFAULT: '#F4A521' },
+        muted: '#6B5E55',
         mt: {
           purple: {
             50:  '#F5F3FF',
