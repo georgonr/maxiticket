@@ -1,71 +1,69 @@
+import { useTranslations } from 'next-intl';
+
 export default function GdprPage() {
+  const t = useTranslations('gdpr');
+  const collected = t.raw('collected.items') as string[];
+  const purposes = t.raw('purpose.items') as string[];
+  const rights = t.raw('rights.items') as string[];
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
       <h1 className="mb-6 text-3xl font-extrabold tracking-tight text-slate-900">
-        Ochrana osobných údajov
+        {t('title')}
       </h1>
       <div className="space-y-6 text-sm leading-relaxed text-slate-700">
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-slate-800">Prevádzkovateľ</h2>
+          <h2 className="mb-2 text-lg font-semibold text-slate-800">{t('controller.heading')}</h2>
           <p>
-            Prevádzkovateľom osobných údajov je spoločnosť <strong>MaceT s.r.o.</strong>, so sídlom na Slovensku
-            (presná adresa bude doplnená). Kontakt: <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">info@ticketall.eu</a>.
+            {t('controller.intro')} <strong>MaceT s.r.o.</strong>{t('controller.intro2')}{' '}
+            {t('controller.contact')} <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">info@ticketall.eu</a>.
           </p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-slate-800">Aké údaje zbierame?</h2>
+          <h2 className="mb-2 text-lg font-semibold text-slate-800">{t('collected.heading')}</h2>
           <ul className="ml-4 list-disc space-y-1 text-slate-600">
-            <li>Meno a priezvisko</li>
-            <li>E-mailová adresa</li>
-            <li>História objednávok a zakúpených lístkov</li>
-            <li>IP adresa (pre bezpečnosť a audit)</li>
+            {collected.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
           </ul>
         </section>
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-slate-800">Na aký účel?</h2>
+          <h2 className="mb-2 text-lg font-semibold text-slate-800">{t('purpose.heading')}</h2>
           <ul className="ml-4 list-disc space-y-1 text-slate-600">
-            <li>Správa zákazníckeho účtu a autentifikácia</li>
-            <li>Vybavenie objednávky a doručenie lístkov</li>
-            <li>Zákaznícka podpora a komunikácia</li>
-            <li>Plnenie zákonných povinností (účtovníctvo, daňové doklady)</li>
+            {purposes.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
           </ul>
         </section>
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-slate-800">Doba uchovávania</h2>
-          <p>
-            Osobné údaje uchovávame po dobu trvania zmluvného vzťahu a ďalej v súlade so zákonnými lehotami (5 rokov
-            pre daňové doklady, 10 rokov pre účtovné záznamy). Po uplynutí týchto lehôt sú údaje bezpečne vymazané.
-          </p>
+          <h2 className="mb-2 text-lg font-semibold text-slate-800">{t('retention.heading')}</h2>
+          <p>{t('retention.body')}</p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-slate-800">Vaše práva</h2>
+          <h2 className="mb-2 text-lg font-semibold text-slate-800">{t('rights.heading')}</h2>
           <ul className="ml-4 list-disc space-y-1 text-slate-600">
-            <li>Právo na prístup k osobným údajom</li>
-            <li>Právo na opravu nesprávnych údajov</li>
-            <li>Právo na výmaz („právo byť zabudnutý")</li>
-            <li>Právo na obmedzenie spracúvania</li>
-            <li>Právo na prenosnosť údajov</li>
-            <li>Právo namietať spracúvanie</li>
+            {rights.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
           </ul>
           <p className="mt-2">
-            Žiadosť o uplatnenie práv zasielajte na{' '}
+            {t('rights.requestPrefix')}{' '}
             <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">
               info@ticketall.eu
             </a>
-            . Odpovieme do 30 dní.
+            {t('rights.requestSuffix')}
           </p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-slate-800">Sťažnosti</h2>
+          <h2 className="mb-2 text-lg font-semibold text-slate-800">{t('complaints.heading')}</h2>
           <p>
-            Ak sa domnievate, že spracúvanie vašich osobných údajov porušuje nariadenie GDPR, máte právo podať sťažnosť
-            na Úrad na ochranu osobných údajov SR (
+            {t('complaints.body')} (
             <a href="https://dataprotection.gov.sk" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
               dataprotection.gov.sk
             </a>
@@ -73,7 +71,7 @@ export default function GdprPage() {
           </p>
         </section>
 
-        <p className="text-xs text-slate-400">Posledná aktualizácia: máj 2025</p>
+        <p className="text-xs text-slate-400">{t('lastUpdated')}</p>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import {
   useEffect, useState, useRef, useCallback, KeyboardEvent,
 } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link as LocaleLink } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { publicApi, HeroSlideType } from '@/lib/api';
@@ -172,13 +172,26 @@ export function HeroSlider() {
                     </p>
                   )}
                   {slideCtaUrl(s) !== '#' && (
-                    <Link
-                      href={slideCtaUrl(s)}
-                      className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-500 hover:bg-rose-600 active:bg-rose-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
-                      tabIndex={i === active ? 0 : -1}
-                    >
-                      {slideCtaLabel(s, t)}
-                    </Link>
+                    // Interný odkaz (/...) → locale-aware; externý banner → plain <a>.
+                    slideCtaUrl(s).startsWith('/') ? (
+                      <LocaleLink
+                        href={slideCtaUrl(s)}
+                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-500 hover:bg-rose-600 active:bg-rose-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                        tabIndex={i === active ? 0 : -1}
+                      >
+                        {slideCtaLabel(s, t)}
+                      </LocaleLink>
+                    ) : (
+                      <a
+                        href={slideCtaUrl(s)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-500 hover:bg-rose-600 active:bg-rose-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                        tabIndex={i === active ? 0 : -1}
+                      >
+                        {slideCtaLabel(s, t)}
+                      </a>
+                    )
                   )}
                 </div>
               </div>

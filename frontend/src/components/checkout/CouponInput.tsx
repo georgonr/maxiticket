@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations, useFormatter } from 'next-intl';
 import { Tag, X, Loader2, Check } from 'lucide-react';
 import { couponsApi, ValidateCouponItem } from '@/lib/api/coupons';
-import { formatPrice } from '@/lib/format';
 
 export interface AppliedCoupon {
   code: string;
@@ -33,6 +33,8 @@ export function CouponInput({
   onApply,
   onRemove,
 }: Props) {
+  const t = useTranslations('coupon');
+  const format = useFormatter();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -58,7 +60,7 @@ export function CouponInput({
         setError(result.reason);
       }
     } catch {
-      setError('Kupón sa nepodarilo overiť. Skúste znova.');
+      setError(t('error'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export function CouponInput({
           <Check size={16} className="text-emerald-600" />
           <span className="font-medium text-emerald-800">{appliedCoupon.code}</span>
           <span className="text-emerald-700">
-            −{formatPrice(appliedCoupon.discount, currency)}
+            −{format.number(appliedCoupon.discount, { style: 'currency', currency })}
           </span>
         </div>
         <button
@@ -80,7 +82,7 @@ export function CouponInput({
           className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600"
         >
           <X size={14} />
-          Odstrániť
+          {t('remove')}
         </button>
       </div>
     );
@@ -104,7 +106,7 @@ export function CouponInput({
                 handleApply();
               }
             }}
-            placeholder="Máte kupón? Zadajte kód"
+            placeholder={t('placeholder')}
             className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm uppercase placeholder:normal-case focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
             disabled={loading}
           />
@@ -115,7 +117,7 @@ export function CouponInput({
           disabled={loading || !code.trim()}
           className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
         >
-          {loading ? <Loader2 size={15} className="animate-spin" /> : 'Použiť'}
+          {loading ? <Loader2 size={15} className="animate-spin" /> : t('apply')}
         </button>
       </div>
       {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}

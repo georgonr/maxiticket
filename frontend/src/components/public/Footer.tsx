@@ -3,22 +3,14 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
-// Krok 31b1: i18n texty (namespace `footer`) + locale-aware linky. `flat` = nelokalizovaná staff cesta.
+// Krok 31b1/3: i18n texty (namespace `footer`) + locale-aware linky. `flat` = nelokalizovaná staff cesta.
+// Krok 31b3: odstránené mŕtve odkazy (o-nas/blog/cennik/podmienky/vop = 404). Ponechané funkčné stránky.
 const FOOTER_COLS = [
-  {
-    titleKey: 'colAbout',
-    links: [
-      { href: '/o-nas', key: 'ourStory' },
-      { href: '/kontakt', key: 'contact' },
-      { href: '/blog', key: 'blog' },
-    ],
-  },
   {
     titleKey: 'colOrganizers',
     links: [
+      { href: '/pre-organizatorov', key: 'forOrganizers' },
       { href: '/admin/register', key: 'register', flat: true },
-      { href: '/cennik', key: 'pricing' },
-      { href: '/podmienky', key: 'terms' },
     ],
   },
   {
@@ -26,7 +18,6 @@ const FOOTER_COLS = [
     links: [
       { href: '/faq', key: 'faq' },
       { href: '/kontakt', key: 'contact' },
-      { href: '/vop', key: 'vop' },
     ],
   },
   {

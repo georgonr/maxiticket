@@ -96,20 +96,15 @@
   "footer": {
     "tagline": "Medzinárodná vstupenková platforma pre každé podujatie. Rýchlo, bezpečne, moderne.",
     "rights": "Všetky práva vyhradené.",
-    "colAbout": "O nás",
     "colOrganizers": "Pre organizátorov",
     "colHelp": "Pomoc",
     "colLegal": "Právne",
-    "ourStory": "Náš príbeh",
     "contact": "Kontakt",
-    "blog": "Blog",
     "register": "Registrácia",
-    "pricing": "Cenník",
-    "terms": "Podmienky",
     "faq": "FAQ",
-    "vop": "VOP",
     "gdpr": "Ochrana osobných údajov",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "forOrganizers": "Pre organizátorov"
   },
   "chat": {
     "title": "Asistent TicketAll",
@@ -343,5 +338,201 @@
     "totalLabel": "Celkom",
     "viewMyTickets": "Zobraziť moje lístky",
     "moreEvents": "Ďalšie podujatia"
+  },
+  "coupon": {
+    "error": "Kupón sa nepodarilo overiť. Skúste znova.",
+    "remove": "Odstrániť",
+    "placeholder": "Máte kupón? Zadajte kód",
+    "apply": "Použiť"
+  },
+  "faq": {
+    "title": "Často kladené otázky",
+    "subtitle": "Nenašli ste odpoveď? Napíšte nám na",
+    "items": [
+      {
+        "question": "Ako si kúpim lístok?",
+        "answer": "Vyhľadajte podujatie na stránke Podujatia, kliknite na tlačidlo „Kúpiť lístok\" a postupujte podľa krokov pokladne. Platbu môžete uskutočniť kartou alebo iným dostupným spôsobom."
+      },
+      {
+        "question": "Musím sa zaregistrovať, aby som mohol kúpiť lístok?",
+        "answer": "Áno, na dokončenie nákupu je potrebné mať účet v systéme TicketAll. Registrácia je bezplatná a trvá menej ako minútu."
+      },
+      {
+        "question": "Kde nájdem zakúpené lístky?",
+        "answer": "Po prihlásení prejdite do sekcie Môj účet → Moje lístky. Každý lístok obsahuje QR kód, ktorý sa skenuje na vstupe."
+      },
+      {
+        "question": "Ako prebieha skenovanie lístka na vstupe?",
+        "answer": "Organizátor podujatia alebo pracovník vstupu naskenuje QR kód vášho lístka pomocou aplikácie TicketAll Scanner. Lístok môžete zobraziť priamo v mobilnom prehliadači — tlač nie je nutná."
+      },
+      {
+        "question": "Môžem lístok vrátiť alebo vymeniť?",
+        "answer": "Podmienky vrátenia lístkov sa riadia pravidlami konkrétneho organizátora. Kontaktujte nás na info@ticketall.eu a my vám pomôžeme situáciu riešiť."
+      },
+      {
+        "question": "Ako mi bude doručený lístok?",
+        "answer": "Lístok vám po úspešnej platbe automaticky zašleme e-mailom vo formáte PDF s QR kódom. Nájdete ho aj v sekcii Moje lístky po prihlásení."
+      },
+      {
+        "question": "Čo ak môj lístok nefunguje na vstupe?",
+        "answer": "Uistite sa, že obrazovka je dostatočne jasná a QR kód nie je poškodený. V prípade problémov kontaktujte priamo obsluhu vstupu alebo nás na info@ticketall.eu."
+      },
+      {
+        "question": "Sú moje platobné údaje v bezpečí?",
+        "answer": "Platby sú spracovávané prostredníctvom certifikovaného platobného systému. TicketAll neukladá čísla platobných kariet — všetky transakcie prebiehajú šifrovaným spojením."
+      }
+    ]
+  },
+  "cookies": {
+    "title": "Zásady používania cookies",
+    "whatTitle": "Čo sú cookies?",
+    "whatBody": "Cookies sú malé textové súbory, ktoré webová stránka ukladá vo vašom prehliadači pri návšteve. Pomáhajú stránke zapamätať si vaše preferencie a prihlasovací stav.",
+    "typesTitle": "Aké cookies používame?",
+    "colType": "Typ",
+    "colPurpose": "Účel",
+    "colDuration": "Doba platnosti",
+    "essentialType": "Nevyhnutné",
+    "essentialPurpose": "Udržiavanie prihlasovacieho stavu, bezpečnosť relácie",
+    "essentialDuration": "Session / 30 dní",
+    "functionalType": "Funkčné",
+    "functionalPurpose": "Zapamätanie košíka a preferencií zobrazovania",
+    "functionalDuration": "7 dní",
+    "noTracking": "V súčasnosti <strong>nepoužívame sledovacie ani reklamné cookies</strong> tretích strán.",
+    "manageTitle": "Ako spravovať cookies?",
+    "manageBody": "Väčšina moderných prehliadačov umožňuje cookies spravovať alebo odstrániť v nastaveniach. Vypnutie nevyhnutných cookies môže narušiť fungovanie prihlásenia a nákupu lístkov.",
+    "contactTitle": "Kontakt",
+    "contactBody": "Otázky ohľadom cookies zasielajte na",
+    "lastUpdated": "Posledná aktualizácia: máj 2025"
+  },
+  "gdpr": {
+    "title": "Ochrana osobných údajov",
+    "controller": {
+      "heading": "Prevádzkovateľ",
+      "intro": "Prevádzkovateľom osobných údajov je spoločnosť",
+      "intro2": ", so sídlom na Slovensku (presná adresa bude doplnená).",
+      "contact": "Kontakt:"
+    },
+    "collected": {
+      "heading": "Aké údaje zbierame?",
+      "items": [
+        "Meno a priezvisko",
+        "E-mailová adresa",
+        "História objednávok a zakúpených lístkov",
+        "IP adresa (pre bezpečnosť a audit)"
+      ]
+    },
+    "purpose": {
+      "heading": "Na aký účel?",
+      "items": [
+        "Správa zákazníckeho účtu a autentifikácia",
+        "Vybavenie objednávky a doručenie lístkov",
+        "Zákaznícka podpora a komunikácia",
+        "Plnenie zákonných povinností (účtovníctvo, daňové doklady)"
+      ]
+    },
+    "retention": {
+      "heading": "Doba uchovávania",
+      "body": "Osobné údaje uchovávame po dobu trvania zmluvného vzťahu a ďalej v súlade so zákonnými lehotami (5 rokov pre daňové doklady, 10 rokov pre účtovné záznamy). Po uplynutí týchto lehôt sú údaje bezpečne vymazané."
+    },
+    "rights": {
+      "heading": "Vaše práva",
+      "items": [
+        "Právo na prístup k osobným údajom",
+        "Právo na opravu nesprávnych údajov",
+        "Právo na výmaz („právo byť zabudnutý“)",
+        "Právo na obmedzenie spracúvania",
+        "Právo na prenosnosť údajov",
+        "Právo namietať spracúvanie"
+      ],
+      "requestPrefix": "Žiadosť o uplatnenie práv zasielajte na",
+      "requestSuffix": ". Odpovieme do 30 dní."
+    },
+    "complaints": {
+      "heading": "Sťažnosti",
+      "body": "Ak sa domnievate, že spracúvanie vašich osobných údajov porušuje nariadenie GDPR, máte právo podať sťažnosť na Úrad na ochranu osobných údajov SR"
+    },
+    "lastUpdated": "Posledná aktualizácia: máj 2025"
+  },
+  "contact": {
+    "title": "Kontakt",
+    "subtitle": "Máte otázku? Napíšte nám – odpovieme do 1 pracovného dňa.",
+    "form": {
+      "name": "Meno a priezvisko",
+      "namePlaceholder": "Ján Novák",
+      "email": "E-mail",
+      "emailPlaceholder": "jan@priklad.sk",
+      "subject": "Predmet",
+      "subjectPlaceholder": "Vyberte predmet…",
+      "message": "Správa",
+      "messagePlaceholder": "Popíšte vašu požiadavku…",
+      "submit": "Odoslať správu",
+      "sending": "Odosielam…"
+    },
+    "subjects": {
+      "order": "Otázka k objednávke",
+      "technical": "Technický problém",
+      "refund": "Vrátenie lístka",
+      "partnership": "Spolupráca / organizátor",
+      "other": "Iné"
+    },
+    "success": {
+      "title": "Správa odoslaná!",
+      "body": "Ďakujeme. Ozveme sa na vašu e-mailovú adresu čo najskôr.",
+      "again": "Odoslať ďalšiu správu"
+    },
+    "errors": {
+      "tooMany": "Príliš veľa správ. Skúste to znova o hodinu.",
+      "generic": "Nastala chyba. Skúste to znova.",
+      "network": "Nepodarilo sa odoslať správu. Skúste neskôr."
+    },
+    "details": {
+      "title": "Kontaktné údaje",
+      "emailLabel": "E-mail",
+      "addressLabel": "Adresa",
+      "country": "Slovenská republika"
+    },
+    "operator": {
+      "title": "Prevádzkovateľ",
+      "body": "MaceT s.r.o. je prevádzkovateľom platformy TicketAll a je zodpovedný za spracúvanie osobných údajov v súlade s nariadením GDPR."
+    }
+  },
+  "forOrganizers": {
+    "heroTitle": "Predávajte vstupenky",
+    "heroTitleBrand": "s TicketAll",
+    "heroSubtitle": "Platforma pre organizátorov podujatí. Online predaj, QR skener na vstupe, prehľadné štatistiky – všetko na jednom mieste.",
+    "ctaLogin": "Prihlásiť sa do organizátorského portálu",
+    "ctaRegister": "Zaregistrovať sa ako organizátor",
+    "heroNote": "Bez záväzkov. Platíte len percento z predaných lístkov.",
+    "benefitsHeading": "Čo získate",
+    "benefits": [
+      {
+        "title": "Spustenie za 5 minút",
+        "desc": "Zaregistrujte sa, vytvorte podujatie a okamžite prijímajte platby. Žiadna inštalácia softvéru."
+      },
+      {
+        "title": "Bezpečné online platby",
+        "desc": "Integrované platby cez Stripe. Výnosy sú prevádzané priamo na váš účet po skončení podujatia."
+      },
+      {
+        "title": "Skener vstupeniek v mobile",
+        "desc": "PWA skener funguje ako aplikácia bez inštalácie. Skenujte QR kódy priamo na vstupe."
+      },
+      {
+        "title": "Prehľad v reálnom čase",
+        "desc": "Sledujte predaje, no-show rate a obsadenosť v reálnom čase priamo v dashboarde."
+      },
+      {
+        "title": "Tímová spolupráca",
+        "desc": "Pridajte členov tímu a skenerov. Každý má prístup len k tomu, čo potrebuje."
+      },
+      {
+        "title": "Zákaznícka podpora",
+        "desc": "Náš tím je k dispozícii pri prvom podujatí. Pomôžeme vám s nastavením aj technicky."
+      }
+    ],
+    "bottomHeading": "Pripravení začať?",
+    "bottomSubtitle": "Registrácia trvá menej ako 5 minút. Prvé podujatie môžete spustiť ešte dnes.",
+    "bottomQuestions": "Máte otázky?",
+    "bottomContactLink": "Napíšte nám"
   }
 }
