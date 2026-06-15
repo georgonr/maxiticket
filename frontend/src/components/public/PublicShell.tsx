@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
+import { ChatWidget } from '@/components/assistant/ChatWidget';
 
 /**
  * Pozadie public layoutu. Dark režim je ZÁMERNE izolovaný len na /account
@@ -14,6 +15,8 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={clsx('min-h-screen flex flex-col bg-slate-50', isAccount && 'theme-scope dark:bg-gray-950')}>
       {children}
+      {/* Krok 28: chat asistent – sám sa vykreslí len pre prihláseného zákazníka. */}
+      <ChatWidget />
     </div>
   );
 }
