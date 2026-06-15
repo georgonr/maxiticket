@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useFormatter } from 'next-intl';
 import { useScannerAuth, loadSelectedTermin, clearSelectedTermin, SelectedTermin } from '@/lib/scanner-auth';
 import { scanApi, ScanValidateOk, ScanError } from '@/lib/api';
 import { getValidToken } from '@/lib/auth';
@@ -21,21 +22,6 @@ type ScanState =
 type HistoryEntry = { kind: 'ok' | 'error'; label: string; at: string };
 
 const SESSION_COUNT_KEY = 'scanSessionCount';
-
-function formatDate(startsAt: string): string {
-  return new Date(startsAt).toLocaleDateString('sk-SK', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function formatTime(iso: string | null | undefined): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
-}
 
 function beep() {
   try {
@@ -80,6 +66,19 @@ async function decodeFrameJsQR(
 
 export default function SkenerPage() {
   const router = useRouter();
+  const t = useTranslations('scanner');
+  const format = useFormatter();
+  const formatDate = useCallback(
+    (startsAt: string) =>
+      format.dateTime(new Date(startsAt), {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [format],
+  );
   const { token, user, loading: authLoading, logout } = useScannerAuth();
   const [termin, setTermin] = useState<SelectedTermin | null>(null);
   const [scanState, setScanState] = useState<ScanState>({ kind: 'scanning' });
@@ -118,7 +117,7 @@ export default function SkenerPage() {
 
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
   }, []);
 
@@ -136,12 +135,12 @@ export default function SkenerPage() {
       }
     } catch (err: any) {
       if (err.name === 'NotAllowedError') {
-        setCameraError('Prístup ku kamere bol zamietnutý. Povolte kameru v nastaveniach prehliadača.');
+        setCameraError(t('scan.cameraDenied'));
       } else {
-        setCameraError('Kamera nie je dostupná: ' + (err.message ?? err.name));
+        setCameraError(t('scan.cameraUnavailable', { error: err.message ?? err.name }));
       }
     }
-  }, []);
+  }, [t]);
 
   const handleQrDetected = useCallback(async (qrToken: string) => {
     if (pausedRef.current || !termin) return;
@@ -299,14 +298,14 @@ export default function SkenerPage() {
                 onClick={() => setShowHistory(true)}
                 className="rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-gray-300 active:bg-white/20"
               >
-                História ({scanHistory.length})
+                {t('scan.history', { count: scanHistory.length })}
               </button>
             )}
             <button
               onClick={logout}
               className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-gray-300 active:bg-white/10"
             >
-              Odhlásiť
+              {t('scan.logout')}
             </button>
           </div>
         </div>
@@ -321,7 +320,7 @@ export default function SkenerPage() {
             onClick={handleChangeTermin}
             className="ml-3 shrink-0 rounded-lg bg-white/10 px-2.5 py-1.5 text-xs font-medium text-gray-200 active:bg-white/20"
           >
-            Zmeniť
+            {t('scan.changeTermin')}
           </button>
         </div>
       </header>
@@ -357,7 +356,7 @@ export default function SkenerPage() {
         </div>
 
         <p className="mt-4 text-sm text-white/60">
-          {scanState.kind === 'scanning' && !cameraError ? 'Namieriť na QR kód vstupenky' : ''}
+          {scanState.kind === 'scanning' && !cameraError ? t('scan.aimAtQr') : ''}
         </p>
       </main>
 
@@ -365,13 +364,13 @@ export default function SkenerPage() {
       <div className="relative z-10 px-4 pb-5">
         {scanState.kind === 'manual' ? (
           <div className="rounded-2xl bg-gray-900 p-4">
-            <p className="mb-2 text-sm font-medium text-gray-200">Zadajte kód ručne</p>
+            <p className="mb-2 text-sm font-medium text-gray-200">{t('scan.manualTitle')}</p>
             <textarea
               value={manualInput}
               onChange={(e) => setManualInput(e.target.value)}
               rows={3}
               className="w-full rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-brand focus:outline-none"
-              placeholder="Vložte QR token..."
+              placeholder={t('scan.manualPlaceholder')}
               autoFocus
             />
             <div className="mt-2 flex gap-2">
@@ -379,13 +378,13 @@ export default function SkenerPage() {
                 onClick={handleManualSubmit}
                 className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white active:bg-brand-dark"
               >
-                Skenovať
+                {t('scan.scanButton')}
               </button>
               <button
                 onClick={() => setScanState({ kind: 'scanning' })}
                 className="rounded-xl border border-gray-700 px-4 py-2.5 text-sm text-gray-300 active:bg-gray-800"
               >
-                Zrušiť
+                {t('scan.cancel')}
               </button>
             </div>
           </div>
@@ -394,7 +393,7 @@ export default function SkenerPage() {
             onClick={() => { setScanState({ kind: 'manual' }); pausedRef.current = true; }}
             className="w-full rounded-xl border border-white/20 py-2.5 text-sm text-gray-300 active:bg-white/10"
           >
-            Manuálne zadať kód
+            {t('scan.manualEnter')}
           </button>
         )}
       </div>
@@ -403,7 +402,7 @@ export default function SkenerPage() {
       {scanState.kind === 'ok' && (
         <ResultOverlay color="green" onDismiss={handleDismiss} autoClose>
           <div className="text-5xl mb-3">✅</div>
-          <p className="text-xl font-bold">Vpustiť</p>
+          <p className="text-xl font-bold">{t('scan.admit')}</p>
           <p className="mt-2 text-lg font-semibold text-white/90">{scanState.data.ticketTypeName}</p>
           <p className="text-sm text-white/70">{scanState.data.showName}</p>
           {scanState.data.buyerName && (
@@ -411,7 +410,7 @@ export default function SkenerPage() {
           )}
           {(scanState.data.seatSection || scanState.data.seatRow || scanState.data.seatNumber) && (
             <p className="mt-1 text-xs text-white/50">
-              {[scanState.data.seatSection, scanState.data.seatRow && `Rad ${scanState.data.seatRow}`, scanState.data.seatNumber && `Sedadlo ${scanState.data.seatNumber}`].filter(Boolean).join(' · ')}
+              {[scanState.data.seatSection, scanState.data.seatRow && t('scan.seatRow', { row: scanState.data.seatRow }), scanState.data.seatNumber && t('scan.seatNumber', { number: scanState.data.seatNumber })].filter(Boolean).join(' · ')}
             </p>
           )}
         </ResultOverlay>
@@ -420,10 +419,10 @@ export default function SkenerPage() {
       {scanState.kind === 'wrong_termin' && (
         <ResultOverlay color="orange" onDismiss={handleDismiss}>
           <div className="text-5xl mb-3">⚠️</div>
-          <p className="text-xl font-bold">Nesprávny termín</p>
+          <p className="text-xl font-bold">{t('scan.wrongTerminTitle')}</p>
           {scanState.correctTermin && (
             <p className="mt-2 text-sm text-white/80">
-              Lístok patrí na:{' '}
+              {t('scan.belongsTo')}{' '}
               <span className="font-semibold">{scanState.correctTermin.showName ?? ''}</span>
               <br />
               {formatDate(scanState.correctTermin.startsAt)}
@@ -433,7 +432,7 @@ export default function SkenerPage() {
             onClick={handleDismiss}
             className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30"
           >
-            Pokračovať
+            {t('scan.continue')}
           </button>
         </ResultOverlay>
       )}
@@ -441,15 +440,17 @@ export default function SkenerPage() {
       {scanState.kind === 'already_used' && (
         <ResultOverlay color="blue" onDismiss={handleDismiss}>
           <div className="text-5xl mb-3">🕐</div>
-          <p className="text-xl font-bold">Vstupenka už použitá</p>
+          <p className="text-xl font-bold">{t('scan.alreadyUsedTitle')}</p>
           {scanState.usedAt && (
-            <p className="mt-2 text-sm text-white/80">{formatTime(scanState.usedAt)}</p>
+            <p className="mt-2 text-sm text-white/80">
+              {format.dateTime(new Date(scanState.usedAt), { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
+            </p>
           )}
           {scanState.scannedBy && (
-            <p className="text-sm text-white/60">Skenoval: {scanState.scannedBy}</p>
+            <p className="text-sm text-white/60">{t('scan.scannedBy', { name: scanState.scannedBy })}</p>
           )}
           <button onClick={handleDismiss} className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30">
-            Pokračovať
+            {t('scan.continue')}
           </button>
         </ResultOverlay>
       )}
@@ -457,12 +458,12 @@ export default function SkenerPage() {
       {scanState.kind === 'wrong_show' && (
         <ResultOverlay color="red" onDismiss={handleDismiss}>
           <div className="text-5xl mb-3">🎫</div>
-          <p className="text-xl font-bold">Vstupenka pre iné podujatie</p>
+          <p className="text-xl font-bold">{t('scan.wrongShowTitle')}</p>
           {scanState.correctShow && (
-            <p className="mt-2 text-sm text-white/80">Patrí na: <span className="font-semibold">{scanState.correctShow.name}</span></p>
+            <p className="mt-2 text-sm text-white/80">{t('scan.belongsTo')} <span className="font-semibold">{scanState.correctShow.name}</span></p>
           )}
           <button onClick={handleDismiss} className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30">
-            Pokračovať
+            {t('scan.continue')}
           </button>
         </ResultOverlay>
       )}
@@ -475,15 +476,15 @@ export default function SkenerPage() {
           <div className="text-5xl mb-3">🚫</div>
           <p className="text-xl font-bold">
             {scanState.code === 'NOT_FOUND' || scanState.code === 'INVALID_SIGNATURE'
-              ? 'Neplatná vstupenka'
+              ? t('scan.errorInvalid')
               : scanState.code === 'CANCELLED'
-              ? 'Vstupenka bola zrušená'
+              ? t('scan.errorCancelled')
               : scanState.code === 'REFUNDED'
-              ? 'Vstupenka bola refundovaná'
-              : 'Chyba skenovania'}
+              ? t('scan.errorRefunded')
+              : t('scan.errorGeneric')}
           </p>
           <button onClick={handleDismiss} className="mt-5 rounded-xl bg-white/20 px-8 py-3 text-sm font-semibold active:bg-white/30">
-            Pokračovať
+            {t('scan.continue')}
           </button>
         </ResultOverlay>
       )}
@@ -533,19 +534,21 @@ function ResultOverlay({
 // ─── History overlay ──────────────────────────────────────────────────────────
 
 function HistoryOverlay({ history, onClose }: { history: HistoryEntry[]; onClose: () => void }) {
+  const t = useTranslations('scanner');
+  const format = useFormatter();
   return (
     <div className="absolute inset-0 z-30 flex flex-col bg-gray-950/98 text-white" onClick={onClose}>
       <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-        <p className="font-semibold">História scanov</p>
-        <button onClick={onClose} className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm active:bg-gray-700">Zavrieť</button>
+        <p className="font-semibold">{t('scan.historyTitle')}</p>
+        <button onClick={onClose} className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm active:bg-gray-700">{t('scan.close')}</button>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {history.length === 0 && <p className="text-center text-gray-500 py-8">Zatiaľ žiadne skeny</p>}
+        {history.length === 0 && <p className="text-center text-gray-500 py-8">{t('scan.historyEmpty')}</p>}
         {history.map((h, i) => (
           <div key={i} className={`flex items-center justify-between rounded-xl px-4 py-2.5 ${h.kind === 'ok' ? 'bg-green-900/40' : 'bg-red-900/30'}`}>
             <div>
               <p className="text-sm font-medium">{h.kind === 'ok' ? '✅' : '❌'} {h.label}</p>
-              <p className="text-xs text-gray-400">{new Date(h.at).toLocaleTimeString('sk-SK')}</p>
+              <p className="text-xs text-gray-400">{format.dateTime(new Date(h.at), { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
             </div>
           </div>
         ))}

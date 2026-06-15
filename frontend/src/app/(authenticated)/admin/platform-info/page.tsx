@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
 import { platformInfoApi, UpdatePlatformInfoBody, ApiError } from '@/lib/api';
@@ -42,6 +43,7 @@ const EMPTY: FormState = {
 
 export default function PlatformInfoPage() {
   const router = useRouter();
+  const t = useTranslations('admin');
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -82,7 +84,7 @@ export default function PlatformInfoPage() {
         if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
           setAllowed(false);
         } else {
-          setError('Nepodarilo sa načítať platform info.');
+          setError(t('platformInfo.loadError'));
         }
       } finally {
         setLoading(false);
@@ -112,9 +114,9 @@ export default function PlatformInfoPage() {
         defaultVatRateCz: form.defaultVatRateCz || undefined,
       };
       await platformInfoApi.update(body, token);
-      setToast({ msg: 'Platform info uložené', ok: true });
+      setToast({ msg: t('platformInfo.saved'), ok: true });
     } catch (e) {
-      setToast({ msg: 'Nepodarilo sa uložiť platform info.', ok: false });
+      setToast({ msg: t('platformInfo.saveError'), ok: false });
     } finally {
       setSaving(false);
     }
@@ -131,9 +133,9 @@ export default function PlatformInfoPage() {
   if (allowed === false) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Prístup zamietnutý</h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Táto sekcia je dostupná len pre správcu platformy.</p>
-        <Link href="/organizer/shows"><Button variant="outline">Späť na podujatia</Button></Link>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('platformInfo.accessDenied')}</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">{t('platformInfo.accessDeniedDesc')}</p>
+        <Link href="/organizer/shows"><Button variant="outline">{t('platformInfo.backToShows')}</Button></Link>
       </div>
     );
   }
@@ -148,13 +150,13 @@ export default function PlatformInfoPage() {
 
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
+        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← {t('platformInfo.dashboard')}</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-6 sm:p-8">
-        <h1 className="text-2xl font-bold mb-1">Platforma</h1>
+        <h1 className="text-2xl font-bold mb-1">{t('platformInfo.title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-          Údaje prevádzkovateľa platformy a predvolené sadzby DPH. Zobrazujú sa na vstupenkách.
+          {t('platformInfo.subtitle')}
         </p>
 
         {error && (
@@ -163,47 +165,47 @@ export default function PlatformInfoPage() {
 
         <div className="space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
           <Input
-            id="legalName" label="Právny názov"
+            id="legalName" label={t('platformInfo.legalName')}
             placeholder="TicketAll s.r.o."
             value={form.legalName} onChange={(e) => set('legalName', e.target.value)}
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input id="ico" label="IČO" placeholder="8 číslic"
+            <Input id="ico" label={t('platformInfo.ico')} placeholder={t('platformInfo.icoPlaceholder')}
               value={form.ico} onChange={(e) => set('ico', e.target.value)} />
-            <Input id="icDph" label="IČ DPH" placeholder="SK1234567890"
+            <Input id="icDph" label={t('platformInfo.icDph')} placeholder="SK1234567890"
               value={form.icDph} onChange={(e) => set('icDph', e.target.value)} />
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Sídlo</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{t('platformInfo.address')}</h2>
             <div className="space-y-4">
-              <Input id="addressStreet" label="Ulica a číslo" placeholder="Napr. Hlavná 1"
+              <Input id="addressStreet" label={t('platformInfo.street')} placeholder={t('platformInfo.streetPlaceholder')}
                 value={form.addressStreet} onChange={(e) => set('addressStreet', e.target.value)} />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input id="addressZip" label="PSČ" placeholder="81101"
+                <Input id="addressZip" label={t('platformInfo.zip')} placeholder="81101"
                   value={form.addressZip} onChange={(e) => set('addressZip', e.target.value)} />
-                <Input id="addressCity" label="Mesto" placeholder="Bratislava"
+                <Input id="addressCity" label={t('platformInfo.city')} placeholder="Bratislava"
                   value={form.addressCity} onChange={(e) => set('addressCity', e.target.value)} />
-                <Input id="addressCountry" label="Krajina" placeholder="SK"
+                <Input id="addressCountry" label={t('platformInfo.country')} placeholder="SK"
                   value={form.addressCountry} onChange={(e) => set('addressCountry', e.target.value.toUpperCase())} />
               </div>
             </div>
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Predvolené sadzby DPH</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{t('platformInfo.vatRates')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input id="defaultVatRateSk" label="SK sadzba (%)" type="number" step="0.01" placeholder="20.00"
+              <Input id="defaultVatRateSk" label={t('platformInfo.vatRateSk')} type="number" step="0.01" placeholder="20.00"
                 value={form.defaultVatRateSk} onChange={(e) => set('defaultVatRateSk', e.target.value)} />
-              <Input id="defaultVatRateCz" label="CZ sadzba (%)" type="number" step="0.01" placeholder="21.00"
+              <Input id="defaultVatRateCz" label={t('platformInfo.vatRateCz')} type="number" step="0.01" placeholder="21.00"
                 value={form.defaultVatRateCz} onChange={(e) => set('defaultVatRateCz', e.target.value)} />
             </div>
           </div>
 
           <div className="flex justify-end pt-2">
             <Button onClick={handleSave} loading={saving} disabled={saving}>
-              Uložiť
+              {t('platformInfo.save')}
             </Button>
           </div>
         </div>

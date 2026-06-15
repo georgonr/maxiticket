@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { setAccessToken, getValidToken } from '@/lib/auth';
 import Link from 'next/link';
 import { getReadableError } from '@/lib/api-errors';
+import { StaffLangSwitch } from '@/components/nav/StaffLangSwitch';
 
 export default function ScanLoginPage() {
   const router = useRouter();
+  const t = useTranslations('scanner');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -57,13 +60,18 @@ export default function ScanLoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-950 px-5 py-10">
+      {/* Jazykový prepínač */}
+      <div className="absolute right-4 top-4">
+        <StaffLangSwitch />
+      </div>
+
       {/* Logo */}
       <div className="mb-8 text-center">
         <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-white text-2xl font-bold shadow-lg">
           MT
         </div>
-        <h1 className="text-xl font-bold text-white">TicketAll Skener</h1>
-        <p className="mt-1 text-sm text-gray-400">Prihlásenie pre skenovanie vstupeniek</p>
+        <h1 className="text-xl font-bold text-white">{t('login.title')}</h1>
+        <p className="mt-1 text-sm text-gray-400">{t('login.subtitle')}</p>
       </div>
 
       {/* Form */}
@@ -75,7 +83,7 @@ export default function ScanLoginPage() {
           {/* Email */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-sm font-medium text-gray-300">
-              E-mail
+              {t('login.email')}
             </label>
             <input
               id="email"
@@ -85,7 +93,7 @@ export default function ScanLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="h-12 rounded-xl border border-gray-700 bg-gray-800 px-4 text-base text-white placeholder-gray-500 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-              placeholder="vas@email.sk"
+              placeholder={t('login.emailPlaceholder')}
             />
           </div>
 
@@ -93,13 +101,13 @@ export default function ScanLoginPage() {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <label htmlFor="password" className="text-sm font-medium text-gray-300">
-                Heslo
+                {t('login.password')}
               </label>
               <Link
                 href="/forgot-password"
                 className="text-xs text-gray-400 underline-offset-2 active:text-brand"
               >
-                Zabudli ste heslo?
+                {t('login.forgotPassword')}
               </Link>
             </div>
             <div className="relative">
@@ -117,7 +125,7 @@ export default function ScanLoginPage() {
                 type="button"
                 onClick={() => setShowPass((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 active:text-white"
-                aria-label={showPass ? 'Skryť heslo' : 'Zobraziť heslo'}
+                aria-label={showPass ? t('login.hidePassword') : t('login.showPassword')}
               >
                 {showPass ? (
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -150,14 +158,14 @@ export default function ScanLoginPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Prihlasovanie…
+                {t('login.signingIn')}
               </span>
-            ) : 'Prihlásiť sa'}
+            ) : t('login.signIn')}
           </button>
         </div>
       </form>
 
-      <p className="mt-6 text-xs text-gray-600">TicketAll Scanner v1.0</p>
+      <p className="mt-6 text-xs text-gray-600">{t('login.version')}</p>
     </div>
   );
 }

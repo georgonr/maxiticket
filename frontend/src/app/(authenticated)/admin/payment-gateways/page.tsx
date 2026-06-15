@@ -1,28 +1,38 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { clsx } from 'clsx';
 import { CreditCard, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ApiError, paymentGatewaysApi, PaymentGatewayId, PaymentGatewayStatus } from '@/lib/api';
 import { SectionCard, Skeleton, ErrorState } from '@/components/dashboard/parts';
 
-const META: Record<PaymentGatewayId, { label: string; desc: string; live: boolean; comingSoon?: boolean }> = {
-  STRIPE_SANDBOX: { label: 'Stripe Sandbox', desc: 'Testovacie prostredie Stripe (bez reálnych platieb).', live: false },
-  STRIPE_LIVE: { label: 'Stripe Live', desc: 'Ostrá platobná brána – reálne platby kartou.', live: true },
-  COMGATE_TEST: { label: 'ComGate Test', desc: 'Testovacie prostredie ComGate.', live: false, comingSoon: true },
-  COMGATE_LIVE: { label: 'ComGate Live', desc: 'Ostrá brána ComGate – reálne platby.', live: true, comingSoon: true },
+const META: Record<PaymentGatewayId, { label: string; live: boolean; comingSoon?: boolean }> = {
+  STRIPE_SANDBOX: { label: 'Stripe Sandbox', live: false },
+  STRIPE_LIVE: { label: 'Stripe Live', live: true },
+  COMGATE_TEST: { label: 'ComGate Test', live: false, comingSoon: true },
+  COMGATE_LIVE: { label: 'ComGate Live', live: true, comingSoon: true },
 };
 
-function readableError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 401 || e.status === 403) return 'Nemáte oprávnenie spravovať platobné brány.';
-    return e.message || 'Niečo sa pokazilo.';
-  }
-  return 'Nemôžeme sa pripojiť k serveru.';
-}
+const GATEWAY_DESC_KEY: Record<PaymentGatewayId, string> = {
+  STRIPE_SANDBOX: 'descStripeSandbox',
+  STRIPE_LIVE: 'descStripeLive',
+  COMGATE_TEST: 'descComgateTest',
+  COMGATE_LIVE: 'descComgateLive',
+};
 
 export default function PaymentGatewaysPage() {
+  const t = useTranslations('admin');
+
+  function readableError(e: unknown): string {
+    if (e instanceof ApiError) {
+      if (e.status === 401 || e.status === 403) return t('paymentGateways.errNoPermission');
+      return e.message || t('paymentGateways.errGeneric');
+    }
+    return t('paymentGateways.errConnect');
+  }
+
   const [gateways, setGateways] = useState<PaymentGatewayStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,14 +65,14 @@ export default function PaymentGatewaysPage() {
   async function activate(g: PaymentGatewayStatus) {
     if (g.active || !g.configured || busy) return;
     const meta = META[g.gateway];
-    if (meta.live && !window.confirm('Zmeníte aktívnu platobnú bránu pre CELÝ predaj. Pokračovať?')) return;
+    if (meta.live && !window.confirm(t('paymentGateways.confirmLive'))) return;
     setBusy(g.gateway);
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       const res = await paymentGatewaysApi.setActive(g.gateway, token);
       setGateways(res.gateways);
-      setToast({ msg: `Aktívna brána: ${meta.label}.`, ok: true });
+      setToast({ msg: t('paymentGateways.activeGatewayToast', { label: meta.label }), ok: true });
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
     } finally {
@@ -74,9 +84,9 @@ export default function PaymentGatewaysPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <main className="mx-auto max-w-3xl space-y-6 p-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Platobné brány</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('paymentGateways.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Aktívna je vždy práve jedna brána. Predvolená je Stripe Live. Bránu bez nakonfigurovaných kľúčov nie je možné aktivovať.
+            {t('paymentGateways.subtitle')}
           </p>
         </div>
 
@@ -89,7 +99,7 @@ export default function PaymentGatewaysPage() {
         {error ? (
           <ErrorState message={error} />
         ) : (
-          <SectionCard title="Brány">
+          <SectionCard title={t('paymentGateways.gatewaysCard')}>
             {loading ? (
               <Skeleton className="h-48" />
             ) : (
@@ -111,21 +121,21 @@ export default function PaymentGatewaysPage() {
                           <span className="font-medium text-gray-900 dark:text-gray-100">{meta.label}</span>
                           {g.active && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                              <CheckCircle2 size={11} /> Aktívna
+                              <CheckCircle2 size={11} /> {t('paymentGateways.badgeActive')}
                             </span>
                           )}
                           {!g.configured && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs font-medium text-gray-500">
-                              <Lock size={11} /> {meta.comingSoon ? 'Čoskoro' : 'Nenakonfigurované'}
+                              <Lock size={11} /> {meta.comingSoon ? t('paymentGateways.badgeComingSoon') : t('paymentGateways.badgeNotConfigured')}
                             </span>
                           )}
                           {meta.live && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                              <AlertTriangle size={11} /> Ostrá
+                              <AlertTriangle size={11} /> {t('paymentGateways.badgeLive')}
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{meta.desc}</p>
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t(`paymentGateways.${GATEWAY_DESC_KEY[g.gateway]}`)}</p>
                       </div>
 
                       {/* iPhone-style toggle */}
@@ -135,7 +145,7 @@ export default function PaymentGatewaysPage() {
                         aria-checked={g.active}
                         disabled={disabled}
                         onClick={() => activate(g)}
-                        title={g.configured ? (g.active ? 'Aktívna' : 'Aktivovať') : 'Nenakonfigurované'}
+                        title={g.configured ? (g.active ? t('paymentGateways.titleActive') : t('paymentGateways.titleActivate')) : t('paymentGateways.titleNotConfigured')}
                         className={clsx(
                           'relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors',
                           g.active ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-700',
@@ -154,7 +164,7 @@ export default function PaymentGatewaysPage() {
 
         <div className="flex items-start gap-2 text-xs text-gray-400 dark:text-gray-500">
           <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-          Zmena ostrej brány ovplyvní všetky nové objednávky. ComGate sa pripravuje (stub) – aktivuje sa po doplnení kľúčov.
+          {t('paymentGateways.footerNote')}
         </div>
       </main>
     </div>

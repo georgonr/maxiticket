@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, ChangeEvent, FormEvent, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useFormatter } from 'next-intl';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
 import { heroAdminApi, HeroBanner, AdminShow, ShowImage } from '@/lib/api';
@@ -18,11 +19,6 @@ import {
 function parseJwt(token: string): { role: string } | null {
   try { return JSON.parse(atob(token.split('.')[1])); }
   catch { return null; }
-}
-
-function fmtDate(iso: string | null) {
-  if (!iso) return '—';
-  return new Intl.DateTimeFormat('sk-SK', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
 }
 
 // ─── Banner form state ─────────────────────────────────────────────────────────
@@ -74,8 +70,13 @@ function formToPayload(f: BannerForm) {
 type ShowFilter = 'all' | 'promoted' | 'notPromoted';
 
 export default function HeroAdminPage() {
+  const t = useTranslations('admin');
+  const format = useFormatter();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
+
+  const fmtDate = (iso: string | null) =>
+    iso ? format.dateTime(new Date(iso), { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
   // Banners state
   const [banners, setBanners] = useState<HeroBanner[]>([]);
@@ -113,23 +114,23 @@ export default function HeroAdminPage() {
   }, [router]);
 
   // ── Load banners ─────────────────────────────────────────────────────────────
-  const loadBanners = useCallback(async (t: string) => {
+  const loadBanners = useCallback(async (tok: string) => {
     setBannersLoading(true);
     try {
-      const data = await heroAdminApi.listBanners(t);
+      const data = await heroAdminApi.listBanners(tok);
       setBanners(data);
     } catch (e) {
-      setBannerError(e instanceof Error ? e.message : 'Chyba pri načítaní bannerov');
+      setBannerError(e instanceof Error ? e.message : t('hero.errors.loadBanners'));
     } finally {
       setBannersLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // ── Load shows ───────────────────────────────────────────────────────────────
-  const loadShows = useCallback(async (t: string) => {
+  const loadShows = useCallback(async (tok: string) => {
     setShowsLoading(true);
     try {
-      const data = await heroAdminApi.listShows(t);
+      const data = await heroAdminApi.listShows(tok);
       setShows(data);
     } catch {
       // non-critical
@@ -178,7 +179,7 @@ export default function HeroAdminPage() {
       const { imageUrl } = await heroAdminApi.uploadImage(file, token);
       setForm((f) => ({ ...f, imageUrl }));
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Upload zlyhal');
+      setFormError(err instanceof Error ? err.message : t('hero.errors.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -187,8 +188,8 @@ export default function HeroAdminPage() {
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     if (!token) return;
-    if (!form.title.trim()) { setFormError('Slogan je povinný'); return; }
-    if (!form.imageUrl.trim()) { setFormError('Obrázok je povinný'); return; }
+    if (!form.title.trim()) { setFormError(t('hero.errors.titleRequired')); return; }
+    if (!form.imageUrl.trim()) { setFormError(t('hero.errors.imageRequired')); return; }
     setSaving(true);
     setFormError('');
     try {
@@ -202,14 +203,14 @@ export default function HeroAdminPage() {
       }
       closeForm();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Uloženie zlyhalo');
+      setFormError(err instanceof Error ? err.message : t('hero.errors.saveFailed'));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!token || !confirm('Naozaj zmazať tento banner?')) return;
+    if (!token || !confirm(t('hero.confirmDelete'))) return;
     // Optimistic
     setBanners((prev) => prev.filter((b) => b.id !== id));
     try {
@@ -326,11 +327,11 @@ export default function HeroAdminPage() {
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <nav className="flex items-center gap-4 text-sm">
-          <Link href="/organizer/shows" className="text-gray-600 dark:text-gray-300 hover:text-brand transition-colors">Podujatia</Link>
-          <Link href="/admin/hero" className="font-medium text-brand underline underline-offset-2">Hero slider</Link>
+          <Link href="/organizer/shows" className="text-gray-600 dark:text-gray-300 hover:text-brand transition-colors">{t('hero.nav.shows')}</Link>
+          <Link href="/admin/hero" className="font-medium text-brand underline underline-offset-2">{t('hero.nav.heroSlider')}</Link>
           <Link href="/organizer/dashboard" className="text-gray-500 dark:text-gray-400 hover:text-brand transition-colors flex items-center gap-1">
             <LayoutDashboard size={14} />
-            Dashboard
+            {t('hero.nav.dashboard')}
           </Link>
         </nav>
       </header>
@@ -341,11 +342,11 @@ export default function HeroAdminPage() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Marketingové bannery</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Zoraďované podľa sortOrder, zobrazované v slideri.</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('hero.banners.title')}</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('hero.banners.subtitle')}</p>
             </div>
             <Button onClick={openCreate} size="sm">
-              <Plus size={15} className="mr-1.5" /> Pridať banner
+              <Plus size={15} className="mr-1.5" /> {t('hero.banners.add')}
             </Button>
           </div>
 
@@ -359,19 +360,19 @@ export default function HeroAdminPage() {
             </div>
           ) : banners.length === 0 ? (
             <div className="rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center">
-              <p className="text-gray-400 dark:text-gray-500 text-sm mb-3">Zatiaľ žiadne bannery.</p>
-              <Button variant="outline" size="sm" onClick={openCreate}><Plus size={13} className="mr-1" /> Pridať prvý banner</Button>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mb-3">{t('hero.banners.empty')}</p>
+              <Button variant="outline" size="sm" onClick={openCreate}><Plus size={13} className="mr-1" /> {t('hero.banners.addFirst')}</Button>
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                   <tr>
-                    <th className="w-16 px-3 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Poradie</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Banner</th>
-                    <th className="w-24 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Aktívny</th>
-                    <th className="w-40 px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Platnosť</th>
-                    <th className="w-24 px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Akcie</th>
+                    <th className="w-16 px-3 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('hero.banners.cols.order')}</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('hero.banners.cols.banner')}</th>
+                    <th className="w-24 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">{t('hero.banners.cols.active')}</th>
+                    <th className="w-40 px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('hero.banners.cols.validity')}</th>
+                    <th className="w-24 px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">{t('hero.banners.cols.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -383,14 +384,14 @@ export default function HeroAdminPage() {
                             onClick={() => moveOrder(b.id, 'up')}
                             disabled={idx === 0}
                             className="rounded p-0.5 text-gray-400 dark:text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-20"
-                            title="Posunúť nahor"
+                            title={t('hero.banners.moveUp')}
                           ><ChevronUp size={14} /></button>
                           <span className="text-xs font-mono text-gray-500 dark:text-gray-400 w-5 text-center">{b.sortOrder}</span>
                           <button
                             onClick={() => moveOrder(b.id, 'down')}
                             disabled={idx === banners.length - 1}
                             className="rounded p-0.5 text-gray-400 dark:text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-20"
-                            title="Posunúť nadol"
+                            title={t('hero.banners.moveDown')}
                           ><ChevronDown size={14} /></button>
                         </div>
                       </td>
@@ -416,7 +417,7 @@ export default function HeroAdminPage() {
                           className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${b.isActive ? 'bg-brand' : 'bg-gray-200'}`}
                           role="switch"
                           aria-checked={b.isActive}
-                          title={b.isActive ? 'Aktívny – klikni na deaktiváciu' : 'Neaktívny – klikni na aktiváciu'}
+                          title={b.isActive ? t('hero.banners.toggleActiveOn') : t('hero.banners.toggleActiveOff')}
                         >
                           <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 shadow ring-0 transition duration-200 ease-in-out ${b.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
@@ -424,8 +425,8 @@ export default function HeroAdminPage() {
                       <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                         {b.activeFrom || b.activeUntil ? (
                           <div>
-                            {b.activeFrom && <div>Od: {fmtDate(b.activeFrom)}</div>}
-                            {b.activeUntil && <div>Do: {fmtDate(b.activeUntil)}</div>}
+                            {b.activeFrom && <div>{t('hero.banners.from')}: {fmtDate(b.activeFrom)}</div>}
+                            {b.activeUntil && <div>{t('hero.banners.until')}: {fmtDate(b.activeUntil)}</div>}
                           </div>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
@@ -434,12 +435,12 @@ export default function HeroAdminPage() {
                           <button
                             onClick={() => openEdit(b)}
                             className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:text-brand hover:bg-brand/5 transition-colors"
-                            title="Upraviť"
+                            title={t('hero.banners.edit')}
                           ><Pencil size={13} /></button>
                           <button
                             onClick={() => handleDelete(b.id)}
                             className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Zmazať"
+                            title={t('hero.banners.delete')}
                           ><Trash2 size={13} /></button>
                         </div>
                       </td>
@@ -454,13 +455,13 @@ export default function HeroAdminPage() {
         {/* ── Section 2: Promoted Shows ────────────────────────────────────────── */}
         <section>
           <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Promoted podujatia</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Podujatia so zapnutým promoted flagom sa zobrazia v slideri (musia byť PUBLISHED + mať aktívny termín).</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('hero.promoted.title')}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('hero.promoted.subtitle')}</p>
           </div>
 
           {/* Filter tabs */}
           <div className="flex items-center gap-1 mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
-            {([['all', 'Všetky'], ['promoted', 'Promoted'], ['notPromoted', 'Nepromoted']] as [ShowFilter, string][]).map(([val, label]) => (
+            {([['all', t('hero.promoted.filters.all')], ['promoted', t('hero.promoted.filters.promoted')], ['notPromoted', t('hero.promoted.filters.notPromoted')]] as [ShowFilter, string][]).map(([val, label]) => (
               <button
                 key={val}
                 onClick={() => setShowFilter(val)}
@@ -475,17 +476,17 @@ export default function HeroAdminPage() {
             </div>
           ) : filteredShows.length === 0 ? (
             <div className="rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 text-center">
-              <p className="text-sm text-gray-400 dark:text-gray-500">Žiadne podujatia v tomto filteri.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">{t('hero.promoted.empty')}</p>
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Podujatie</th>
-                    <th className="w-24 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Stav</th>
-                    <th className="w-36 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Slider obrázok</th>
-                    <th className="w-28 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Promoted</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('hero.promoted.cols.show')}</th>
+                    <th className="w-24 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">{t('hero.promoted.cols.status')}</th>
+                    <th className="w-36 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">{t('hero.promoted.cols.sliderImage')}</th>
+                    <th className="w-28 px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">{t('hero.promoted.cols.promoted')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -517,10 +518,10 @@ export default function HeroAdminPage() {
                         <button
                           onClick={() => openSliderImgModal(s)}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:border-brand/30 hover:text-brand hover:bg-brand/5 transition-colors"
-                          title="Vybrať slider obrázok"
+                          title={t('hero.promoted.pickSliderImage')}
                         >
                           <Images size={12} />
-                          {s.sliderImageId ? 'Vlastný' : 'Titulka'}
+                          {s.sliderImageId ? t('hero.promoted.custom') : t('hero.promoted.cover')}
                         </button>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -530,7 +531,7 @@ export default function HeroAdminPage() {
                           className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${s.isPromoted ? 'bg-brand' : 'bg-gray-200'}`}
                           role="switch"
                           aria-checked={s.isPromoted}
-                          title={s.isPromoted ? 'Promoted – klikni na vypnutie' : 'Nepromoted – klikni na zapnutie'}
+                          title={s.isPromoted ? t('hero.promoted.togglePromotedOn') : t('hero.promoted.togglePromotedOff')}
                         >
                           <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 shadow ring-0 transition duration-200 ease-in-out ${s.isPromoted ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
@@ -550,7 +551,7 @@ export default function HeroAdminPage() {
           <div className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Slider obrázok</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{t('hero.imageModal.title')}</h3>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sliderImgModal.show.name}</p>
               </div>
               <button onClick={() => setSliderImgModal(null)} className="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -575,12 +576,12 @@ export default function HeroAdminPage() {
                     }`}
                   >
                     <ImageIcon size={16} />
-                    <span>Použiť titulku (cover) – predvolené</span>
+                    <span>{t('hero.imageModal.useCover')}</span>
                     {sliderImgModal.show.sliderImageId === null && <Check size={14} className="ml-auto" />}
                   </button>
 
                   {sliderImgModal.images.length === 0 ? (
-                    <p className="text-sm text-center text-gray-400 dark:text-gray-500 py-6">Toto podujatie nemá žiadne obrázky v galérii.</p>
+                    <p className="text-sm text-center text-gray-400 dark:text-gray-500 py-6">{t('hero.imageModal.noImages')}</p>
                   ) : (
                     <div className="grid grid-cols-3 gap-3">
                       {sliderImgModal.images.map((img) => {
@@ -593,7 +594,7 @@ export default function HeroAdminPage() {
                             className={`relative aspect-square overflow-hidden rounded-xl border-2 transition-all disabled:opacity-50 ${
                               selected ? 'border-brand ring-2 ring-brand/30' : 'border-transparent hover:border-brand/40'
                             }`}
-                            title="Nastaviť ako slider obrázok"
+                            title={t('hero.imageModal.setAsSlider')}
                           >
                             <img src={img.squareUrl} alt="" className="h-full w-full object-cover" />
                             {selected && (
@@ -610,7 +611,7 @@ export default function HeroAdminPage() {
               )}
             </div>
             <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
-              <Button variant="outline" size="sm" onClick={() => setSliderImgModal(null)}>Zavrieť</Button>
+              <Button variant="outline" size="sm" onClick={() => setSliderImgModal(null)}>{t('hero.imageModal.close')}</Button>
             </div>
           </div>
         </div>
@@ -622,7 +623,7 @@ export default function HeroAdminPage() {
           <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                {editingId ? 'Upraviť banner' : 'Pridať banner'}
+                {editingId ? t('hero.form.editTitle') : t('hero.form.addTitle')}
               </h3>
               <button onClick={closeForm} className="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 <XIcon size={16} />
@@ -633,7 +634,7 @@ export default function HeroAdminPage() {
 
               {/* Image upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Obrázok *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">{t('hero.form.imageLabel')}</label>
                 <div className="flex items-start gap-3">
                   <div
                     className="h-20 w-20 flex-shrink-0 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex items-center justify-center cursor-pointer hover:border-brand/50 transition-colors overflow-hidden"
@@ -649,39 +650,39 @@ export default function HeroAdminPage() {
                   </div>
                   <div className="flex-1 space-y-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} loading={uploading}>
-                      {uploading ? 'Nahrávam…' : 'Vybrať obrázok'}
+                      {uploading ? t('hero.form.uploading') : t('hero.form.pickImage')}
                     </Button>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">JPEG / PNG / WebP, max 10 MB. Bude orezaný na štvorec 1000×1000.</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{t('hero.form.imageHint')}</p>
                     {form.imageUrl && (
-                      <p className="text-xs text-green-600 flex items-center gap-1"><Check size={11} /> Obrázok nahratý</p>
+                      <p className="text-xs text-green-600 flex items-center gap-1"><Check size={11} /> {t('hero.form.imageUploaded')}</p>
                     )}
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImagePick} />
                 </div>
                 {/* Or paste URL directly */}
                 <Input
-                  id="imageUrl" label="" placeholder="…alebo vložte URL obrázka"
+                  id="imageUrl" label="" placeholder={t('hero.form.imageUrlPlaceholder')}
                   value={form.imageUrl}
                   onChange={(e) => fieldChange('imageUrl', e.target.value)}
                   className="mt-2"
                 />
               </div>
 
-              <Input id="title" label="Slogan (nadpis) *" placeholder="Letný festival 2026"
+              <Input id="title" label={t('hero.form.titleLabel')} placeholder={t('hero.form.titlePlaceholder')}
                 value={form.title} onChange={(e) => fieldChange('title', e.target.value)} required />
 
-              <Input id="subtitle" label="Sub-slogan (voliteľne)" placeholder="Najväčší festival roka"
+              <Input id="subtitle" label={t('hero.form.subtitleLabel')} placeholder={t('hero.form.subtitlePlaceholder')}
                 value={form.subtitle} onChange={(e) => fieldChange('subtitle', e.target.value)} />
 
               <div className="grid grid-cols-2 gap-3">
-                <Input id="ctaLabel" label="CTA text" placeholder="Kúpiť lístky"
+                <Input id="ctaLabel" label={t('hero.form.ctaLabelLabel')} placeholder={t('hero.form.ctaLabelPlaceholder')}
                   value={form.ctaLabel} onChange={(e) => fieldChange('ctaLabel', e.target.value)} />
-                <Input id="ctaUrl" label="CTA URL" placeholder="/events/festival"
+                <Input id="ctaUrl" label={t('hero.form.ctaUrlLabel')} placeholder="/events/festival"
                   value={form.ctaUrl} onChange={(e) => fieldChange('ctaUrl', e.target.value)} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Input id="sortOrder" label="SortOrder" type="number" min="0"
+                <Input id="sortOrder" label={t('hero.form.sortOrderLabel')} type="number" min="0"
                   value={form.sortOrder} onChange={(e) => fieldChange('sortOrder', e.target.value)} />
                 <div className="flex flex-col justify-end pb-0.5">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -694,21 +695,21 @@ export default function HeroAdminPage() {
                     >
                       <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 shadow transition duration-200 ${form.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
                     </button>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Aktívny</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t('hero.form.activeLabel')}</span>
                   </label>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <DateTimePicker id="activeFrom" label="Aktívny od" value={form.activeFrom}
+                  <DateTimePicker id="activeFrom" label={t('hero.form.activeFromLabel')} value={form.activeFrom}
                     onChange={(v) => fieldChange('activeFrom', v)} />
-                  <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Prázdne = okamžite aktívny</p>
+                  <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('hero.form.activeFromHint')}</p>
                 </div>
                 <div>
-                  <DateTimePicker id="activeUntil" label="Aktívny do" value={form.activeUntil}
+                  <DateTimePicker id="activeUntil" label={t('hero.form.activeUntilLabel')} value={form.activeUntil}
                     onChange={(v) => fieldChange('activeUntil', v)} />
-                  <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Prázdne = bez expirácie</p>
+                  <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('hero.form.activeUntilHint')}</p>
                 </div>
               </div>
 
@@ -718,9 +719,9 @@ export default function HeroAdminPage() {
             </form>
 
             <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-              <Button type="button" variant="outline" size="sm" onClick={closeForm}>Zrušiť</Button>
+              <Button type="button" variant="outline" size="sm" onClick={closeForm}>{t('hero.form.cancel')}</Button>
               <Button type="submit" size="sm" loading={saving} onClick={handleSave}>
-                {editingId ? 'Uložiť zmeny' : 'Vytvoriť banner'}
+                {editingId ? t('hero.form.saveChanges') : t('hero.form.create')}
               </Button>
             </div>
           </div>

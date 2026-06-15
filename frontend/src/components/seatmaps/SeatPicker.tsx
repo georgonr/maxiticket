@@ -1,6 +1,7 @@
 'use client';
 
 import { Accessibility } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { PublicSeatSection } from '@/lib/api';
 
 // Úloha 22/3b: verejný výber sedadiel (SEATED sekcia). Klikateľné voľné sedadlá,
@@ -13,12 +14,13 @@ interface Props {
 }
 
 export function SeatPicker({ section, selected, onToggle }: Props) {
+  const t = useTranslations('seatPicker');
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       {/* pódium / orientácia */}
       <div className="mb-4 flex justify-center">
         <div className="rounded-full bg-slate-100 px-6 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-          Pódium / scéna
+          {t('stage')}
         </div>
       </div>
 
@@ -42,7 +44,7 @@ export function SeatPicker({ section, selected, onToggle }: Props) {
                     type="button"
                     disabled={seat.taken}
                     onClick={() => onToggle(seat.id)}
-                    title={`${section.name} · rad ${row.label} · sedadlo ${seat.label}${seat.isAccessible ? ' (bezbariérové)' : ''}${seat.taken ? ' – obsadené' : ''}`}
+                    title={`${t('seatTitle', { section: section.name, row: row.label, seat: seat.label })}${seat.isAccessible ? t('accessibleSuffix') : ''}${seat.taken ? t('takenSuffix') : ''}`}
                     className={`${base} ${cls}`}
                   >
                     {seat.isAccessible ? <Accessibility size={12} /> : seat.label}
@@ -56,10 +58,10 @@ export function SeatPicker({ section, selected, onToggle }: Props) {
 
       {/* legenda */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-slate-100 pt-3 text-xs text-slate-500">
-        <span className="flex items-center gap-1.5"><span className="inline-block h-4 w-4 rounded-md border border-emerald-300 bg-emerald-50" /> voľné</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-4 w-4 rounded-md bg-purple-700" /> vybrané</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-4 w-4 rounded-md bg-slate-200" /> obsadené</span>
-        <span className="flex items-center gap-1.5"><Accessibility size={13} /> bezbariérové</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-4 w-4 rounded-md border border-emerald-300 bg-emerald-50" /> {t('legendFree')}</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-4 w-4 rounded-md bg-purple-700" /> {t('legendSelected')}</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-4 w-4 rounded-md bg-slate-200" /> {t('legendTaken')}</span>
+        <span className="flex items-center gap-1.5"><Accessibility size={13} /> {t('legendAccessible')}</span>
       </div>
     </div>
   );

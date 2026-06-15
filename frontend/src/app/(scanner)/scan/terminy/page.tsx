@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useFormatter } from 'next-intl';
 import { useScannerAuth, saveSelectedTermin } from '@/lib/scanner-auth';
 import { scanApi, ScanTermin } from '@/lib/api';
 
-type DateBadge = { label: string; bg: string; text: string };
+type DateBadgeKey = 'today' | 'tomorrow' | 'thisWeek' | 'later';
+type DateBadge = { key: DateBadgeKey; bg: string; text: string };
 
 function getDateBadge(startsAt: string): DateBadge {
   const now = new Date();
@@ -15,31 +17,33 @@ function getDateBadge(startsAt: string): DateBadge {
   const eventDay = new Date(new Date(startsAt).setHours(0, 0, 0, 0));
 
   if (eventDay.getTime() === today.getTime())
-    return { label: 'Dnes', bg: 'bg-green-500', text: 'text-white' };
+    return { key: 'today', bg: 'bg-green-500', text: 'text-white' };
   if (eventDay.getTime() === tomorrow.getTime())
-    return { label: 'Zajtra', bg: 'bg-blue-500', text: 'text-white' };
+    return { key: 'tomorrow', bg: 'bg-blue-500', text: 'text-white' };
   if (eventDay < nextWeek)
-    return { label: 'Tento týždeň', bg: 'bg-violet-600', text: 'text-white' };
-  return { label: 'Neskôr', bg: 'bg-gray-600', text: 'text-white' };
-}
-
-function formatDate(startsAt: string): string {
-  return new Date(startsAt).toLocaleDateString('sk-SK', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+    return { key: 'thisWeek', bg: 'bg-violet-600', text: 'text-white' };
+  return { key: 'later', bg: 'bg-gray-600', text: 'text-white' };
 }
 
 export default function TerminyPage() {
   const router = useRouter();
+  const t = useTranslations('scanner');
+  const format = useFormatter();
   const { token, user, loading: authLoading, logout } = useScannerAuth();
   const [terminy, setTerminy] = useState<ScanTermin[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
+
+  function formatDate(startsAt: string): string {
+    return format.dateTime(new Date(startsAt), {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
 
   const fetchTerminy = useCallback(
     async (all: boolean) => {
@@ -50,25 +54,25 @@ export default function TerminyPage() {
         const data = await scanApi.terminy(token, all);
         setTerminy(data);
       } catch {
-        setError('Nepodarilo sa načítať termíny. Skúste znova.');
+        setError(t('terminy.loadError'));
       } finally {
         setFetching(false);
       }
     },
-    [token],
+    [token, t],
   );
 
   useEffect(() => {
     if (token) fetchTerminy(showAll);
   }, [token, showAll, fetchTerminy]);
 
-  function handleSelectTermin(t: ScanTermin) {
+  function handleSelectTermin(termin: ScanTermin) {
     saveSelectedTermin({
-      id: t.id,
-      showName: t.show.name,
-      startsAt: t.startsAt,
-      venueName: t.venue?.name ?? null,
-      venueCity: t.venue?.city ?? null,
+      id: termin.id,
+      showName: termin.show.name,
+      startsAt: termin.startsAt,
+      venueName: termin.venue?.name ?? null,
+      venueCity: termin.venue?.city ?? null,
     });
     router.push('/scan/skener');
   }
@@ -95,7 +99,7 @@ export default function TerminyPage() {
             MT
           </div>
           <div className="leading-tight">
-            <p className="text-sm font-semibold">Skener</p>
+            <p className="text-sm font-semibold">{t('common.scanner')}</p>
             {user && <p className="text-xs text-gray-400 truncate max-w-[160px]">{user.email}</p>}
           </div>
         </div>
@@ -103,15 +107,15 @@ export default function TerminyPage() {
           onClick={logout}
           className="rounded-lg border border-gray-700 px-3 py-1.5 text-sm text-gray-300 active:bg-gray-800"
         >
-          Odhlásiť
+          {t('common.logout')}
         </button>
       </header>
 
       {/* Content */}
       <main className="flex-1 px-4 py-4">
-        <h1 className="mb-1 text-xl font-bold">Vyberte termín</h1>
+        <h1 className="mb-1 text-xl font-bold">{t('terminy.title')}</h1>
         <p className="mb-4 text-sm text-gray-400">
-          Skenovanie bude obmedzené na zvolený termín.
+          {t('terminy.subtitle')}
         </p>
 
         {/* Error */}
@@ -122,7 +126,7 @@ export default function TerminyPage() {
               onClick={() => fetchTerminy(showAll)}
               className="ml-2 underline"
             >
-              Skúsiť znova
+              {t('common.retry')}
             </button>
           </div>
         )}
@@ -141,11 +145,11 @@ export default function TerminyPage() {
               🎫
             </div>
             <div>
-              <p className="font-semibold text-gray-200">Žiadne termíny so vstupenkami</p>
+              <p className="font-semibold text-gray-200">{t('terminy.emptyTitle')}</p>
               <p className="mt-1 text-sm text-gray-500">
                 {showAll
-                  ? 'Zatiaľ nie sú predané žiadne vstupenky.'
-                  : 'V okne ±7/+30 dní nie sú žiadne termíny.'}
+                  ? t('terminy.emptyAllDesc')
+                  : t('terminy.emptyNearDesc')}
               </p>
             </div>
             {!showAll && (
@@ -153,7 +157,7 @@ export default function TerminyPage() {
                 onClick={() => setShowAll(true)}
                 className="rounded-xl bg-gray-800 px-5 py-2.5 text-sm font-medium text-white active:bg-gray-700"
               >
-                Zobraziť všetky termíny
+                {t('terminy.showAll')}
               </button>
             )}
           </div>
@@ -162,27 +166,27 @@ export default function TerminyPage() {
         {/* Termin cards */}
         {!fetching && terminy.length > 0 && (
           <div className="flex flex-col gap-3">
-            {terminy.map((t) => {
-              const badge = getDateBadge(t.startsAt);
-              const noShow = t.ticketCount > 0 ? Math.round(((t.ticketCount - t.scannedCount) / t.ticketCount) * 100) : 0;
+            {terminy.map((termin) => {
+              const badge = getDateBadge(termin.startsAt);
+              const noShow = termin.ticketCount > 0 ? Math.round(((termin.ticketCount - termin.scannedCount) / termin.ticketCount) * 100) : 0;
               return (
                 <button
-                  key={t.id}
-                  onClick={() => handleSelectTermin(t)}
+                  key={termin.id}
+                  onClick={() => handleSelectTermin(termin)}
                   className="w-full rounded-2xl border border-gray-800 bg-gray-900 p-4 text-left active:bg-gray-800"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="truncate font-semibold text-white">{t.show.name}</p>
-                      <p className="mt-0.5 text-sm text-gray-400">{formatDate(t.startsAt)}</p>
-                      {t.venue && (
+                      <p className="truncate font-semibold text-white">{termin.show.name}</p>
+                      <p className="mt-0.5 text-sm text-gray-400">{formatDate(termin.startsAt)}</p>
+                      {termin.venue && (
                         <p className="mt-0.5 truncate text-xs text-gray-500">
-                          {t.venue.name}{t.venue.city ? `, ${t.venue.city}` : ''}
+                          {termin.venue.name}{termin.venue.city ? `, ${termin.venue.city}` : ''}
                         </p>
                       )}
                     </div>
                     <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-semibold ${badge.bg} ${badge.text}`}>
-                      {badge.label}
+                      {t(`terminy.badge.${badge.key}`)}
                     </span>
                   </div>
 
@@ -191,15 +195,15 @@ export default function TerminyPage() {
                     <div className="flex-1 overflow-hidden rounded-full bg-gray-800 h-1.5">
                       <div
                         className="h-full rounded-full bg-brand transition-all"
-                        style={{ width: t.ticketCount > 0 ? `${(t.scannedCount / t.ticketCount) * 100}%` : '0%' }}
+                        style={{ width: termin.ticketCount > 0 ? `${(termin.scannedCount / termin.ticketCount) * 100}%` : '0%' }}
                       />
                     </div>
                     <span className="shrink-0 text-xs text-gray-400">
-                      <span className="font-semibold text-white">{t.scannedCount}</span>
+                      <span className="font-semibold text-white">{termin.scannedCount}</span>
                       {' / '}
-                      {t.ticketCount}
-                      {t.ticketCount > 0 && (
-                        <span className="ml-1 text-gray-500">({noShow}% no-show)</span>
+                      {termin.ticketCount}
+                      {termin.ticketCount > 0 && (
+                        <span className="ml-1 text-gray-500">{t('terminy.noShow', { percent: noShow })}</span>
                       )}
                     </span>
                   </div>
@@ -216,7 +220,7 @@ export default function TerminyPage() {
           onClick={toggleShowAll}
           className="w-full rounded-xl border border-gray-700 py-2.5 text-sm font-medium text-gray-300 active:bg-gray-800"
         >
-          {showAll ? '📅 Iba blízke termíny' : '🗓 Zobraziť všetky termíny'}
+          {showAll ? `📅 ${t('terminy.nearOnly')}` : `🗓 ${t('terminy.showAll')}`}
         </button>
       </footer>
     </div>

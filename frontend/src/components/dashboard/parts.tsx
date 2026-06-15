@@ -15,14 +15,6 @@ export function greetingKey(): 'greetingMorning' | 'greetingAfternoon' | 'greeti
   return 'greetingEvening';
 }
 
-// SK pozdrav – ponechaný pre admin dashboard (preklad admin oblasti až krok 31d).
-export function greeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Dobré ráno';
-  if (h < 18) return 'Dobré popoludnie';
-  return 'Dobrý večer';
-}
-
 /** 'YYYY-MM-DD' → 'dd.MM' (UTC, aby nedošlo k posunu o deň). */
 export function formatDayShort(date: string): string {
   const d = new Date(date + 'T00:00:00Z');
