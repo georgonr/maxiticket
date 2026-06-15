@@ -61,6 +61,7 @@ export function buildNavGroups(role: string): NavGroup[] {
       items: [
         { label: 'Hero slider', href: '/admin/hero', roles: ['SUPERADMIN'] },
         { label: 'Platforma', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
+        { label: 'Platobné brány', href: '/admin/payment-gateways', roles: ['SUPERADMIN', 'STAFF'] },
       ],
     },
     {

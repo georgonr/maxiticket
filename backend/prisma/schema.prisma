@@ -747,6 +747,26 @@ model PlatformInfo {
 }
 
 // ─────────────────────────────────────────────
+// PAYMENT GATEWAY (úloha 25): aktívna platobná brána (singleton).
+// Default STRIPE_LIVE = dnešné správanie. ComGate = stub (príprava na migráciu).
+// ─────────────────────────────────────────────
+
+enum PaymentGateway {
+  STRIPE_SANDBOX
+  STRIPE_LIVE
+  COMGATE_TEST
+  COMGATE_LIVE
+}
+
+model PaymentGatewayConfig {
+  id            String         @id @default(cuid())
+  activeGateway PaymentGateway @default(STRIPE_LIVE)
+  updatedById   String?        // audit – kto naposledy prepol (plain field, bez FK)
+  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime       @default(now())
+}
+
+// ─────────────────────────────────────────────
 // COUPON (zľavové kupóny)
 // ─────────────────────────────────────────────
 

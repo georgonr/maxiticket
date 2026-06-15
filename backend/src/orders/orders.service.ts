@@ -12,6 +12,7 @@ import { PosOrderDto } from './dto/pos-order.dto';
 import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole, TerminMode, SectionMode, SeatStatus } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
+import { PaymentGatewayService } from '../payment/payment-gateways.service';
 import { sendTicketsForOrder } from './orders-mail.helper';
 import { CouponsService } from '../coupons/coupons.service';
 import { generatePosClosurePdf, PosClosureByTermin } from './pos-closure-pdf.helper';
@@ -26,6 +27,7 @@ export class OrdersService {
     private mail: MailService,
     private coupons: CouponsService,
     @Inject(PAYMENT_PROVIDER) private paymentProvider: PaymentProvider,
+    private gateways: PaymentGatewayService,
   ) {}
 
   async createOrder(dto: CreateOrderDto, user?: JwtPayload) {
@@ -362,7 +364,10 @@ export class OrdersService {
       ];
     }
 
-    const result = await this.paymentProvider.createCheckoutSession({
+    // Úloha 25: provider aktívnej brány. Default STRIPE_LIVE → ten istý injektovaný instance ako
+    // doteraz (this.paymentProvider) → byte-identické správanie. Iné brány len po prepnutí SUPERADMIN-om.
+    const provider = await this.gateways.getActiveProvider();
+    const result = await provider.createCheckoutSession({
       orderId: order.id,
       orderNumber: order.orderNumber,
       currency: order.currency,

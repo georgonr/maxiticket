@@ -164,6 +164,24 @@ export const organizersApi = {
   list: (token: string) => apiFetch<OrganizerLite[]>('/v1/organizers', { token }),
 };
 
+// Úloha 25: platobné brány (SUPERADMIN/STAFF)
+export type PaymentGatewayId = 'STRIPE_SANDBOX' | 'STRIPE_LIVE' | 'COMGATE_TEST' | 'COMGATE_LIVE';
+export interface PaymentGatewayStatus {
+  gateway: PaymentGatewayId;
+  active: boolean;
+  configured: boolean;
+}
+export const paymentGatewaysApi = {
+  list: (token: string) =>
+    apiFetch<{ gateways: PaymentGatewayStatus[] }>('/v1/admin/payment-gateways', { token }),
+  setActive: (gateway: PaymentGatewayId, token: string) =>
+    apiFetch<{ gateways: PaymentGatewayStatus[] }>('/v1/admin/payment-gateways/active', {
+      method: 'PUT',
+      body: JSON.stringify({ gateway }),
+      token,
+    }),
+};
+
 export const terminsApi = {
   list: (showId: string, token: string) => apiFetch<Termin[]>('/v1/shows/' + showId + '/termins', { token }),
   get: (showId: string, id: string, token: string) => apiFetch<Termin>('/v1/shows/' + showId + '/termins/' + id, { token }),
