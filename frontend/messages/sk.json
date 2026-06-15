@@ -1,0 +1,50 @@
+{
+  "landing": {
+    "nav": { "events": "Podujatia", "features": "Funkcie", "how": "Ako to funguje", "login": "Prihlásiť", "cta": "Začni zadarmo" },
+    "hero": {
+      "badge": "Predaj vstupeniek pre moderných organizátorov",
+      "title1": "Vstupenky, ktoré",
+      "title2": "ľudia milujú.",
+      "subtitle": "Spusti predaj lístkov online za pár minút – od malého koncertu po vypredanú halu.",
+      "ctaPrimary": "Začni zadarmo",
+      "ctaSecondary": "Prezri podujatia"
+    },
+    "featured": {
+      "heading": "Vybrané podujatia",
+      "sub": "Najnavštevovanejšie a najnovšie akcie, ktoré práve frčia.",
+      "allEvents": "Všetky podujatia",
+      "priceFrom": "od",
+      "empty": "Momentálne nie sú zverejnené žiadne podujatia."
+    },
+    "features": {
+      "heading": "Všetky nástroje, jedna platforma",
+      "sub": "To, čo inde platíš zvlášť – u nás v jednom.",
+      "items": [
+        { "title": "AI podpora 24/7", "desc": "Chat asistent pomôže zákazníkom s lístkami a objednávkami kedykoľvek." },
+        { "title": "Skenovanie a check-in", "desc": "Rýchle skenovanie QR pri vstupe – funguje aj offline." },
+        { "title": "Kupóny a zľavy", "desc": "Promo kódy, zľavy a kampane na pár klikov." }
+      ]
+    },
+    "steps": {
+      "heading": "3 kroky k spusteniu podujatia",
+      "sub": "Od nápadu k predaju za pár minút.",
+      "items": [
+        { "title": "Povedz nám o podujatí", "desc": "Názov, miesto, dátum – pridáš pár detailov a máš hotovú stránku." },
+        { "title": "Nastav typy lístkov", "desc": "Ceny, kapacity, zľavy alebo seat mapu podľa potreby." },
+        { "title": "Zdieľaj a predávaj", "desc": "Pošli odkaz, predávaj online a sleduj tržby v reálnom čase." }
+      ]
+    },
+    "finalCta": {
+      "title": "Tvoje ďalšie podujatie si zaslúži lepší predaj.",
+      "sub": "Vytvor podujatie zadarmo. Platíš až keď predávaš.",
+      "button": "Začni zadarmo"
+    },
+    "footer": {
+      "tagline": "Predaj vstupeniek, ktorý ti sadne.",
+      "product": "Produkt",
+      "company": "Spoločnosť",
+      "links": { "events": "Podujatia", "features": "Funkcie", "how": "Ako to funguje", "faq": "Časté otázky", "organizers": "Pre organizátorov", "contact": "Kontakt" },
+      "rights": "Všetky práva vyhradené."
+    }
+  }
+}

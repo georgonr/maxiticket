@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ArrowRight, Calendar, MapPin } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { publicApi, PublicShow } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
-import type { LandingMessages } from '@/lib/landing-i18n';
 
 const PAGE_SIZE = 12;
 const ROTATE_MS = 7000;
@@ -46,7 +46,8 @@ function EventCard({ show, priceFrom }: { show: PublicShow; priceFrom: string })
   );
 }
 
-export function FeaturedEvents({ t }: { t: LandingMessages['featured'] }) {
+export function FeaturedEvents() {
+  const t = useTranslations('landing.featured');
   const [pool, setPool] = useState<PublicShow[]>([]);
   const [page, setPage] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -82,11 +83,11 @@ export function FeaturedEvents({ t }: { t: LandingMessages['featured'] }) {
     <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold text-plum sm:text-4xl">{t.heading}</h2>
-          <p className="mt-2 text-muted">{t.sub}</p>
+          <h2 className="font-display text-3xl font-semibold text-plum sm:text-4xl">{t('heading')}</h2>
+          <p className="mt-2 text-muted">{t('sub')}</p>
         </div>
         <Link href="/events" className="hidden flex-shrink-0 items-center gap-1 text-sm font-semibold text-coral hover:text-coral-dark sm:flex">
-          {t.allEvents} <ArrowRight size={16} />
+          {t('allEvents')} <ArrowRight size={16} />
         </Link>
       </div>
 
@@ -95,12 +96,12 @@ export function FeaturedEvents({ t }: { t: LandingMessages['featured'] }) {
         onMouseLeave={() => { hoverRef.current = false; }}
         className={`mt-8 grid grid-cols-2 gap-3 transition-opacity duration-300 sm:grid-cols-3 lg:grid-cols-4 ${visible ? 'opacity-100' : 'opacity-0'}`}
       >
-        {items.map((s) => <EventCard key={s.id} show={s} priceFrom={t.priceFrom} />)}
+        {items.map((s) => <EventCard key={s.id} show={s} priceFrom={t('priceFrom')} />)}
       </div>
 
       <div className="mt-8 text-center sm:hidden">
         <Link href="/events" className="inline-flex items-center gap-1 text-sm font-semibold text-coral">
-          {t.allEvents} <ArrowRight size={16} />
+          {t('allEvents')} <ArrowRight size={16} />
         </Link>
       </div>
     </section>

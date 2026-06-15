@@ -1,0 +1,50 @@
+{
+  "landing": {
+    "nav": { "events": "Akce", "features": "Funkce", "how": "Jak to funguje", "login": "Přihlásit", "cta": "Začni zdarma" },
+    "hero": {
+      "badge": "Prodej vstupenek pro moderní pořadatele",
+      "title1": "Vstupenky, které",
+      "title2": "lidé milují.",
+      "subtitle": "Spusť prodej lístků online během pár minut – od malého koncertu po vyprodanou halu.",
+      "ctaPrimary": "Začni zdarma",
+      "ctaSecondary": "Prohlédnout akce"
+    },
+    "featured": {
+      "heading": "Vybrané akce",
+      "sub": "Nejnavštěvovanější a nejnovější akce, které právě frčí.",
+      "allEvents": "Všechny akce",
+      "priceFrom": "od",
+      "empty": "Momentálně nejsou zveřejněny žádné akce."
+    },
+    "features": {
+      "heading": "Všechny nástroje, jedna platforma",
+      "sub": "To, co jinde platíš zvlášť – u nás v jednom.",
+      "items": [
+        { "title": "AI podpora 24/7", "desc": "Chatovací asistent pomůže zákazníkům s lístky a objednávkami kdykoli." },
+        { "title": "Skenování a check-in", "desc": "Rychlé skenování QR u vstupu – funguje i offline." },
+        { "title": "Kupóny a slevy", "desc": "Promo kódy, slevy a kampaně na pár kliknutí." }
+      ]
+    },
+    "steps": {
+      "heading": "3 kroky ke spuštění akce",
+      "sub": "Od nápadu k prodeji za pár minut.",
+      "items": [
+        { "title": "Řekni nám o akci", "desc": "Název, místo, datum – přidáš pár detailů a máš hotovou stránku." },
+        { "title": "Nastav typy lístků", "desc": "Ceny, kapacity, slevy nebo plánek sálu podle potřeby." },
+        { "title": "Sdílej a prodávej", "desc": "Pošli odkaz, prodávej online a sleduj tržby v reálném čase." }
+      ]
+    },
+    "finalCta": {
+      "title": "Tvoje další akce si zaslouží lepší prodej.",
+      "sub": "Vytvoř akci zdarma. Platíš až když prodáváš.",
+      "button": "Začni zdarma"
+    },
+    "footer": {
+      "tagline": "Prodej vstupenek, který ti sedne.",
+      "product": "Produkt",
+      "company": "Společnost",
+      "links": { "events": "Akce", "features": "Funkce", "how": "Jak to funguje", "faq": "Časté dotazy", "organizers": "Pro pořadatele", "contact": "Kontakt" },
+      "rights": "Všechna práva vyhrazena."
+    }
+  }
+}

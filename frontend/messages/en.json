@@ -1,0 +1,50 @@
+{
+  "landing": {
+    "nav": { "events": "Events", "features": "Features", "how": "How it works", "login": "Sign in", "cta": "Start free" },
+    "hero": {
+      "badge": "Ticketing for modern organizers",
+      "title1": "Tickets people",
+      "title2": "love.",
+      "subtitle": "Start selling tickets online in minutes – from a tiny gig to a sold-out arena.",
+      "ctaPrimary": "Start free",
+      "ctaSecondary": "Browse events"
+    },
+    "featured": {
+      "heading": "Featured events",
+      "sub": "The most popular and newest events trending right now.",
+      "allEvents": "All events",
+      "priceFrom": "from",
+      "empty": "No events are published right now."
+    },
+    "features": {
+      "heading": "All the tools, one platform",
+      "sub": "What you pay extra for elsewhere – bundled here.",
+      "items": [
+        { "title": "AI support 24/7", "desc": "A chat assistant helps your buyers with tickets and orders anytime." },
+        { "title": "Scanning & check-in", "desc": "Fast QR scanning at the door – works offline too." },
+        { "title": "Coupons & discounts", "desc": "Promo codes, discounts and campaigns in a few clicks." }
+      ]
+    },
+    "steps": {
+      "heading": "3 steps to launch your event",
+      "sub": "From idea to selling in minutes.",
+      "items": [
+        { "title": "Tell us about the event", "desc": "Name, venue, date – add a few details and your page is ready." },
+        { "title": "Set up ticket types", "desc": "Prices, capacities, discounts or a seat map as needed." },
+        { "title": "Share & sell", "desc": "Share the link, sell online and track revenue in real time." }
+      ]
+    },
+    "finalCta": {
+      "title": "Your next event deserves better selling.",
+      "sub": "Create your event for free. You pay only when you sell.",
+      "button": "Start free"
+    },
+    "footer": {
+      "tagline": "Ticketing that feels right.",
+      "product": "Product",
+      "company": "Company",
+      "links": { "events": "Events", "features": "Features", "how": "How it works", "faq": "FAQ", "organizers": "For organizers", "contact": "Contact" },
+      "rights": "All rights reserved."
+    }
+  }
+}
