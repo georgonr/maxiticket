@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Res, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { UserRole } from '@prisma/client';
 import { RefundExportService } from './refund-export.service';
+import { EventCancelService } from './event-cancel.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -13,7 +14,21 @@ import { JwtPayload } from '../casl/casl-ability.factory';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER)
 export class RefundExportController {
-  constructor(private readonly svc: RefundExportService) {}
+  constructor(
+    private readonly svc: RefundExportService,
+    private readonly cancelSvc: EventCancelService,
+  ) {}
+
+  // Krok 27: zrušenie jedného termínu (occurrence). 409 ak už zrušený.
+  @Post(':eventId/occurrences/:occurrenceId/cancel')
+  @HttpCode(HttpStatus.OK)
+  cancelOccurrence(
+    @Param('eventId') eventId: string,
+    @Param('occurrenceId') occurrenceId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.cancelSvc.cancelOccurrence(eventId, occurrenceId, user);
+  }
 
   @Get(':eventId/refund-export')
   async exportRefunds(

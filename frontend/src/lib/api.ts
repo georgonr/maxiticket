@@ -176,6 +176,21 @@ export const refundExportApi = {
   },
 };
 
+// Krok 27: zrušenie jedného termínu (occurrence)
+export interface CancelOccurrenceResult {
+  occurrenceId: string;
+  status: string;
+  orderCount: number;
+  emailsSent: number;
+}
+export const eventOpsApi = {
+  cancelOccurrence: (eventId: string, occurrenceId: string, token: string) =>
+    apiFetch<CancelOccurrenceResult>(`/v1/events/${eventId}/occurrences/${occurrenceId}/cancel`, {
+      method: 'POST',
+      token,
+    }),
+};
+
 // Úloha 25: platobné brány (SUPERADMIN/STAFF)
 export type PaymentGatewayId = 'STRIPE_SANDBOX' | 'STRIPE_LIVE' | 'COMGATE_TEST' | 'COMGATE_LIVE';
 export interface PaymentGatewayStatus {

@@ -134,6 +134,45 @@ export class MailService {
     this.logger.log(`Sent ${data.tickets.length} ticket(s) to ${data.to}`);
   }
 
+  /** Krok 27: notifikácia o zrušení termínu (lístky zneplatnené + info o refunde). */
+  async sendTerminCancelled(data: {
+    to: string;
+    showName: string;
+    startsAt: Date;
+    timezone: string;
+    orderNumber: string;
+    refundInfo: string;
+  }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+    <h1 style="font-size:22px;margin:12px 0 4px;">Termín bol zrušený</h1>
+    <p style="color:#6b7280;margin:0;">Objednávka <strong>${data.orderNumber}</strong></p>
+  </div>
+  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:20px;">
+    <h2 style="font-size:18px;margin:0 0 8px;">${data.showName}</h2>
+    <p style="color:#374151;margin:4px 0;">📅 ${this.formatDate(data.startsAt, data.timezone)}</p>
+    <p style="color:#b91c1c;margin:12px 0 0;font-weight:600;">Tento termín bol zrušený a vaše lístky boli zneplatnené.</p>
+  </div>
+  <div style="background:#f9fafb;border-radius:8px;padding:16px;margin-bottom:20px;">
+    <p style="color:#374151;margin:0;"><strong>Vrátenie peňazí:</strong> ${data.refundInfo}</p>
+  </div>
+  <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
+    V prípade otázok kontaktujte organizátora podujatia.
+  </p>
+</body></html>`;
+
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `Termín zrušený – ${data.showName}`,
+      html,
+    });
+    this.logger.log(`Sent termin-cancelled notice to ${data.to} (order ${data.orderNumber})`);
+  }
+
   private async generateTicketPdf(
     data: TicketEmailData & {
       ticket: TicketEmailData['tickets'][0];

@@ -7,6 +7,7 @@ import { OrganizerOrdersController } from './organizer-orders.controller';
 import { PosController } from './pos.controller';
 import { RefundExportController } from './refund-export.controller';
 import { RefundExportService } from './refund-export.service';
+import { EventCancelService } from './event-cancel.service';
 import { MailModule } from '../mail/mail.module';
 import { PaymentModule } from '../payment/payment.module';
 import { CouponsModule } from '../coupons/coupons.module';
@@ -14,7 +15,7 @@ import { CouponsModule } from '../coupons/coupons.module';
 @Module({
   imports: [MailModule, PaymentModule, CouponsModule],
   controllers: [OrdersController, AdminOrdersController, OrganizerOrdersController, PosController, RefundExportController],
-  providers: [OrdersService, OrdersQueryService, RefundExportService],
+  providers: [OrdersService, OrdersQueryService, RefundExportService, EventCancelService],
   exports: [OrdersService, OrdersQueryService],
 })
 export class OrdersModule {}

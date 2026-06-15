@@ -3,7 +3,11 @@ import { OrderStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
 
-/** Úloha 26: CSV export platieb na manuálny refund (Stripe Dashboard) pri zrušení podujatia. */
+/**
+ * Úloha 26 + krok 27: CSV export platieb na manuálny refund.
+ * Dve sekcie: STRIPE (refund cez Dashboard) + POS (hotovosť/karta – refunduje organizátor ručne).
+ * comp/free do refundu nepatria. Zahŕňa PAID aj REFUND_PENDING (po zrušení termínu).
+ */
 @Injectable()
 export class RefundExportService {
   constructor(private prisma: PrismaService) {}
@@ -12,7 +16,6 @@ export class RefundExportService {
     return user.role === UserRole.SUPERADMIN || user.role === UserRole.STAFF;
   }
 
-  /** Vráti { filename, csv }. Len ADMIN/STAFF alebo ORGANIZER ktorý vlastní podujatie. */
   async exportCsv(eventId: string, occurrenceId: string | undefined, user: JwtPayload) {
     const show = await this.prisma.show.findUnique({
       where: { id: eventId },
@@ -23,11 +26,11 @@ export class RefundExportService {
       throw new ForbiddenException('Toto podujatie nepatrí vašej organizácii.');
     }
 
-    // Len reálne zaplatené Stripe platby (na refund cez Stripe Dashboard).
+    // Platby na refund: zaplatené alebo čakajúce na refund (po zrušení). comp/mock vylúčené.
     const orders = await this.prisma.order.findMany({
       where: {
-        status: OrderStatus.PAID,
-        paymentProvider: 'stripe',
+        status: { in: [OrderStatus.PAID, OrderStatus.REFUND_PENDING] },
+        paymentProvider: { in: ['stripe', 'pos_cash', 'pos_card'] },
         items: {
           some: { termin: { showId: eventId, ...(occurrenceId ? { id: occurrenceId } : {}) } },
         },
@@ -35,6 +38,7 @@ export class RefundExportService {
       select: {
         orderNumber: true,
         buyerEmail: true,
+        paymentProvider: true,
         paymentRef: true,
         totalAmount: true,
         currency: true,
@@ -44,18 +48,33 @@ export class RefundExportService {
       orderBy: { paidAt: 'asc' },
     });
 
-    const header = ['orderRef', 'buyerEmail', 'paymentIntentId', 'amount', 'currency', 'paidAt', 'status'];
-    const rows = orders.map((o) => [
-      o.orderNumber,
-      o.buyerEmail,
-      o.paymentRef ?? '',
-      Number(o.totalAmount).toFixed(2), // hlavná mena (EUR), nie centy
-      o.currency,
-      o.paidAt ? o.paidAt.toISOString() : '',
-      o.status,
-    ]);
+    const stripe = orders.filter((o) => o.paymentProvider === 'stripe');
+    const pos = orders.filter((o) => o.paymentProvider === 'pos_cash' || o.paymentProvider === 'pos_card');
 
-    const csv = [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+    const lines: string[] = [];
+    // Sekcia 1 – STRIPE (refund cez Dashboard podľa paymentIntentId)
+    lines.push('# STRIPE (refund cez Stripe Dashboard)');
+    lines.push(['orderRef', 'buyerEmail', 'paymentIntentId', 'amount', 'currency', 'paidAt', 'status'].join(','));
+    for (const o of stripe) {
+      lines.push([
+        o.orderNumber, o.buyerEmail, o.paymentRef ?? '',
+        Number(o.totalAmount).toFixed(2), o.currency,
+        o.paidAt ? o.paidAt.toISOString() : '', o.status,
+      ].map(csvCell).join(','));
+    }
+    // Sekcia 2 – POS (hotovosť/karta – refunduje organizátor ručne)
+    lines.push('');
+    lines.push('# POS – HOTOVOSŤ/KARTA (refunduje organizátor ručne)');
+    lines.push(['orderRef', 'buyerEmail', 'paymentMethod', 'amount', 'currency', 'paidAt', 'status'].join(','));
+    for (const o of pos) {
+      lines.push([
+        o.orderNumber, o.buyerEmail, o.paymentProvider ?? '',
+        Number(o.totalAmount).toFixed(2), o.currency,
+        o.paidAt ? o.paidAt.toISOString() : '', o.status,
+      ].map(csvCell).join(','));
+    }
+
+    const csv = lines.join('\r\n') + '\r\n';
     const suffix = occurrenceId ? `${show.slug}-${occurrenceId}` : show.slug;
     return { filename: `refund-export-${suffix}.csv`, csv, count: orders.length };
   }

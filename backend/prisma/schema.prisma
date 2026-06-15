@@ -65,6 +65,7 @@ enum OrderStatus {
   REFUND_REQUESTED  // customer požiadal o vrátenie (Úloha 20)
   REFUND_APPROVED   // schválené, čaká na vykonanie refundu (Stripe manuálne / comp-pos rovno)
   REFUND_REJECTED   // žiadosť zamietnutá (Order sa reálne vracia na PAID; hodnota pre audit/úplnosť)
+  REFUND_PENDING    // krok 27: termín zrušený → čaká na manuálny refund (Stripe Dashboard / POS hotovosť)
   REFUNDED
   CANCELLED
   FAILED

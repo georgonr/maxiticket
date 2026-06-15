@@ -4,9 +4,10 @@ import { useEffect, useState, useRef, ChangeEvent, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
-import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi, refundExportApi } from '@/lib/api';
+import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi, refundExportApi, eventOpsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { CouponsSection } from '@/components/coupons/CouponsSection';
+import { CancelTerminModal } from '@/components/shows/CancelTerminModal';
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300',
@@ -109,6 +110,19 @@ export default function ShowDetailPage() {
   }
 
   const [exporting, setExporting] = useState(false);
+  const [cancelTermin, setCancelTermin] = useState<Termin | null>(null);
+  const [notice, setNotice] = useState('');
+
+  // Krok 27: zrušenie termínu (po potvrdení v modáli).
+  async function handleCancelTermin(occurrenceId: string) {
+    const token = await getValidToken();
+    if (!token) { router.replace('/login'); return; }
+    const res = await eventOpsApi.cancelOccurrence(id, occurrenceId, token);
+    setCancelTermin(null);
+    setNotice(`Termín zrušený. Objednávky na refund: ${res.orderCount}, odoslaných e-mailov: ${res.emailsSent}.`);
+    await load(token);
+  }
+
   // Úloha 26: stiahne CSV platieb na manuálny refund (príprava na zrušenie podujatia).
   async function handleRefundExport(occurrenceId?: string) {
     setError('');
@@ -151,6 +165,9 @@ export default function ShowDetailPage() {
       <main className="mx-auto max-w-4xl p-8 space-y-6">
         {error && (
           <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+        )}
+        {notice && (
+          <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">{notice}</div>
         )}
 
         {/* Show header */}
@@ -291,6 +308,8 @@ export default function ShowDetailPage() {
                   onDelete={() => handleDeleteTermin(termin.id)}
                   onDeleteTicketType={(ttId) => handleDeleteTicketType(termin.id, ttId)}
                   onAddTicketType={() => router.push(`/organizer/shows/${id}/termins/${termin.id}/ticket-types`)}
+                  onRequestCancel={() => setCancelTermin(termin)}
+                  onExportRefund={() => handleRefundExport(termin.id)}
                 />
               ))}
             </div>
@@ -307,21 +326,33 @@ export default function ShowDetailPage() {
           )}
         />
       </main>
+
+      {cancelTermin && (
+        <CancelTerminModal
+          showName={show.name}
+          terminLabel={new Date(cancelTermin.startsAt).toLocaleString('sk-SK')}
+          onClose={() => setCancelTermin(null)}
+          onConfirm={() => handleCancelTermin(cancelTermin.id)}
+        />
+      )}
     </div>
   );
 }
 
 function TerminCard({
-  termin, showId, onDelete, onDeleteTicketType, onAddTicketType,
+  termin, showId, onDelete, onDeleteTicketType, onAddTicketType, onRequestCancel, onExportRefund,
 }: {
   termin: Termin;
   showId: string;
   onDelete: () => void;
   onDeleteTicketType: (id: string) => void;
   onAddTicketType: () => void;
+  onRequestCancel: () => void;
+  onExportRefund: () => void;
 }) {
   const date = new Date(termin.startsAt).toLocaleString('sk-SK');
   const ticketTypes: TicketType[] = termin.ticketTypes ?? [];
+  const isCancelled = termin.status === 'CANCELLED';
 
   return (
     <div className="rounded-md border border-gray-200 dark:border-gray-800 p-4">
@@ -332,10 +363,16 @@ function TerminCard({
             <p className="text-xs text-gray-500 dark:text-gray-400">{termin.venue.name}{termin.venue.city ? `, ${termin.venue.city}` : ''}</p>
           )}
           <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[termin.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
-            {termin.status}
+            {isCancelled ? 'ZRUŠENÝ' : termin.status}
           </span>
         </div>
-        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={onDelete}>Odstrániť</Button>
+        <div className="flex flex-col items-end gap-1.5">
+          <button onClick={onExportRefund} className="text-xs text-brand hover:underline">Export refund CSV</button>
+          {!isCancelled && (
+            <button onClick={onRequestCancel} className="text-xs font-medium text-red-600 hover:underline">Zrušiť termín</button>
+          )}
+          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={onDelete}>Odstrániť</Button>
+        </div>
       </div>
 
       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
