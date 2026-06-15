@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ZoomIn, ZoomOut, Maximize2, Accessibility } from 'lucide-react';
 import { Section, SECTION_COLORS } from '@/lib/api/seatmaps';
 
@@ -55,6 +56,7 @@ function layout(sections: Section[]): { boxes: Box[]; width: number; height: num
 }
 
 export function SeatMapCanvas({ sections }: { sections: Section[] }) {
+  const t = useTranslations('organizer.seatmap');
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(20);
@@ -118,9 +120,9 @@ export function SeatMapCanvas({ sections }: { sections: Section[] }) {
     <div className="relative h-full w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950">
       {/* ovládače */}
       <div className="absolute right-3 top-3 z-10 flex flex-col gap-1.5">
-        <button onClick={() => zoomBtn(1)} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1.5 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" aria-label="Priblížiť"><ZoomIn size={16} /></button>
-        <button onClick={() => zoomBtn(-1)} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1.5 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" aria-label="Oddialiť"><ZoomOut size={16} /></button>
-        <button onClick={fit} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1.5 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" aria-label="Vycentrovať"><Maximize2 size={16} /></button>
+        <button onClick={() => zoomBtn(1)} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1.5 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" aria-label={t('canvas.zoomIn')}><ZoomIn size={16} /></button>
+        <button onClick={() => zoomBtn(-1)} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1.5 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" aria-label={t('canvas.zoomOut')}><ZoomOut size={16} /></button>
+        <button onClick={fit} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1.5 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800" aria-label={t('canvas.fit')}><Maximize2 size={16} /></button>
       </div>
 
       {/* hover label */}
@@ -139,7 +141,7 @@ export function SeatMapCanvas({ sections }: { sections: Section[] }) {
         onMouseUp={endDrag}
         onMouseLeave={endDrag}
       >
-        <svg className="h-full w-full select-none" role="img" aria-label="Náhľad plánu haly">
+        <svg className="h-full w-full select-none" role="img" aria-label={t('canvas.ariaLabel')}>
           <g transform={`translate(${tx},${ty}) scale(${scale})`}>
             {boxes.map((box, idx) => {
               const c = colorFor(box.section, idx);
@@ -149,14 +151,14 @@ export function SeatMapCanvas({ sections }: { sections: Section[] }) {
                     <>
                       <rect width={box.w} height={box.h} rx={12} fill={c} fillOpacity={0.14} stroke={c} strokeWidth={2} />
                       <text x={box.w / 2} y={box.h / 2 - 6} textAnchor="middle" className="fill-gray-900 dark:fill-gray-100" style={{ fontSize: 15, fontWeight: 700 }}>{box.section.name}</text>
-                      <text x={box.w / 2} y={box.h / 2 + 14} textAnchor="middle" fill={c} style={{ fontSize: 12, fontWeight: 600 }}>kapacita: {box.section.capacity ?? 0}</text>
+                      <text x={box.w / 2} y={box.h / 2 + 14} textAnchor="middle" fill={c} style={{ fontSize: 12, fontWeight: 600 }}>{t('canvas.capacityLabel', { count: box.section.capacity ?? 0 })}</text>
                     </>
                   ) : box.simplified ? (
                     <>
                       <rect width={box.w} height={box.h} rx={12} fill={c} fillOpacity={0.14} stroke={c} strokeWidth={2} strokeDasharray="6 4" />
                       <text x={box.w / 2} y={box.h / 2 - 6} textAnchor="middle" className="fill-gray-900 dark:fill-gray-100" style={{ fontSize: 15, fontWeight: 700 }}>{box.section.name}</text>
                       <text x={box.w / 2} y={box.h / 2 + 14} textAnchor="middle" fill={c} style={{ fontSize: 12, fontWeight: 600 }}>
-                        {box.section.rows.reduce((s, r) => s + r.seats.length, 0)} sedadiel (náhľad zjednodušený)
+                        {t('canvas.simplifiedSeats', { count: box.section.rows.reduce((s, r) => s + r.seats.length, 0) })}
                       </text>
                     </>
                   ) : (
@@ -184,7 +186,7 @@ export function SeatMapCanvas({ sections }: { sections: Section[] }) {
                                   onMouseLeave={() => setHover(null)}
                                   style={{ cursor: 'pointer' }}
                                 >
-                                  <title>{box.section.name} · {seat.label}{seat.isAccessible ? ' (bezbariérové)' : ''}</title>
+                                  <title>{box.section.name} · {seat.label}{seat.isAccessible ? ` (${t('canvas.accessible')})` : ''}</title>
                                 </circle>
                               );
                             })}
@@ -202,9 +204,9 @@ export function SeatMapCanvas({ sections }: { sections: Section[] }) {
 
       {/* legenda */}
       <div className="absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-white/90 dark:bg-gray-900/90 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 shadow-sm">
-        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded-full border-2 border-current bg-current opacity-55" /> sedadlo</span>
-        <span className="flex items-center gap-1"><Accessibility size={13} /> bezbariérové</span>
-        <span>zoom: koliesko · posun: ťahaj pozadie</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded-full border-2 border-current bg-current opacity-55" /> {t('canvas.legend.seat')}</span>
+        <span className="flex items-center gap-1"><Accessibility size={13} /> {t('canvas.accessible')}</span>
+        <span>{t('canvas.legend.hint')}</span>
       </div>
     </div>
   );

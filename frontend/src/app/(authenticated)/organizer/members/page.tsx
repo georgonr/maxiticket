@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations, useFormatter } from 'next-intl';
 import { clsx } from 'clsx';
 import { Users, UserPlus, Power, Trash2, Send } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
@@ -10,23 +11,31 @@ import { membersApi, Member } from '@/lib/api/members';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { InviteMemberModal } from '@/components/members/InviteMemberModal';
 
-function readableError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 401 || e.status === 403) return 'Nemáte oprávnenie spravovať tím.';
-    if (e.status >= 500) return 'Chyba servera. Skúste neskôr.';
-    return e.message || 'Niečo sa pokazilo.';
-  }
-  return 'Nemôžeme sa pripojiť k serveru.';
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Intl.DateTimeFormat('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric' }).format(new Date(iso));
-}
-
 export default function MembersPage() {
+  const t = useTranslations('organizer.members');
+  const format = useFormatter();
   const { user, isLoading: authLoading } = useAuth();
   const canManage = user?.role === 'ORGANIZER_OWNER' || user?.role === 'SUPERADMIN' || user?.role === 'STAFF';
+
+  const readableError = useCallback(
+    (e: unknown): string => {
+      if (e instanceof ApiError) {
+        if (e.status === 401 || e.status === 403) return t('error.forbidden');
+        if (e.status >= 500) return t('error.server');
+        return e.message || t('error.generic');
+      }
+      return t('error.network');
+    },
+    [t],
+  );
+
+  const formatDate = useCallback(
+    (iso: string | null): string => {
+      if (!iso) return '—';
+      return format.dateTime(new Date(iso), { day: 'numeric', month: 'numeric', year: 'numeric' });
+    },
+    [format],
+  );
 
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +76,7 @@ export default function MembersPage() {
       if (!token) throw new ApiError(401, 'No token');
       const updated = await membersApi.setActive(m.id, !m.isActive, token);
       setMembers((prev) => prev.map((x) => (x.id === m.id ? updated : x)));
-      setToast({ msg: updated.isActive ? 'Člen aktivovaný.' : 'Člen deaktivovaný.', ok: true });
+      setToast({ msg: updated.isActive ? t('toast.activated') : t('toast.deactivated'), ok: true });
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
     } finally {
@@ -81,7 +90,7 @@ export default function MembersPage() {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       await membersApi.resendInvite(m.id, token);
-      setToast({ msg: `Pozvánka znova odoslaná na ${m.email}.`, ok: true });
+      setToast({ msg: t('toast.inviteResent', { email: m.email }), ok: true });
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
     } finally {
@@ -90,14 +99,14 @@ export default function MembersPage() {
   }
 
   async function remove(m: Member) {
-    if (!window.confirm(`Naozaj odstrániť člena ${m.email} z tímu?`)) return;
+    if (!window.confirm(t('confirmRemove', { email: m.email }))) return;
     setBusyId(m.id);
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       await membersApi.delete(m.id, token);
       setMembers((prev) => prev.filter((x) => x.id !== m.id));
-      setToast({ msg: `Člen ${m.email} odstránený.`, ok: true });
+      setToast({ msg: t('toast.removed', { email: m.email }), ok: true });
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
     } finally {
@@ -112,9 +121,9 @@ export default function MembersPage() {
   }
 
   function statusBadge(m: Member) {
-    if (m.pending) return { label: 'Čaká na prijatie', cls: 'bg-amber-50 text-amber-700' };
-    if (!m.isActive) return { label: 'Deaktivovaný', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
-    return { label: 'Aktívny', cls: 'bg-emerald-50 text-emerald-700' };
+    if (m.pending) return { label: t('status.pending'), cls: 'bg-amber-50 text-amber-700' };
+    if (!m.isActive) return { label: t('status.deactivated'), cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
+    return { label: t('status.active'), cls: 'bg-emerald-50 text-emerald-700' };
   }
 
   return (
@@ -122,10 +131,9 @@ export default function MembersPage() {
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tím</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Členovia tímu spravujú podujatia, pokladňu a skenovanie. Nemajú prístup k uzávierkam,
-              skenerom ani údajom firmy.
+              {t('subtitle')}
             </p>
           </div>
           {canManage && (
@@ -133,7 +141,7 @@ export default function MembersPage() {
               onClick={() => setShowInvite(true)}
               className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-dark"
             >
-              <UserPlus size={16} /> Pozvať člena
+              <UserPlus size={16} /> {t('inviteMember')}
             </button>
           )}
         </div>
@@ -145,25 +153,25 @@ export default function MembersPage() {
         )}
 
         {!canManage && !authLoading ? (
-          <ErrorState message="Správa tímu je dostupná len pre vlastníka organizácie." />
+          <ErrorState message={t('noPermission')} />
         ) : error ? (
           <ErrorState message={error} />
         ) : (
-          <SectionCard title={`Členovia${!loading ? ` (${members.length})` : ''}`}>
+          <SectionCard title={`${t('membersTitle')}${!loading ? ` (${members.length})` : ''}`}>
             {loading ? (
               <Skeleton className="h-40" />
             ) : members.length === 0 ? (
-              <EmptyState message="Žiadni členovia tímu. Pozvite prvého kolegu." />
+              <EmptyState message={t('empty')} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
-                      <th className="py-2 pr-3 font-medium">E-mail</th>
-                      <th className="py-2 px-3 font-medium">Meno</th>
-                      <th className="py-2 px-3 font-medium">Stav</th>
-                      <th className="py-2 px-3 font-medium">Vytvorený</th>
-                      <th className="py-2 pl-3 font-medium text-right">Akcie</th>
+                      <th className="py-2 pr-3 font-medium">{t('col.email')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.name')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.status')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.created')}</th>
+                      <th className="py-2 pl-3 font-medium text-right">{t('col.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -178,16 +186,16 @@ export default function MembersPage() {
                           <td className="py-2.5 pl-3">
                             <div className="flex items-center justify-end gap-1">
                               {m.pending && (
-                                <button onClick={() => resend(m)} disabled={busyId === m.id} className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-brand hover:bg-brand/5 disabled:opacity-40" title="Znova poslať pozvánku">
-                                  <Send size={13} /> Pozvánka
+                                <button onClick={() => resend(m)} disabled={busyId === m.id} className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-brand hover:bg-brand/5 disabled:opacity-40" title={t('action.resendTitle')}>
+                                  <Send size={13} /> {t('action.invite')}
                                 </button>
                               )}
                               {!m.pending && (
-                                <button onClick={() => toggleActive(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40" title={m.isActive ? 'Deaktivovať' : 'Aktivovať'}>
+                                <button onClick={() => toggleActive(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40" title={m.isActive ? t('action.deactivate') : t('action.activate')}>
                                   <Power size={15} className={m.isActive ? 'text-emerald-600' : ''} />
                                 </button>
                               )}
-                              <button onClick={() => remove(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-40" title="Odstrániť">
+                              <button onClick={() => remove(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-40" title={t('action.remove')}>
                                 <Trash2 size={15} />
                               </button>
                             </div>
@@ -203,7 +211,7 @@ export default function MembersPage() {
         )}
 
         <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-          <Users size={15} /> Pozvaný člen dostane e-mail s odkazom na nastavenie hesla (platnosť 7 dní).
+          <Users size={15} /> {t('footerNote')}
         </div>
       </main>
 

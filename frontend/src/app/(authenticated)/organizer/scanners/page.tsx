@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
+import { useTranslations, useFormatter } from 'next-intl';
 import { ScanLine, Plus, Trash2, Power, KeyRound } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,26 +12,35 @@ import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dash
 import { CreateScannerModal } from '@/components/scanners/CreateScannerModal';
 import { ChangeScannerPasswordModal } from '@/components/scanners/ChangeScannerPasswordModal';
 
-function readableError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 401 || e.status === 403) return 'Nemáte oprávnenie spravovať skenerov.';
-    if (e.status >= 500) return 'Chyba servera. Skúste neskôr.';
-    return e.message || 'Niečo sa pokazilo.';
-  }
-  return 'Nemôžeme sa pripojiť k serveru.';
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Intl.DateTimeFormat('sk-SK', {
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-  }).format(new Date(iso));
-}
-
 export default function ScannersPage() {
+  const t = useTranslations('organizer.scanners');
+  const format = useFormatter();
   const { user, isLoading: authLoading } = useAuth();
+
+  const readableError = useCallback(
+    (e: unknown): string => {
+      if (e instanceof ApiError) {
+        if (e.status === 401 || e.status === 403) return t('error.forbidden');
+        if (e.status >= 500) return t('error.server');
+        return e.message || t('error.generic');
+      }
+      return t('error.network');
+    },
+    [t],
+  );
+
+  const formatDate = useCallback(
+    (iso: string | null): string => {
+      if (!iso) return '—';
+      return format.dateTime(new Date(iso), {
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric',
+      });
+    },
+    [format],
+  );
+
   const canManage = user?.role === 'ORGANIZER_OWNER' || user?.role === 'SUPERADMIN';
 
   const [scanners, setScanners] = useState<Scanner[]>([]);
@@ -73,7 +83,7 @@ export default function ScannersPage() {
       if (!token) throw new ApiError(401, 'No token');
       const updated = await scannersApi.setActive(s.id, !s.isActive, token);
       setScanners((prev) => prev.map((x) => (x.id === s.id ? updated : x)));
-      setToast({ msg: updated.isActive ? 'Scanner aktivovaný.' : 'Scanner deaktivovaný.', ok: true });
+      setToast({ msg: updated.isActive ? t('toast.activated') : t('toast.deactivated'), ok: true });
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
     } finally {
@@ -82,14 +92,14 @@ export default function ScannersPage() {
   }
 
   async function removeScanner(s: Scanner) {
-    if (!window.confirm(`Naozaj zmazať scanner účet ${s.email}? Túto akciu nie je možné vrátiť.`)) return;
+    if (!window.confirm(t('confirmDelete', { email: s.email }))) return;
     setBusyId(s.id);
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       await scannersApi.delete(s.id, token);
       setScanners((prev) => prev.filter((x) => x.id !== s.id));
-      setToast({ msg: `Scanner ${s.email} zmazaný.`, ok: true });
+      setToast({ msg: t('toast.deleted', { email: s.email }), ok: true });
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
     } finally {
@@ -109,17 +119,15 @@ export default function ScannersPage() {
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Skeneri</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Účty pre personál na vstupe – môžu výhradne skenovať vstupenky vašich podujatí.
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('subtitle')}</p>
           </div>
           {canManage && (
             <button
               onClick={() => setShowCreate(true)}
               className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-dark"
             >
-              <Plus size={16} /> Pridať skenera
+              <Plus size={16} /> {t('add')}
             </button>
           )}
         </div>
@@ -136,25 +144,25 @@ export default function ScannersPage() {
         )}
 
         {!canManage && !authLoading ? (
-          <ErrorState message="Správa skenerov je dostupná len pre vlastníka organizácie." />
+          <ErrorState message={t('forbiddenManage')} />
         ) : error ? (
           <ErrorState message={error} />
         ) : (
-          <SectionCard title={`Scanner účty${!loading ? ` (${scanners.length})` : ''}`}>
+          <SectionCard title={`${t('cardTitle')}${!loading ? ` (${scanners.length})` : ''}`}>
             {loading ? (
               <Skeleton className="h-40" />
             ) : scanners.length === 0 ? (
-              <EmptyState message="Žiadne scanner účty. Vytvorte prvý pre personál na vstupe." />
+              <EmptyState message={t('empty')} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
-                      <th className="py-2 pr-3 font-medium">E-mail</th>
-                      <th className="py-2 px-3 font-medium">Meno</th>
-                      <th className="py-2 px-3 font-medium">Stav</th>
-                      <th className="py-2 px-3 font-medium">Vytvorený</th>
-                      <th className="py-2 pl-3 font-medium text-right">Akcie</th>
+                      <th className="py-2 pr-3 font-medium">{t('col.email')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.name')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.status')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.created')}</th>
+                      <th className="py-2 pl-3 font-medium text-right">{t('col.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -171,7 +179,7 @@ export default function ScannersPage() {
                                 : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
                             )}
                           >
-                            {s.isActive ? 'Aktívny' : 'Deaktivovaný'}
+                            {s.isActive ? t('status.active') : t('status.inactive')}
                           </span>
                         </td>
                         <td className="px-3 text-gray-500 dark:text-gray-400">{formatDate(s.createdAt)}</td>
@@ -181,7 +189,7 @@ export default function ScannersPage() {
                               onClick={() => setPwScanner(s)}
                               disabled={busyId === s.id}
                               className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40"
-                              title="Zmeniť heslo"
+                              title={t('action.changePassword')}
                             >
                               <KeyRound size={15} />
                             </button>
@@ -189,7 +197,7 @@ export default function ScannersPage() {
                               onClick={() => toggleActive(s)}
                               disabled={busyId === s.id}
                               className="inline-flex items-center gap-1 rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40"
-                              title={s.isActive ? 'Deaktivovať' : 'Aktivovať'}
+                              title={s.isActive ? t('action.deactivate') : t('action.activate')}
                             >
                               <Power size={15} className={s.isActive ? 'text-emerald-600' : ''} />
                             </button>
@@ -197,7 +205,7 @@ export default function ScannersPage() {
                               onClick={() => removeScanner(s)}
                               disabled={busyId === s.id}
                               className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
-                              title="Zmazať"
+                              title={t('action.delete')}
                             >
                               <Trash2 size={15} />
                             </button>
@@ -214,8 +222,7 @@ export default function ScannersPage() {
 
         {!loading && scanners.length === 0 && canManage && (
           <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-            <ScanLine size={15} /> Skeneri sa prihlasujú cez prihlasovaciu stránku a sú presmerovaní
-            na skener.ticketall.eu.
+            <ScanLine size={15} /> {t('hint')}
           </div>
         )}
       </main>

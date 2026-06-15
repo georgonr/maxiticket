@@ -1162,6 +1162,306 @@
           "confirm": "Close"
         }
       }
+    },
+    "venues": {
+      "title": "Venues",
+      "subtitle": "Reusable halls and venues. When creating a date you pick a venue from the database.",
+      "addVenue": "Add venue",
+      "listTitle": "Venues",
+      "empty": "No venues. Create your first one for your events.",
+      "sharedHint": "Shared venues are managed by the administrator and are read-only for you (you can create dates on them).",
+      "col": {
+        "name": "Name",
+        "city": "City",
+        "address": "Address",
+        "capacity": "Capacity",
+        "type": "Type",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "type": {
+        "global": "Global",
+        "organizer": "Organizer",
+        "own": "Own",
+        "shared": "Shared"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Deactivated"
+      },
+      "action": {
+        "activate": "Activate",
+        "seatmaps": "Seating plans",
+        "share": "Share with organizers",
+        "edit": "Edit",
+        "delete": "Delete",
+        "readOnly": "Read-only"
+      },
+      "confirm": {
+        "delete": "Really delete venue {name}? If it is linked to dates, it will only be deactivated."
+      },
+      "toast": {
+        "deactivated": "Venue {name} deactivated (has dates).",
+        "deleted": "Venue {name} deleted.",
+        "activated": "Venue {name} activated.",
+        "saved": "Venue {name} saved.",
+        "created": "Venue {name} created."
+      },
+      "error": {
+        "noPermission": "You do not have permission to manage venues.",
+        "server": "Server error. Try again later.",
+        "generic": "Something went wrong.",
+        "connect": "We cannot connect to the server."
+      },
+      "form": {
+        "createTitle": "Add venue",
+        "editTitle": "Edit venue",
+        "close": "Close",
+        "label": {
+          "name": "Name *",
+          "city": "City",
+          "postalCode": "Postal code",
+          "address": "Address",
+          "capacity": "Capacity",
+          "notes": "Note"
+        },
+        "placeholder": {
+          "name": "e.g. City Hall",
+          "address": "Street and number",
+          "capacity": "e.g. 500"
+        },
+        "globalVenue": "Global venue (shared with all organizers)",
+        "cancel": "Cancel",
+        "save": "Save",
+        "create": "Create",
+        "error": {
+          "nameMin": "Venue name must be at least 2 characters.",
+          "capacity": "Capacity must be a non-negative integer.",
+          "loginRequired": "Sign-in required.",
+          "saveFailed": "Saving failed."
+        }
+      },
+      "access": {
+        "title": "Share venue",
+        "searchPlaceholder": "Search organizer…",
+        "loading": "Loading…",
+        "noOrganizers": "No organizers.",
+        "selectedCount": "{count} selected",
+        "toast": {
+          "saved": "Sharing of venue “{name}\" saved ({count})."
+        },
+        "error": {
+          "loginRequired": "Sign-in required.",
+          "loadFailed": "Loading failed.",
+          "saveFailed": "Saving failed."
+        }
+      }
+    },
+    "seatmap": {
+      "error": {
+        "server": "Server error. Please try again later.",
+        "generic": "Something went wrong.",
+        "network": "We can't connect to the server."
+      },
+      "badge": {
+        "default": "Default"
+      },
+      "action": {
+        "setDefault": "Set as default",
+        "rename": "Rename",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "prompt": {
+        "rename": "New seat map name"
+      },
+      "toast": {
+        "renamed": "Seat map renamed."
+      },
+      "list": {
+        "title": "Seating maps",
+        "titleWithVenue": "Seating maps — {venue}",
+        "subtitle": "A single hall can have several layouts (theatre, concert…). You assign the map to a date later.",
+        "backToVenues": "Back to venues",
+        "newMap": "New map",
+        "cardTitle": "Maps",
+        "cardTitleCount": "Maps ({count})",
+        "openEditor": "Open editor",
+        "view": "View",
+        "sectionCount": "{count} sections",
+        "capacity": "capacity {count}",
+        "empty": {
+          "canManage": "No map yet. Create the first one.",
+          "readonly": "This venue has no seating map."
+        },
+        "prompt": {
+          "create": "Name of the new map (e.g. “Theatre layout”)"
+        },
+        "confirm": {
+          "delete": "Really delete the map “{name}” including all sections and seats?"
+        },
+        "toast": {
+          "setDefault": "“{name}” is now the default map.",
+          "deleted": "Map “{name}” deleted."
+        },
+        "error": {
+          "forbidden": "You don't have permission to manage maps for this venue.",
+          "notFound": "Venue not found."
+        }
+      },
+      "editor": {
+        "backToMaps": "Back to maps",
+        "capacity": "capacity {count}",
+        "setDefault": "Set default",
+        "sectionsTitle": "Sections ({count})",
+        "addSection": "Add",
+        "noSections": "No sections.",
+        "noSectionsHint": "Add the first one (capacity or seated).",
+        "modeSectioned": "Capacity",
+        "modeSeated": "Seated",
+        "seatsCount": "{count} seats",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "canvasEmpty": "The hall preview will appear once you add sections.",
+        "confirm": {
+          "deleteSection": "Delete section “{name}”?",
+          "deleteSectionSeated": "Delete section “{name}” including seats?"
+        },
+        "toast": {
+          "setDefault": "Set as the default map.",
+          "sectionDeleted": "Section “{name}” deleted."
+        },
+        "error": {
+          "forbidden": "You don't have permission to edit this map.",
+          "notFound": "Map not found."
+        }
+      },
+      "canvas": {
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "fit": "Fit to view",
+        "ariaLabel": "Hall layout preview",
+        "capacityLabel": "capacity: {count}",
+        "simplifiedSeats": "{count} seats (simplified preview)",
+        "accessible": "accessible",
+        "legend": {
+          "seat": "seat",
+          "hint": "zoom: wheel · pan: drag background"
+        }
+      }
+    },
+    "members": {
+      "title": "Team",
+      "subtitle": "Team members manage events, the box office and scanning. They have no access to closures, scanners or company data.",
+      "inviteMember": "Invite member",
+      "membersTitle": "Members",
+      "noPermission": "Team management is available only to the organization owner.",
+      "empty": "No team members yet. Invite your first colleague.",
+      "footerNote": "The invited member receives an e-mail with a password setup link (valid for 7 days).",
+      "confirmRemove": "Really remove member {email} from the team?",
+      "col": {
+        "email": "E-mail",
+        "name": "Name",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Awaiting acceptance",
+        "deactivated": "Deactivated",
+        "active": "Active"
+      },
+      "action": {
+        "invite": "Invitation",
+        "resendTitle": "Resend invitation",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "remove": "Remove"
+      },
+      "toast": {
+        "activated": "Member activated.",
+        "deactivated": "Member deactivated.",
+        "inviteResent": "Invitation resent to {email}.",
+        "removed": "Member {email} removed."
+      },
+      "error": {
+        "forbidden": "You are not allowed to manage the team.",
+        "server": "Server error. Please try again later.",
+        "generic": "Something went wrong.",
+        "network": "We cannot connect to the server."
+      }
+    },
+    "scanners": {
+      "title": "Scanners",
+      "subtitle": "Accounts for entrance staff – they can only scan tickets for your events.",
+      "add": "Add scanner",
+      "forbiddenManage": "Scanner management is available only to the organization owner.",
+      "cardTitle": "Scanner accounts",
+      "empty": "No scanner accounts. Create the first one for your entrance staff.",
+      "hint": "Scanners sign in via the login page and are redirected to skener.ticketall.eu.",
+      "confirmDelete": "Really delete scanner account {email}? This action cannot be undone.",
+      "col": {
+        "email": "E-mail",
+        "name": "Name",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Deactivated"
+      },
+      "action": {
+        "changePassword": "Change password",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "delete": "Delete"
+      },
+      "toast": {
+        "activated": "Scanner activated.",
+        "deactivated": "Scanner deactivated.",
+        "deleted": "Scanner {email} deleted."
+      },
+      "error": {
+        "forbidden": "You do not have permission to manage scanners.",
+        "server": "Server error. Try again later.",
+        "generic": "Something went wrong.",
+        "network": "We cannot connect to the server."
+      }
+    },
+    "settings": {
+      "title": "Company details",
+      "subtitle": "These details are shown on tickets and tax documents as required by law.",
+      "backToDashboard": "Dashboard",
+      "companyNameLabel": "Legal company name",
+      "companyNamePlaceholder": "E.g. Acme Ltd.",
+      "icoLabel": "Company ID (IČO)",
+      "icoPlaceholder": "8 digits",
+      "icDphLabel": "VAT ID (IČ DPH)",
+      "icDphPlaceholder": "SK1234567890",
+      "vatPayerLabel": "We are a VAT payer",
+      "vatRateLabel": "VAT rate (%)",
+      "vatRatePlaceholder": "Leave empty for the country's standard rate",
+      "addressSection": "Registered address",
+      "streetLabel": "Street and number",
+      "streetPlaceholder": "E.g. Hlavná 1",
+      "zipLabel": "ZIP code",
+      "zipPlaceholder": "81101",
+      "cityLabel": "City",
+      "cityPlaceholder": "Bratislava",
+      "countryLabel": "Country",
+      "countryPlaceholder": "SK",
+      "bankAccountLabel": "IBAN (optional)",
+      "bankAccountPlaceholder": "SK00 0000 0000 0000 0000 0000",
+      "saveButton": "Save details",
+      "toastSaved": "Company details saved",
+      "toastInvalid": "Please check your input – one of the fields is invalid.",
+      "toastSaveFailed": "Could not save the details.",
+      "errorLoad": "Could not load the company details.",
+      "errorIcoRequired": "Company ID is required for a VAT payer.",
+      "errorIcoFormat": "Company ID must have 8 digits.",
+      "errorIcDphFormat": "VAT ID must be in the format e.g. SK1234567890.",
+      "errorZipFormat": "ZIP code must have 5 digits."
     }
   }
 }

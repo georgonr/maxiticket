@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 import { MapPin, Plus, Pencil, Trash2, Globe, LayoutGrid, Share2 } from 'lucide-react';
@@ -11,17 +12,18 @@ import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dash
 import { VenueFormModal } from '@/components/venues/VenueFormModal';
 import { VenueAccessModal } from '@/components/venues/VenueAccessModal';
 
-function readableError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 401 || e.status === 403) return 'Nemáte oprávnenie spravovať miesta.';
-    if (e.status >= 500) return 'Chyba servera. Skúste neskôr.';
-    return e.message || 'Niečo sa pokazilo.';
-  }
-  return 'Nemôžeme sa pripojiť k serveru.';
-}
-
 export default function VenuesPage() {
+  const t = useTranslations('organizer.venues');
   const { user } = useAuth();
+
+  const readableError = useCallback((e: unknown): string => {
+    if (e instanceof ApiError) {
+      if (e.status === 401 || e.status === 403) return t('error.noPermission');
+      if (e.status >= 500) return t('error.server');
+      return e.message || t('error.generic');
+    }
+    return t('error.connect');
+  }, [t]);
   const isSuper = user?.role === 'SUPERADMIN' || user?.role === 'STAFF';
 
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -51,7 +53,7 @@ export default function VenuesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [readableError]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -62,13 +64,13 @@ export default function VenuesPage() {
   }, [toast]);
 
   async function remove(v: Venue) {
-    if (!window.confirm(`Naozaj zmazať miesto ${v.name}? Ak je naviazané na termíny, len sa deaktivuje.`)) return;
+    if (!window.confirm(t('confirm.delete', { name: v.name }))) return;
     setBusyId(v.id);
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       const res = await venuesApi.remove(v.id, token);
-      setToast({ msg: res.deactivated ? `Miesto ${v.name} deaktivované (má termíny).` : `Miesto ${v.name} zmazané.`, ok: true });
+      setToast({ msg: res.deactivated ? t('toast.deactivated', { name: v.name }) : t('toast.deleted', { name: v.name }), ok: true });
       load();
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
@@ -83,7 +85,7 @@ export default function VenuesPage() {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       await venuesApi.update(v.id, { isActive: true }, token);
-      setToast({ msg: `Miesto ${v.name} aktivované.`, ok: true });
+      setToast({ msg: t('toast.activated', { name: v.name }), ok: true });
       load();
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
@@ -105,16 +107,16 @@ export default function VenuesPage() {
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Miesta konania</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Opakovane použiteľné haly a miesta. Pri vytváraní termínu si miesto vyberiete z databázy.
+              {t('subtitle')}
             </p>
           </div>
           <button
             onClick={() => setShowCreate(true)}
             className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-dark"
           >
-            <Plus size={16} /> Pridať miesto
+            <Plus size={16} /> {t('addVenue')}
           </button>
         </div>
 
@@ -127,23 +129,23 @@ export default function VenuesPage() {
         {error ? (
           <ErrorState message={error} />
         ) : (
-          <SectionCard title={`Miesta${!loading ? ` (${venues.length})` : ''}`}>
+          <SectionCard title={`${t('listTitle')}${!loading ? ` (${venues.length})` : ''}`}>
             {loading ? (
               <Skeleton className="h-40" />
             ) : venues.length === 0 ? (
-              <EmptyState message="Žiadne miesta. Vytvorte prvé pre vaše podujatia." />
+              <EmptyState message={t('empty')} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
-                      <th className="py-2 pr-3 font-medium">Názov</th>
-                      <th className="py-2 px-3 font-medium">Mesto</th>
-                      <th className="py-2 px-3 font-medium">Adresa</th>
-                      <th className="py-2 px-3 font-medium text-right">Kapacita</th>
-                      <th className="py-2 px-3 font-medium">Typ</th>
-                      <th className="py-2 px-3 font-medium">Stav</th>
-                      <th className="py-2 pl-3 font-medium text-right">Akcie</th>
+                      <th className="py-2 pr-3 font-medium">{t('col.name')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.city')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.address')}</th>
+                      <th className="py-2 px-3 font-medium text-right">{t('col.capacity')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.type')}</th>
+                      <th className="py-2 px-3 font-medium">{t('col.status')}</th>
+                      <th className="py-2 pl-3 font-medium text-right">{t('col.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -159,35 +161,35 @@ export default function VenuesPage() {
                             {isSuper ? (
                               isGlobal(v) ? (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
-                                  <Globe size={11} /> Globálne
+                                  <Globe size={11} /> {t('type.global')}
                                 </span>
                               ) : (
-                                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">Organizátor</span>
+                                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">{t('type.organizer')}</span>
                               )
                             ) : isOwn(v) ? (
-                              <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">Vlastné</span>
+                              <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">{t('type.own')}</span>
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                <Share2 size={11} /> Sprístupnené
+                                <Share2 size={11} /> {t('type.shared')}
                               </span>
                             )}
                           </td>
                           <td className="px-3">
                             <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', v.isActive === false ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' : 'bg-emerald-50 text-emerald-700')}>
-                              {v.isActive === false ? 'Deaktivované' : 'Aktívne'}
+                              {v.isActive === false ? t('status.inactive') : t('status.active')}
                             </span>
                           </td>
                           <td className="py-2.5 pl-3">
                             <div className="flex items-center justify-end gap-1">
                               {v.isActive === false && manage && (
                                 <button onClick={() => reactivate(v)} disabled={busyId === v.id} className="rounded px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 disabled:opacity-40">
-                                  Aktivovať
+                                  {t('action.activate')}
                                 </button>
                               )}
                               <Link
                                 href={`/organizer/venues/${v.id}/seatmaps`}
                                 className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700"
-                                title="Plániky sedenia"
+                                title={t('action.seatmaps')}
                               >
                                 <LayoutGrid size={15} />
                               </Link>
@@ -195,7 +197,7 @@ export default function VenuesPage() {
                                 <button
                                   onClick={() => setSharing(v)}
                                   className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-amber-50 hover:text-amber-600"
-                                  title="Sprístupniť organizátorom"
+                                  title={t('action.share')}
                                 >
                                   <Share2 size={15} />
                                 </button>
@@ -204,7 +206,7 @@ export default function VenuesPage() {
                                 onClick={() => setEditing(v)}
                                 disabled={!manage}
                                 className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-30"
-                                title={manage ? 'Upraviť' : 'Len na čítanie'}
+                                title={manage ? t('action.edit') : t('action.readOnly')}
                               >
                                 <Pencil size={15} />
                               </button>
@@ -212,7 +214,7 @@ export default function VenuesPage() {
                                 onClick={() => remove(v)}
                                 disabled={!manage || busyId === v.id}
                                 className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
-                                title={manage ? 'Zmazať' : 'Len na čítanie'}
+                                title={manage ? t('action.delete') : t('action.readOnly')}
                               >
                                 <Trash2 size={15} />
                               </button>
@@ -229,7 +231,7 @@ export default function VenuesPage() {
         )}
 
         <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-          <MapPin size={15} /> Sprístupnené miesta spravuje administrátor a sú pre vás len na čítanie (môžete na nich vytvárať termíny).
+          <MapPin size={15} /> {t('sharedHint')}
         </div>
       </main>
 

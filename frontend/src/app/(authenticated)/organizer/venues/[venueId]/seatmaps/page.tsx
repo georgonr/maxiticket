@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 import { ArrowLeft, Plus, Pencil, Trash2, Star, LayoutGrid, Armchair } from 'lucide-react';
@@ -11,20 +12,21 @@ import { ApiError, venuesApi, Venue } from '@/lib/api';
 import { seatmapsApi, SeatMapSummary } from '@/lib/api/seatmaps';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 
-function readableError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 401 || e.status === 403) return 'Nemáte oprávnenie spravovať plániky tohto miesta.';
-    if (e.status === 404) return 'Miesto sa nenašlo.';
-    if (e.status >= 500) return 'Chyba servera. Skúste neskôr.';
-    return e.message || 'Niečo sa pokazilo.';
-  }
-  return 'Nemôžeme sa pripojiť k serveru.';
-}
-
 export default function VenueSeatMapsPage() {
+  const t = useTranslations('organizer.seatmap');
   const { venueId } = useParams<{ venueId: string }>();
   const router = useRouter();
   const { user } = useAuth();
+
+  function readableError(e: unknown): string {
+    if (e instanceof ApiError) {
+      if (e.status === 401 || e.status === 403) return t('list.error.forbidden');
+      if (e.status === 404) return t('list.error.notFound');
+      if (e.status >= 500) return t('error.server');
+      return e.message || t('error.generic');
+    }
+    return t('error.network');
+  }
   const isSuper = user?.role === 'SUPERADMIN' || user?.role === 'STAFF';
 
   const [venue, setVenue] = useState<Venue | null>(null);
@@ -63,12 +65,12 @@ export default function VenueSeatMapsPage() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   async function createMap() {
-    const name = window.prompt('Názov nového plánika (napr. „Divadelné usporiadanie")');
+    const name = window.prompt(t('list.prompt.create'));
     if (!name || name.trim().length < 2) return;
     setCreating(true);
     try {
@@ -83,14 +85,14 @@ export default function VenueSeatMapsPage() {
   }
 
   async function rename(m: SeatMapSummary) {
-    const name = window.prompt('Nový názov plánika', m.name);
+    const name = window.prompt(t('prompt.rename'), m.name);
     if (!name || name.trim().length < 2 || name.trim() === m.name) return;
     setBusyId(m.id);
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       await seatmapsApi.patch(m.id, { name: name.trim() }, token);
-      setToast({ msg: 'Plánik premenovaný.', ok: true });
+      setToast({ msg: t('toast.renamed'), ok: true });
       load();
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
@@ -106,7 +108,7 @@ export default function VenueSeatMapsPage() {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       await seatmapsApi.patch(m.id, { isDefault: true }, token);
-      setToast({ msg: `„${m.name}" je teraz predvolený plánik.`, ok: true });
+      setToast({ msg: t('list.toast.setDefault', { name: m.name }), ok: true });
       load();
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
@@ -116,13 +118,13 @@ export default function VenueSeatMapsPage() {
   }
 
   async function remove(m: SeatMapSummary) {
-    if (!window.confirm(`Naozaj zmazať plánik „${m.name}" vrátane všetkých sekcií a sedadiel?`)) return;
+    if (!window.confirm(t('list.confirm.delete', { name: m.name }))) return;
     setBusyId(m.id);
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
       await seatmapsApi.remove(m.id, token);
-      setToast({ msg: `Plánik „${m.name}" zmazaný.`, ok: true });
+      setToast({ msg: t('list.toast.deleted', { name: m.name }), ok: true });
       load();
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });
@@ -136,15 +138,15 @@ export default function VenueSeatMapsPage() {
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div>
           <Link href="/organizer/venues" className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-brand">
-            <ArrowLeft size={15} /> Späť na miesta
+            <ArrowLeft size={15} /> {t('list.backToVenues')}
           </Link>
           <div className="flex items-end justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Plániky sedenia{venue ? ` — ${venue.name}` : ''}
+                {venue ? t('list.titleWithVenue', { venue: venue.name }) : t('list.title')}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Jedna hala môže mať viacero usporiadaní (divadelné, koncertné…). Plánik si neskôr priradíte k termínu.
+                {t('list.subtitle')}
               </p>
             </div>
             {canManage && (
@@ -153,7 +155,7 @@ export default function VenueSeatMapsPage() {
                 disabled={creating}
                 className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50"
               >
-                <Plus size={16} /> Nový plánik
+                <Plus size={16} /> {t('list.newMap')}
               </button>
             )}
           </div>
@@ -168,11 +170,11 @@ export default function VenueSeatMapsPage() {
         {error ? (
           <ErrorState message={error} />
         ) : (
-          <SectionCard title={`Plániky${!loading ? ` (${maps.length})` : ''}`}>
+          <SectionCard title={!loading ? t('list.cardTitleCount', { count: maps.length }) : t('list.cardTitle')}>
             {loading ? (
               <Skeleton className="h-40" />
             ) : maps.length === 0 ? (
-              <EmptyState message={canManage ? 'Zatiaľ žiadny plánik. Vytvorte prvý.' : 'Toto miesto nemá žiadny plánik sedenia.'} />
+              <EmptyState message={canManage ? t('list.empty.canManage') : t('list.empty.readonly')} />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {maps.map((m) => (
@@ -183,13 +185,13 @@ export default function VenueSeatMapsPage() {
                           <h3 className="truncate font-semibold text-gray-900 dark:text-gray-100">{m.name}</h3>
                           {m.isDefault && (
                             <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                              <Star size={11} className="fill-amber-500 text-amber-500" /> Predvolený
+                              <Star size={11} className="fill-amber-500 text-amber-500" /> {t('badge.default')}
                             </span>
                           )}
                         </div>
                         <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-gray-500 dark:text-gray-400">
-                          <span className="inline-flex items-center gap-1"><LayoutGrid size={12} /> {m.sectionCount} sekcií</span>
-                          <span className="inline-flex items-center gap-1"><Armchair size={12} /> kapacita {m.totalCapacity}</span>
+                          <span className="inline-flex items-center gap-1"><LayoutGrid size={12} /> {t('list.sectionCount', { count: m.sectionCount })}</span>
+                          <span className="inline-flex items-center gap-1"><Armchair size={12} /> {t('list.capacity', { count: m.totalCapacity })}</span>
                         </p>
                       </div>
                     </div>
@@ -199,19 +201,19 @@ export default function VenueSeatMapsPage() {
                         href={`/organizer/venues/${venueId}/seatmaps/${m.id}`}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
-                        {canManage ? 'Otvoriť editor' : 'Zobraziť'}
+                        {canManage ? t('list.openEditor') : t('list.view')}
                       </Link>
                       {canManage && (
                         <div className="flex items-center gap-1">
                           {!m.isDefault && (
-                            <button onClick={() => setDefault(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-40" title="Nastaviť ako predvolený">
+                            <button onClick={() => setDefault(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-40" title={t('action.setDefault')}>
                               <Star size={15} />
                             </button>
                           )}
-                          <button onClick={() => rename(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40" title="Premenovať">
+                          <button onClick={() => rename(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 disabled:opacity-40" title={t('action.rename')}>
                             <Pencil size={15} />
                           </button>
-                          <button onClick={() => remove(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-40" title="Zmazať">
+                          <button onClick={() => remove(m)} disabled={busyId === m.id} className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-40" title={t('action.delete')}>
                             <Trash2 size={15} />
                           </button>
                         </div>

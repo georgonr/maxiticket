@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
@@ -28,6 +29,7 @@ const EMPTY: FormState = {
 };
 
 export default function OrganizerSettingsPage() {
+  const t = useTranslations('organizer.settings');
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export default function OrganizerSettingsPage() {
           router.replace('/login');
           return;
         }
-        setError('Nepodarilo sa načítať údaje firmy.');
+        setError(t('errorLoad'));
       } finally {
         setLoading(false);
       }
@@ -79,16 +81,16 @@ export default function OrganizerSettingsPage() {
   function validate(): boolean {
     const errs: Record<string, string> = {};
     if (form.vatPayer && !form.ico.trim()) {
-      errs.ico = 'IČO je povinné pre platcu DPH.';
+      errs.ico = t('errorIcoRequired');
     }
     if (form.ico && (form.addressCountry === 'SK' || !form.addressCountry) && !/^\d{8}$/.test(form.ico.trim())) {
-      errs.ico = 'IČO musí mať 8 číslic.';
+      errs.ico = t('errorIcoFormat');
     }
     if (form.icDph && !/^[A-Z]{2}\d{8,12}$/.test(form.icDph.trim())) {
-      errs.icDph = 'IČ DPH musí byť v tvare napr. SK1234567890.';
+      errs.icDph = t('errorIcDphFormat');
     }
     if (form.addressZip && (form.addressCountry === 'SK' || !form.addressCountry) && !/^\d{5}$/.test(form.addressZip.trim())) {
-      errs.addressZip = 'PSČ musí mať 5 číslic.';
+      errs.addressZip = t('errorZipFormat');
     }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -114,11 +116,11 @@ export default function OrganizerSettingsPage() {
         bankAccount: form.bankAccount || undefined,
       };
       await organizerBusinessApi.update(body, token);
-      setToast({ msg: 'Údaje firmy uložené', ok: true });
+      setToast({ msg: t('toastSaved'), ok: true });
     } catch (e) {
       const msg = e instanceof ApiError
-        ? (e.status === 400 ? 'Skontrolujte zadané údaje – niektoré pole je neplatné.' : 'Údaje sa nepodarilo uložiť.')
-        : 'Údaje sa nepodarilo uložiť.';
+        ? (e.status === 400 ? t('toastInvalid') : t('toastSaveFailed'))
+        : t('toastSaveFailed');
       setToast({ msg, ok: false });
     } finally {
       setSaving(false);
@@ -143,13 +145,13 @@ export default function OrganizerSettingsPage() {
 
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
+        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← {t('backToDashboard')}</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-6 sm:p-8">
-        <h1 className="text-2xl font-bold mb-1">Údaje firmy</h1>
+        <h1 className="text-2xl font-bold mb-1">{t('title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-          Tieto údaje sa zobrazujú na vstupenkách a daňových dokladoch podľa zákona.
+          {t('subtitle')}
         </p>
 
         {error && (
@@ -158,21 +160,21 @@ export default function OrganizerSettingsPage() {
 
         <div className="space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
           <Input
-            id="companyName" label="Právny názov firmy"
-            placeholder="Napr. Acme s.r.o."
+            id="companyName" label={t('companyNameLabel')}
+            placeholder={t('companyNamePlaceholder')}
             value={form.companyName} onChange={(e) => set('companyName', e.target.value)}
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              id="ico" label="IČO"
-              placeholder="8 číslic"
+              id="ico" label={t('icoLabel')}
+              placeholder={t('icoPlaceholder')}
               value={form.ico} onChange={(e) => set('ico', e.target.value)}
               error={fieldErrors.ico}
             />
             <Input
-              id="icDph" label="IČ DPH"
-              placeholder="SK1234567890"
+              id="icDph" label={t('icDphLabel')}
+              placeholder={t('icDphPlaceholder')}
               value={form.icDph} onChange={(e) => set('icDph', e.target.value)}
               error={fieldErrors.icDph}
             />
@@ -184,40 +186,40 @@ export default function OrganizerSettingsPage() {
               className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand"
               checked={form.vatPayer} onChange={(e) => set('vatPayer', e.target.checked)}
             />
-            <label htmlFor="vatPayer" className="text-sm font-medium text-gray-700 dark:text-gray-200">Sme platca DPH</label>
+            <label htmlFor="vatPayer" className="text-sm font-medium text-gray-700 dark:text-gray-200">{t('vatPayerLabel')}</label>
           </div>
 
           {form.vatPayer && (
             <Input
-              id="vatRate" label="Sadzba DPH (%)" type="number" step="0.01"
-              placeholder="Ponechajte prázdne pre štandardnú sadzbu krajiny"
+              id="vatRate" label={t('vatRateLabel')} type="number" step="0.01"
+              placeholder={t('vatRatePlaceholder')}
               value={form.vatRate} onChange={(e) => set('vatRate', e.target.value)}
             />
           )}
 
           <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Sídlo firmy</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{t('addressSection')}</h2>
             <div className="space-y-4">
               <Input
-                id="addressStreet" label="Ulica a číslo"
-                placeholder="Napr. Hlavná 1"
+                id="addressStreet" label={t('streetLabel')}
+                placeholder={t('streetPlaceholder')}
                 value={form.addressStreet} onChange={(e) => set('addressStreet', e.target.value)}
               />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Input
-                  id="addressZip" label="PSČ"
-                  placeholder="81101"
+                  id="addressZip" label={t('zipLabel')}
+                  placeholder={t('zipPlaceholder')}
                   value={form.addressZip} onChange={(e) => set('addressZip', e.target.value)}
                   error={fieldErrors.addressZip}
                 />
                 <Input
-                  id="addressCity" label="Mesto"
-                  placeholder="Bratislava"
+                  id="addressCity" label={t('cityLabel')}
+                  placeholder={t('cityPlaceholder')}
                   value={form.addressCity} onChange={(e) => set('addressCity', e.target.value)}
                 />
                 <Input
-                  id="addressCountry" label="Krajina"
-                  placeholder="SK"
+                  id="addressCountry" label={t('countryLabel')}
+                  placeholder={t('countryPlaceholder')}
                   value={form.addressCountry} onChange={(e) => set('addressCountry', e.target.value.toUpperCase())}
                 />
               </div>
@@ -225,14 +227,14 @@ export default function OrganizerSettingsPage() {
           </div>
 
           <Input
-            id="bankAccount" label="IBAN (voliteľné)"
-            placeholder="SK00 0000 0000 0000 0000 0000"
+            id="bankAccount" label={t('bankAccountLabel')}
+            placeholder={t('bankAccountPlaceholder')}
             value={form.bankAccount} onChange={(e) => set('bankAccount', e.target.value)}
           />
 
           <div className="flex justify-end pt-2">
             <Button onClick={handleSave} loading={saving} disabled={saving}>
-              Uložiť údaje
+              {t('saveButton')}
             </Button>
           </div>
         </div>

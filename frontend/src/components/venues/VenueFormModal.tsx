@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, Globe } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { venuesApi, Venue, CreateVenueBody } from '@/lib/api';
@@ -29,6 +30,7 @@ export function VenueFormModal({
   onClose: () => void;
   onSaved: (msg: string) => void;
 }) {
+  const t = useTranslations('organizer.venues');
   const isEdit = !!initial;
   const [name, setName] = useState(initial?.name ?? '');
   const [city, setCity] = useState(initial?.city ?? '');
@@ -44,7 +46,7 @@ export function VenueFormModal({
   async function handleSubmit() {
     setError('');
     if (name.trim().length < 2) {
-      setError('Názov miesta musí mať aspoň 2 znaky.');
+      setError(t('form.error.nameMin'));
       return;
     }
     const body: CreateVenueBody = {
@@ -58,7 +60,7 @@ export function VenueFormModal({
     if (cap) {
       const n = Number(cap);
       if (!Number.isInteger(n) || n < 0) {
-        setError('Kapacita musí byť nezáporné celé číslo.');
+        setError(t('form.error.capacity'));
         return;
       }
       body.capacity = n;
@@ -67,16 +69,16 @@ export function VenueFormModal({
     setSubmitting(true);
     try {
       const token = await getValidToken();
-      if (!token) throw new Error('Vyžaduje sa prihlásenie.');
+      if (!token) throw new Error(t('form.error.loginRequired'));
       if (isEdit) {
         await venuesApi.update(initial!.id, body, token);
-        onSaved(`Miesto ${body.name} uložené.`);
+        onSaved(t('toast.saved', { name: body.name }));
       } else {
         await venuesApi.create(body, token, isSuperAdmin ? { global } : {});
-        onSaved(`Miesto ${body.name} vytvorené.`);
+        onSaved(t('toast.created', { name: body.name }));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Uloženie zlyhalo.');
+      setError(e instanceof Error ? e.message : t('form.error.saveFailed'));
       setSubmitting(false);
     }
   }
@@ -85,38 +87,38 @@ export function VenueFormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{isEdit ? 'Upraviť miesto' : 'Pridať miesto'}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600" aria-label="Zavrieť">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{isEdit ? t('form.editTitle') : t('form.createTitle')}</h3>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600" aria-label={t('form.close')}>
             <X size={18} />
           </button>
         </div>
 
         <div className="space-y-4 px-5 py-4">
-          <Field label="Názov *">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="napr. Mestská hala" className={inputCls} />
+          <Field label={t('form.label.name')}>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('form.placeholder.name')} className={inputCls} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Mesto">
+            <Field label={t('form.label.city')}>
               <input value={city} onChange={(e) => setCity(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="PSČ">
+            <Field label={t('form.label.postalCode')}>
               <input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={inputCls} />
             </Field>
           </div>
-          <Field label="Adresa">
-            <input value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Ulica a číslo" className={inputCls} />
+          <Field label={t('form.label.address')}>
+            <input value={street} onChange={(e) => setStreet(e.target.value)} placeholder={t('form.placeholder.address')} className={inputCls} />
           </Field>
-          <Field label="Kapacita">
-            <input type="number" min={0} value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="napr. 500" className={inputCls} />
+          <Field label={t('form.label.capacity')}>
+            <input type="number" min={0} value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder={t('form.placeholder.capacity')} className={inputCls} />
           </Field>
-          <Field label="Poznámka">
+          <Field label={t('form.label.notes')}>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={inputCls} />
           </Field>
 
           {isSuperAdmin && !isEdit && (
             <label className="flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-2 text-sm text-purple-800">
               <input type="checkbox" checked={global} onChange={(e) => setGlobal(e.target.checked)} className="accent-purple-600" />
-              <Globe size={14} /> Globálne miesto (zdieľané všetkým organizátorom)
+              <Globe size={14} /> {t('form.globalVenue')}
             </label>
           )}
 
@@ -124,9 +126,9 @@ export function VenueFormModal({
         </div>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-gray-800 px-5 py-4">
-          <Button variant="outline" onClick={onClose} disabled={submitting}>Zrušiť</Button>
+          <Button variant="outline" onClick={onClose} disabled={submitting}>{t('form.cancel')}</Button>
           <Button onClick={handleSubmit} loading={submitting} disabled={submitting}>
-            {isEdit ? 'Uložiť' : 'Vytvoriť'}
+            {isEdit ? t('form.save') : t('form.create')}
           </Button>
         </div>
       </div>

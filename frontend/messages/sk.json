@@ -1162,6 +1162,306 @@
           "confirm": "Uzavrieť"
         }
       }
+    },
+    "venues": {
+      "title": "Miesta konania",
+      "subtitle": "Opakovane použiteľné haly a miesta. Pri vytváraní termínu si miesto vyberiete z databázy.",
+      "addVenue": "Pridať miesto",
+      "listTitle": "Miesta",
+      "empty": "Žiadne miesta. Vytvorte prvé pre vaše podujatia.",
+      "sharedHint": "Sprístupnené miesta spravuje administrátor a sú pre vás len na čítanie (môžete na nich vytvárať termíny).",
+      "col": {
+        "name": "Názov",
+        "city": "Mesto",
+        "address": "Adresa",
+        "capacity": "Kapacita",
+        "type": "Typ",
+        "status": "Stav",
+        "actions": "Akcie"
+      },
+      "type": {
+        "global": "Globálne",
+        "organizer": "Organizátor",
+        "own": "Vlastné",
+        "shared": "Sprístupnené"
+      },
+      "status": {
+        "active": "Aktívne",
+        "inactive": "Deaktivované"
+      },
+      "action": {
+        "activate": "Aktivovať",
+        "seatmaps": "Plániky sedenia",
+        "share": "Sprístupniť organizátorom",
+        "edit": "Upraviť",
+        "delete": "Zmazať",
+        "readOnly": "Len na čítanie"
+      },
+      "confirm": {
+        "delete": "Naozaj zmazať miesto {name}? Ak je naviazané na termíny, len sa deaktivuje."
+      },
+      "toast": {
+        "deactivated": "Miesto {name} deaktivované (má termíny).",
+        "deleted": "Miesto {name} zmazané.",
+        "activated": "Miesto {name} aktivované.",
+        "saved": "Miesto {name} uložené.",
+        "created": "Miesto {name} vytvorené."
+      },
+      "error": {
+        "noPermission": "Nemáte oprávnenie spravovať miesta.",
+        "server": "Chyba servera. Skúste neskôr.",
+        "generic": "Niečo sa pokazilo.",
+        "connect": "Nemôžeme sa pripojiť k serveru."
+      },
+      "form": {
+        "createTitle": "Pridať miesto",
+        "editTitle": "Upraviť miesto",
+        "close": "Zavrieť",
+        "label": {
+          "name": "Názov *",
+          "city": "Mesto",
+          "postalCode": "PSČ",
+          "address": "Adresa",
+          "capacity": "Kapacita",
+          "notes": "Poznámka"
+        },
+        "placeholder": {
+          "name": "napr. Mestská hala",
+          "address": "Ulica a číslo",
+          "capacity": "napr. 500"
+        },
+        "globalVenue": "Globálne miesto (zdieľané všetkým organizátorom)",
+        "cancel": "Zrušiť",
+        "save": "Uložiť",
+        "create": "Vytvoriť",
+        "error": {
+          "nameMin": "Názov miesta musí mať aspoň 2 znaky.",
+          "capacity": "Kapacita musí byť nezáporné celé číslo.",
+          "loginRequired": "Vyžaduje sa prihlásenie.",
+          "saveFailed": "Uloženie zlyhalo."
+        }
+      },
+      "access": {
+        "title": "Sprístupniť miesto",
+        "searchPlaceholder": "Hľadať organizátora…",
+        "loading": "Načítavam…",
+        "noOrganizers": "Žiadni organizátori.",
+        "selectedCount": "{count} vybraných",
+        "toast": {
+          "saved": "Sprístupnenie miesta „{name}\" uložené ({count})."
+        },
+        "error": {
+          "loginRequired": "Vyžaduje sa prihlásenie.",
+          "loadFailed": "Načítanie zlyhalo.",
+          "saveFailed": "Uloženie zlyhalo."
+        }
+      }
+    },
+    "seatmap": {
+      "error": {
+        "server": "Chyba servera. Skúste neskôr.",
+        "generic": "Niečo sa pokazilo.",
+        "network": "Nemôžeme sa pripojiť k serveru."
+      },
+      "badge": {
+        "default": "Predvolený"
+      },
+      "action": {
+        "setDefault": "Nastaviť ako predvolený",
+        "rename": "Premenovať",
+        "edit": "Upraviť",
+        "delete": "Zmazať"
+      },
+      "prompt": {
+        "rename": "Nový názov plánika"
+      },
+      "toast": {
+        "renamed": "Plánik premenovaný."
+      },
+      "list": {
+        "title": "Plániky sedenia",
+        "titleWithVenue": "Plániky sedenia — {venue}",
+        "subtitle": "Jedna hala môže mať viacero usporiadaní (divadelné, koncertné…). Plánik si neskôr priradíte k termínu.",
+        "backToVenues": "Späť na miesta",
+        "newMap": "Nový plánik",
+        "cardTitle": "Plániky",
+        "cardTitleCount": "Plániky ({count})",
+        "openEditor": "Otvoriť editor",
+        "view": "Zobraziť",
+        "sectionCount": "{count} sekcií",
+        "capacity": "kapacita {count}",
+        "empty": {
+          "canManage": "Zatiaľ žiadny plánik. Vytvorte prvý.",
+          "readonly": "Toto miesto nemá žiadny plánik sedenia."
+        },
+        "prompt": {
+          "create": "Názov nového plánika (napr. „Divadelné usporiadanie\")"
+        },
+        "confirm": {
+          "delete": "Naozaj zmazať plánik „{name}\" vrátane všetkých sekcií a sedadiel?"
+        },
+        "toast": {
+          "setDefault": "„{name}\" je teraz predvolený plánik.",
+          "deleted": "Plánik „{name}\" zmazaný."
+        },
+        "error": {
+          "forbidden": "Nemáte oprávnenie spravovať plániky tohto miesta.",
+          "notFound": "Miesto sa nenašlo."
+        }
+      },
+      "editor": {
+        "backToMaps": "Späť na plániky",
+        "capacity": "kapacita {count}",
+        "setDefault": "Nastaviť predvolený",
+        "sectionsTitle": "Sekcie ({count})",
+        "addSection": "Pridať",
+        "noSections": "Žiadne sekcie.",
+        "noSectionsHint": "Pridajte prvú (kapacitnú alebo sedadlovú).",
+        "modeSectioned": "Kapacitná",
+        "modeSeated": "Sedadlová",
+        "seatsCount": "{count} sed.",
+        "moveUp": "Posunúť hore",
+        "moveDown": "Posunúť dole",
+        "canvasEmpty": "Náhľad haly sa zobrazí po pridaní sekcií.",
+        "confirm": {
+          "deleteSection": "Zmazať sekciu „{name}\"?",
+          "deleteSectionSeated": "Zmazať sekciu „{name}\" vrátane sedadiel?"
+        },
+        "toast": {
+          "setDefault": "Nastavené ako predvolený plánik.",
+          "sectionDeleted": "Sekcia „{name}\" zmazaná."
+        },
+        "error": {
+          "forbidden": "Nemáte oprávnenie upravovať tento plánik.",
+          "notFound": "Plánik sa nenašiel."
+        }
+      },
+      "canvas": {
+        "zoomIn": "Priblížiť",
+        "zoomOut": "Oddialiť",
+        "fit": "Vycentrovať",
+        "ariaLabel": "Náhľad plánu haly",
+        "capacityLabel": "kapacita: {count}",
+        "simplifiedSeats": "{count} sedadiel (náhľad zjednodušený)",
+        "accessible": "bezbariérové",
+        "legend": {
+          "seat": "sedadlo",
+          "hint": "zoom: koliesko · posun: ťahaj pozadie"
+        }
+      }
+    },
+    "members": {
+      "title": "Tím",
+      "subtitle": "Členovia tímu spravujú podujatia, pokladňu a skenovanie. Nemajú prístup k uzávierkam, skenerom ani údajom firmy.",
+      "inviteMember": "Pozvať člena",
+      "membersTitle": "Členovia",
+      "noPermission": "Správa tímu je dostupná len pre vlastníka organizácie.",
+      "empty": "Žiadni členovia tímu. Pozvite prvého kolegu.",
+      "footerNote": "Pozvaný člen dostane e-mail s odkazom na nastavenie hesla (platnosť 7 dní).",
+      "confirmRemove": "Naozaj odstrániť člena {email} z tímu?",
+      "col": {
+        "email": "E-mail",
+        "name": "Meno",
+        "status": "Stav",
+        "created": "Vytvorený",
+        "actions": "Akcie"
+      },
+      "status": {
+        "pending": "Čaká na prijatie",
+        "deactivated": "Deaktivovaný",
+        "active": "Aktívny"
+      },
+      "action": {
+        "invite": "Pozvánka",
+        "resendTitle": "Znova poslať pozvánku",
+        "activate": "Aktivovať",
+        "deactivate": "Deaktivovať",
+        "remove": "Odstrániť"
+      },
+      "toast": {
+        "activated": "Člen aktivovaný.",
+        "deactivated": "Člen deaktivovaný.",
+        "inviteResent": "Pozvánka znova odoslaná na {email}.",
+        "removed": "Člen {email} odstránený."
+      },
+      "error": {
+        "forbidden": "Nemáte oprávnenie spravovať tím.",
+        "server": "Chyba servera. Skúste neskôr.",
+        "generic": "Niečo sa pokazilo.",
+        "network": "Nemôžeme sa pripojiť k serveru."
+      }
+    },
+    "scanners": {
+      "title": "Skeneri",
+      "subtitle": "Účty pre personál na vstupe – môžu výhradne skenovať vstupenky vašich podujatí.",
+      "add": "Pridať skenera",
+      "forbiddenManage": "Správa skenerov je dostupná len pre vlastníka organizácie.",
+      "cardTitle": "Scanner účty",
+      "empty": "Žiadne scanner účty. Vytvorte prvý pre personál na vstupe.",
+      "hint": "Skeneri sa prihlasujú cez prihlasovaciu stránku a sú presmerovaní na skener.ticketall.eu.",
+      "confirmDelete": "Naozaj zmazať scanner účet {email}? Túto akciu nie je možné vrátiť.",
+      "col": {
+        "email": "E-mail",
+        "name": "Meno",
+        "status": "Stav",
+        "created": "Vytvorený",
+        "actions": "Akcie"
+      },
+      "status": {
+        "active": "Aktívny",
+        "inactive": "Deaktivovaný"
+      },
+      "action": {
+        "changePassword": "Zmeniť heslo",
+        "activate": "Aktivovať",
+        "deactivate": "Deaktivovať",
+        "delete": "Zmazať"
+      },
+      "toast": {
+        "activated": "Scanner aktivovaný.",
+        "deactivated": "Scanner deaktivovaný.",
+        "deleted": "Scanner {email} zmazaný."
+      },
+      "error": {
+        "forbidden": "Nemáte oprávnenie spravovať skenerov.",
+        "server": "Chyba servera. Skúste neskôr.",
+        "generic": "Niečo sa pokazilo.",
+        "network": "Nemôžeme sa pripojiť k serveru."
+      }
+    },
+    "settings": {
+      "title": "Údaje firmy",
+      "subtitle": "Tieto údaje sa zobrazujú na vstupenkách a daňových dokladoch podľa zákona.",
+      "backToDashboard": "Dashboard",
+      "companyNameLabel": "Právny názov firmy",
+      "companyNamePlaceholder": "Napr. Acme s.r.o.",
+      "icoLabel": "IČO",
+      "icoPlaceholder": "8 číslic",
+      "icDphLabel": "IČ DPH",
+      "icDphPlaceholder": "SK1234567890",
+      "vatPayerLabel": "Sme platca DPH",
+      "vatRateLabel": "Sadzba DPH (%)",
+      "vatRatePlaceholder": "Ponechajte prázdne pre štandardnú sadzbu krajiny",
+      "addressSection": "Sídlo firmy",
+      "streetLabel": "Ulica a číslo",
+      "streetPlaceholder": "Napr. Hlavná 1",
+      "zipLabel": "PSČ",
+      "zipPlaceholder": "81101",
+      "cityLabel": "Mesto",
+      "cityPlaceholder": "Bratislava",
+      "countryLabel": "Krajina",
+      "countryPlaceholder": "SK",
+      "bankAccountLabel": "IBAN (voliteľné)",
+      "bankAccountPlaceholder": "SK00 0000 0000 0000 0000 0000",
+      "saveButton": "Uložiť údaje",
+      "toastSaved": "Údaje firmy uložené",
+      "toastInvalid": "Skontrolujte zadané údaje – niektoré pole je neplatné.",
+      "toastSaveFailed": "Údaje sa nepodarilo uložiť.",
+      "errorLoad": "Nepodarilo sa načítať údaje firmy.",
+      "errorIcoRequired": "IČO je povinné pre platcu DPH.",
+      "errorIcoFormat": "IČO musí mať 8 číslic.",
+      "errorIcDphFormat": "IČ DPH musí byť v tvare napr. SK1234567890.",
+      "errorZipFormat": "PSČ musí mať 5 číslic."
     }
   }
 }
