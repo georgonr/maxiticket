@@ -908,6 +908,260 @@
         "countRange": "Počet kódov musí byť celé číslo 1–100.",
         "emailInvalid": "Zadajte platný e-mail pre doručenie PDF."
       }
+    },
+    "orders": {
+      "title": "Objednávky",
+      "subtitle": "Prehľad objednávok vašich podujatí.",
+      "searchPlaceholder": "Číslo objednávky, email alebo meno",
+      "allOrganizers": "Všetci organizátori",
+      "dateFrom": "Od",
+      "dateTo": "Do",
+      "retry": "Skúsiť znova",
+      "empty": "Žiadne objednávky nevyhovujú filtrom.",
+      "prev": "Predošlá",
+      "next": "Ďalšia",
+      "pagination": "{from}–{to} z {total}",
+      "guest": "hosť",
+      "guestTitle": "Nákup bez účtu",
+      "registered": "registrovaný",
+      "errorForbidden": "Nemáte oprávnenie zobraziť tieto objednávky.",
+      "errorServer": "Chyba servera. Skúste neskôr.",
+      "errorGeneric": "Niečo sa pokazilo.",
+      "errorConnection": "Nemôžeme sa pripojiť k serveru.",
+      "detailErrorForbidden": "Táto objednávka nepatrí vašej organizácii.",
+      "detailErrorNotFound": "Objednávka neexistuje.",
+      "detailErrorExpired": "Vaše prihlásenie vypršalo.",
+      "backToOrders": "Späť na objednávky",
+      "buyer": "Kupujúci",
+      "account": "Účet",
+      "organizer": "Organizátor",
+      "items": "Položky",
+      "subtotal": "Medzisúčet",
+      "discount": "Zľava",
+      "grandTotal": "Spolu",
+      "ticketsTitle": "Lístky ({count})",
+      "noTickets": "Žiadne vygenerované lístky.",
+      "payment": "Platba",
+      "method": "Spôsob",
+      "reference": "Referencia",
+      "paidAt": "Zaplatené",
+      "refundedAt": "Refundované",
+      "refundTitle": "Vrátenie peňazí",
+      "reason": "Dôvod",
+      "note": "Poznámka",
+      "amount": "Suma",
+      "col": {
+        "number": "Číslo",
+        "date": "Dátum",
+        "buyer": "Kupujúci",
+        "organizer": "Organizátor",
+        "event": "Podujatie",
+        "qty": "Ks",
+        "amount": "Suma",
+        "payment": "Platba",
+        "status": "Stav"
+      },
+      "itemCol": {
+        "event": "Podujatie / termín",
+        "ticketType": "Typ lístka",
+        "qty": "Ks",
+        "price": "Cena",
+        "total": "Spolu"
+      },
+      "statusFilter": {
+        "all": "Všetky stavy",
+        "PAID": "Zaplatené",
+        "PENDING": "Čaká",
+        "CANCELLED": "Zrušené",
+        "REFUNDED": "Refundované",
+        "FAILED": "Zlyhalo"
+      },
+      "providerFilter": {
+        "all": "Všetky platby",
+        "stripe": "Stripe",
+        "pos_cash": "POS hotovosť",
+        "pos_card": "POS karta",
+        "comp": "Zdarma (comp)",
+        "manual": "Manuál"
+      },
+      "provider": {
+        "stripe": "Stripe",
+        "pos_cash": "POS hotovosť",
+        "pos_card": "POS karta",
+        "comp": "Zdarma",
+        "manual": "Manuál",
+        "mock": "Test"
+      },
+      "ticketStatus": {
+        "VALID": "Platný",
+        "USED": "Použitý",
+        "CANCELLED": "Zrušený",
+        "REFUNDED": "Refundovaný"
+      },
+      "refundStatus": {
+        "REQUESTED": "Čaká na vybavenie",
+        "APPROVED": "Schválené",
+        "REJECTED": "Zamietnuté",
+        "REFUNDED": "Peniaze vrátené"
+      }
+    },
+    "refunds": {
+      "title": "Žiadosti o vrátenie",
+      "subtitle": "Schvaľujte alebo zamietajte žiadosti zákazníkov o vrátenie peňazí.",
+      "refresh": "Obnoviť",
+      "empty": "Žiadne žiadosti o vrátenie.",
+      "notePrefix": "Pozn.:",
+      "filters": {
+        "all": "Všetky",
+        "REQUESTED": "Čakajúce",
+        "APPROVED": "Schválené",
+        "REJECTED": "Zamietnuté",
+        "REFUNDED": "Vrátené"
+      },
+      "status": {
+        "REQUESTED": "Čaká na vybavenie",
+        "APPROVED": "Schválené",
+        "REJECTED": "Zamietnuté",
+        "REFUNDED": "Peniaze vrátené"
+      },
+      "table": {
+        "order": "Objednávka",
+        "organizer": "Organizátor",
+        "customer": "Zákazník",
+        "amount": "Suma",
+        "reason": "Dôvod",
+        "status": "Stav",
+        "requested": "Žiadané",
+        "actions": "Akcie"
+      },
+      "actions": {
+        "approve": "Schváliť",
+        "reject": "Zamietnuť",
+        "markRefunded": "Označiť ako vrátené"
+      },
+      "modal": {
+        "orderLabel": "Objednávka",
+        "cancel": "Zrušiť",
+        "approve": {
+          "title": "Schváliť žiadosť o vrátenie",
+          "amountLabel": "Suma na vrátenie ({currency})",
+          "noteLabel": "Poznámka (voliteľná)",
+          "stripeWarning": "Toto je Stripe platba. Po schválení vykonajte refund v Stripe dashboarde a až potom potvrďte „Označiť ako vrátené“.",
+          "confirm": "Schváliť"
+        },
+        "reject": {
+          "title": "Zamietnuť žiadosť",
+          "noteLabel": "Dôvod zamietnutia (voliteľný – uvidí ho zákazník)",
+          "hint": "Objednávka sa vráti do stavu „Zaplatené“ a lístky ostanú platné.",
+          "confirm": "Zamietnuť"
+        },
+        "mark": {
+          "title": "Označiť ako vrátené",
+          "stripeWarning": "Najprv vykonajte refund v Stripe dashboarde, potom potvrďte. Systém Stripe API nevolá – iba zaeviduje stav.",
+          "confirmText": "Potvrdením označíte objednávku ako vrátenú.",
+          "invalidated": "Vstupenky objednávky budú <strong>zneplatnené</strong> (skener ich odmietne).",
+          "invalidatedStripe": "Vstupenky objednávky budú <strong>zneplatnené</strong> (skener ich odmietne) a prípadný kupón sa vráti do obehu.",
+          "confirm": "Potvrdiť vrátenie"
+        }
+      },
+      "errors": {
+        "load": "Načítanie žiadostí zlyhalo.",
+        "action": "Akcia zlyhala."
+      }
+    },
+    "pos": {
+      "title": "Pokladňa",
+      "retry": "Skúsiť znova",
+      "error": {
+        "forbidden": "Nemáte oprávnenie predávať na tomto termíne.",
+        "server": "Chyba servera. Skúste znova.",
+        "generic": "Niečo sa pokazilo.",
+        "network": "Nemôžeme sa pripojiť k serveru."
+      },
+      "summary": {
+        "sinceLastClosure": "Od poslednej uzávierky:",
+        "cash": "hotovosť",
+        "card": "karta",
+        "ticketCount": "{count} lístkov",
+        "closureLink": "Uzávierka →"
+      },
+      "termin": {
+        "empty": "Žiadne aktívne termíny na predaj. Vytvorte termín so statusom „V predaji“.",
+        "selectPrompt": "Vyberte termín:"
+      },
+      "tickets": {
+        "otherTermin": "Iný termín",
+        "remaining": "zostáva {count}",
+        "soldOut": "Vypredané",
+        "couponPlaceholder": "Zľavový kupón (voliteľné)",
+        "subtotal": "Súčet ({count} ks)",
+        "continue": "Pokračovať"
+      },
+      "payment": {
+        "backToTickets": "Späť na lístky",
+        "toPay": "Na úhradu",
+        "ticketCount": "{count, plural, one {# lístok} few {# lístky} other {# lístkov}}",
+        "couponLabel": "kupón {code}",
+        "buyerHint": "Kupujúci (voliteľné – nechať prázdne = anonymný predaj)",
+        "emailPlaceholder": "E-mail (lístky pošleme sem)",
+        "namePlaceholder": "Meno",
+        "cash": "HOTOVOSŤ",
+        "card": "KARTA",
+        "cardHint": "Karta = potvrďte až po schválení na platobnom termináli."
+      },
+      "done": {
+        "title": "Predaj dokončený",
+        "discount": "zľava −{amount}",
+        "ticketsHint": "Lístky ({count}) – zákazník odfotí alebo personál naskenuje:",
+        "emailInputPlaceholder": "E-mail pre zaslanie lístkov",
+        "sendEmail": "Poslať e-mailom",
+        "print": "Vytlačiť",
+        "newSale": "NOVÝ PREDAJ",
+        "emailSent": "Lístky odoslané na {email}.",
+        "invalidEmail": "Zadajte platný e-mail."
+      },
+      "closures": {
+        "back": "Späť na pokladňu",
+        "title": "Uzávierka pokladne",
+        "sinceLastClosure": "Od poslednej uzávierky",
+        "periodFrom": "od {date}",
+        "allPosSales": "všetky POS predaje",
+        "closeButton": "UZAVRIEŤ POKLADŇU",
+        "cash": "Hotovosť",
+        "card": "Karta",
+        "total": "Spolu",
+        "salesTicketsSummary": "{sales} predajov · {tickets} lístkov",
+        "noNewSales": "Žiadne nové POS predaje na uzavretie.",
+        "historyTitle": "História uzávierok",
+        "historyTitleCount": "História uzávierok ({count})",
+        "historyEmpty": "Zatiaľ žiadne uzávierky.",
+        "downloadPdf": "Stiahnuť PDF",
+        "toast": {
+          "closed": "Pokladňa uzavretá: {amount} ({count} predajov)."
+        },
+        "error": {
+          "forbidden": "Uzávierku môže vykonať len vlastník organizácie.",
+          "noSales": "Žiadne predaje na uzavretie.",
+          "server": "Chyba servera. Skúste neskôr."
+        },
+        "table": {
+          "closed": "Uzavreté",
+          "period": "Obdobie",
+          "cash": "Hotovosť",
+          "card": "Karta",
+          "total": "Spolu",
+          "salesPcs": "Predaje/ks",
+          "by": "Kto",
+          "pdf": "PDF"
+        },
+        "modal": {
+          "title": "Uzavrieť pokladňu?",
+          "notePlaceholder": "Poznámka (voliteľné)",
+          "notice": "Uzávierka zamkne toto obdobie. Ďalšie predaje začnú nové obdobie.",
+          "cancel": "Zrušiť",
+          "confirm": "Uzavrieť"
+        }
+      }
     }
   }
 }

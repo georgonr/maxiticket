@@ -1,26 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations, useFormatter } from 'next-intl';
 import { clsx } from 'clsx';
 import { Loader2, RefreshCw, Check, X, BadgeCheck, AlertTriangle } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { refundsApi, RefundListItem, RefundStatus } from '@/lib/api/refunds';
-import { formatPrice, formatDate } from '@/lib/format';
 
-const REFUND_STATUS: Record<string, { label: string; cls: string }> = {
-  REQUESTED: { label: 'Čaká na vybavenie', cls: 'bg-amber-50 text-amber-700' },
-  APPROVED: { label: 'Schválené', cls: 'bg-sky-50 text-sky-700' },
-  REJECTED: { label: 'Zamietnuté', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
-  REFUNDED: { label: 'Peniaze vrátené', cls: 'bg-orange-50 text-orange-700' },
+const REFUND_STATUS_CLS: Record<string, string> = {
+  REQUESTED: 'bg-amber-50 text-amber-700',
+  APPROVED: 'bg-sky-50 text-sky-700',
+  REJECTED: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+  REFUNDED: 'bg-orange-50 text-orange-700',
 };
 
-const STATUS_FILTERS: { value: string; label: string }[] = [
-  { value: '', label: 'Všetky' },
-  { value: 'REQUESTED', label: 'Čakajúce' },
-  { value: 'APPROVED', label: 'Schválené' },
-  { value: 'REJECTED', label: 'Zamietnuté' },
-  { value: 'REFUNDED', label: 'Vrátené' },
-];
+const STATUS_FILTER_VALUES = ['', 'REQUESTED', 'APPROVED', 'REJECTED', 'REFUNDED'] as const;
 
 type ModalState =
   | { kind: 'approve'; row: RefundListItem }
@@ -29,6 +23,8 @@ type ModalState =
   | null;
 
 export function RefundsManager({ admin }: { admin: boolean }) {
+  const t = useTranslations('organizer.refunds');
+  const format = useFormatter();
   const [rows, setRows] = useState<RefundListItem[] | null>(null);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -45,9 +41,9 @@ export function RefundsManager({ admin }: { admin: boolean }) {
       if (!token) return;
       setRows(await refundsApi.list(admin, statusFilter, token));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Načítanie žiadostí zlyhalo.');
+      setError(e instanceof Error ? e.message : t('errors.load'));
     }
-  }, [admin, statusFilter]);
+  }, [admin, statusFilter, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -76,7 +72,7 @@ export function RefundsManager({ admin }: { admin: boolean }) {
       setModal(null);
       await load();
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : 'Akcia zlyhala.');
+      setActionError(e instanceof Error ? e.message : t('errors.action'));
     } finally {
       setBusy(false);
     }
@@ -86,21 +82,21 @@ export function RefundsManager({ admin }: { admin: boolean }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map((f) => (
+          {STATUS_FILTER_VALUES.map((value) => (
             <button
-              key={f.value}
-              onClick={() => setStatusFilter(f.value)}
+              key={value}
+              onClick={() => setStatusFilter(value)}
               className={clsx(
                 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                statusFilter === f.value ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
+                statusFilter === value ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
               )}
             >
-              {f.label}
+              {t(`filters.${value || 'all'}`)}
             </button>
           ))}
         </div>
         <button onClick={load} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-          <RefreshCw size={14} /> Obnoviť
+          <RefreshCw size={14} /> {t('refresh')}
         </button>
       </div>
 
@@ -109,25 +105,26 @@ export function RefundsManager({ admin }: { admin: boolean }) {
       {rows === null ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-brand" size={28} /></div>
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 py-10 text-center text-sm text-gray-400 dark:text-gray-500">Žiadne žiadosti o vrátenie.</div>
+        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 py-10 text-center text-sm text-gray-400 dark:text-gray-500">{t('empty')}</div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-900 text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <tr>
-                <th className="px-4 py-3">Objednávka</th>
-                {admin && <th className="px-4 py-3">Organizátor</th>}
-                <th className="px-4 py-3">Zákazník</th>
-                <th className="px-4 py-3">Suma</th>
-                <th className="px-4 py-3">Dôvod</th>
-                <th className="px-4 py-3">Stav</th>
-                <th className="px-4 py-3">Žiadané</th>
-                <th className="px-4 py-3 text-right">Akcie</th>
+                <th className="px-4 py-3">{t('table.order')}</th>
+                {admin && <th className="px-4 py-3">{t('table.organizer')}</th>}
+                <th className="px-4 py-3">{t('table.customer')}</th>
+                <th className="px-4 py-3">{t('table.amount')}</th>
+                <th className="px-4 py-3">{t('table.reason')}</th>
+                <th className="px-4 py-3">{t('table.status')}</th>
+                <th className="px-4 py-3">{t('table.requested')}</th>
+                <th className="px-4 py-3 text-right">{t('table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {rows.map((r) => {
-                const rs = REFUND_STATUS[r.status] ?? { label: r.status, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' };
+                const statusCls = REFUND_STATUS_CLS[r.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300';
+                const statusLabel = REFUND_STATUS_CLS[r.status] ? t(`status.${r.status}`) : r.status;
                 return (
                   <tr key={r.id} className="align-top">
                     <td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-200">{r.orderNumber}</td>
@@ -136,30 +133,30 @@ export function RefundsManager({ admin }: { admin: boolean }) {
                       <div>{r.buyerName ?? '—'}</div>
                       <div className="text-xs text-gray-400 dark:text-gray-500">{r.buyerEmail}</div>
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{formatPrice(r.refundAmount ?? r.orderTotal, r.currency)}</td>
+                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{format.number(Number(r.refundAmount ?? r.orderTotal), { style: 'currency', currency: r.currency })}</td>
                     <td className="px-4 py-3 max-w-[16rem] text-gray-600 dark:text-gray-300">
                       <div className="line-clamp-2">{r.reason}</div>
                       {r.status === 'REJECTED' && r.reviewNote && (
-                        <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">Pozn.: {r.reviewNote}</div>
+                        <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t('notePrefix')} {r.reviewNote}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3"><span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', rs.cls)}>{rs.label}</span></td>
-                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">{formatDate(r.requestedAt)}</td>
+                    <td className="px-4 py-3"><span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', statusCls)}>{statusLabel}</span></td>
+                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">{format.dateTime(new Date(r.requestedAt), { dateStyle: 'medium', timeStyle: 'short' })}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1.5">
                         {r.status === 'REQUESTED' && (
                           <>
                             <button onClick={() => openModal('approve', r)} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700">
-                              <Check size={13} /> Schváliť
+                              <Check size={13} /> {t('actions.approve')}
                             </button>
                             <button onClick={() => openModal('reject', r)} className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                              <X size={13} /> Zamietnuť
+                              <X size={13} /> {t('actions.reject')}
                             </button>
                           </>
                         )}
                         {r.status === 'APPROVED' && (
                           <button onClick={() => openModal('mark', r)} className="inline-flex items-center gap-1 rounded-lg bg-orange-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-orange-700">
-                            <BadgeCheck size={13} /> Označiť ako vrátené
+                            <BadgeCheck size={13} /> {t('actions.markRefunded')}
                           </button>
                         )}
                         {(r.status === 'REFUNDED' || r.status === 'REJECTED') && <span className="text-xs text-gray-300">—</span>}
@@ -179,28 +176,28 @@ export function RefundsManager({ admin }: { admin: boolean }) {
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                {modal.kind === 'approve' && 'Schváliť žiadosť o vrátenie'}
-                {modal.kind === 'reject' && 'Zamietnuť žiadosť'}
-                {modal.kind === 'mark' && 'Označiť ako vrátené'}
+                {modal.kind === 'approve' && t('modal.approve.title')}
+                {modal.kind === 'reject' && t('modal.reject.title')}
+                {modal.kind === 'mark' && t('modal.mark.title')}
               </h3>
               <button onClick={() => !busy && setModal(null)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600"><X size={18} /></button>
             </div>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Objednávka {modal.row.orderNumber} · {modal.row.buyerEmail}</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('modal.orderLabel')} {modal.row.orderNumber} · {modal.row.buyerEmail}</p>
 
             {modal.kind === 'approve' && (
               <>
-                <label className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-200">Suma na vrátenie ({modal.row.currency})</label>
+                <label className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('modal.approve.amountLabel', { currency: modal.row.currency })}</label>
                 <input
                   type="number" step="0.01" min="0" value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                 />
-                <label className="mt-3 block text-sm font-medium text-gray-700 dark:text-gray-200">Poznámka (voliteľná)</label>
+                <label className="mt-3 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('modal.approve.noteLabel')}</label>
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={1000} className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
                 {modal.row.paymentProvider === 'stripe' && (
                   <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
                     <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                    <span>Toto je Stripe platba. Po schválení vykonajte refund v Stripe dashboarde a až potom potvrďte „Označiť ako vrátené".</span>
+                    <span>{t('modal.approve.stripeWarning')}</span>
                   </div>
                 )}
               </>
@@ -208,9 +205,9 @@ export function RefundsManager({ admin }: { admin: boolean }) {
 
             {modal.kind === 'reject' && (
               <>
-                <label className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-200">Dôvod zamietnutia (voliteľný – uvidí ho zákazník)</label>
+                <label className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('modal.reject.noteLabel')}</label>
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} maxLength={1000} className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-                <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">Objednávka sa vráti do stavu „Zaplatené" a lístky ostanú platné.</p>
+                <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{t('modal.reject.hint')}</p>
               </>
             )}
 
@@ -219,19 +216,23 @@ export function RefundsManager({ admin }: { admin: boolean }) {
                 {modal.row.paymentProvider === 'stripe' ? (
                   <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-amber-700">
                     <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                    <span>Najprv vykonajte refund v Stripe dashboarde, potom potvrďte. Systém Stripe API nevolá – iba zaeviduje stav.</span>
+                    <span>{t('modal.mark.stripeWarning')}</span>
                   </div>
                 ) : (
-                  <p>Potvrdením označíte objednávku ako vrátenú.</p>
+                  <p>{t('modal.mark.confirmText')}</p>
                 )}
-                <p>Vstupenky objednávky budú <strong>zneplatnené</strong> (skener ich odmietne){modal.row.paymentProvider !== 'stripe' ? '.' : ' a prípadný kupón sa vráti do obehu.'}</p>
+                <p>
+                  {t.rich(modal.row.paymentProvider === 'stripe' ? 'modal.mark.invalidatedStripe' : 'modal.mark.invalidated', {
+                    strong: (chunks) => <strong>{chunks}</strong>,
+                  })}
+                </p>
               </div>
             )}
 
             {actionError && <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</div>}
 
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setModal(null)} disabled={busy} className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50">Zrušiť</button>
+              <button onClick={() => setModal(null)} disabled={busy} className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50">{t('modal.cancel')}</button>
               <button
                 onClick={confirmModal} disabled={busy}
                 className={clsx(
@@ -240,9 +241,9 @@ export function RefundsManager({ admin }: { admin: boolean }) {
                 )}
               >
                 {busy && <Loader2 size={15} className="animate-spin" />}
-                {modal.kind === 'approve' && 'Schváliť'}
-                {modal.kind === 'reject' && 'Zamietnuť'}
-                {modal.kind === 'mark' && 'Potvrdiť vrátenie'}
+                {modal.kind === 'approve' && t('modal.approve.confirm')}
+                {modal.kind === 'reject' && t('modal.reject.confirm')}
+                {modal.kind === 'mark' && t('modal.mark.confirm')}
               </button>
             </div>
           </div>

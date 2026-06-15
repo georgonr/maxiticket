@@ -908,6 +908,260 @@
         "countRange": "Number of codes must be an integer between 1–100.",
         "emailInvalid": "Enter a valid e-mail for PDF delivery."
       }
+    },
+    "orders": {
+      "title": "Orders",
+      "subtitle": "Overview of your events' orders.",
+      "searchPlaceholder": "Order number, email or name",
+      "allOrganizers": "All organizers",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "retry": "Try again",
+      "empty": "No orders match the filters.",
+      "prev": "Previous",
+      "next": "Next",
+      "pagination": "{from}–{to} of {total}",
+      "guest": "guest",
+      "guestTitle": "Purchase without an account",
+      "registered": "registered",
+      "errorForbidden": "You are not allowed to view these orders.",
+      "errorServer": "Server error. Try again later.",
+      "errorGeneric": "Something went wrong.",
+      "errorConnection": "We can't connect to the server.",
+      "detailErrorForbidden": "This order does not belong to your organization.",
+      "detailErrorNotFound": "Order does not exist.",
+      "detailErrorExpired": "Your session has expired.",
+      "backToOrders": "Back to orders",
+      "buyer": "Buyer",
+      "account": "Account",
+      "organizer": "Organizer",
+      "items": "Items",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "grandTotal": "Total",
+      "ticketsTitle": "Tickets ({count})",
+      "noTickets": "No tickets generated.",
+      "payment": "Payment",
+      "method": "Method",
+      "reference": "Reference",
+      "paidAt": "Paid",
+      "refundedAt": "Refunded",
+      "refundTitle": "Refund",
+      "reason": "Reason",
+      "note": "Note",
+      "amount": "Amount",
+      "col": {
+        "number": "Number",
+        "date": "Date",
+        "buyer": "Buyer",
+        "organizer": "Organizer",
+        "event": "Event",
+        "qty": "Qty",
+        "amount": "Amount",
+        "payment": "Payment",
+        "status": "Status"
+      },
+      "itemCol": {
+        "event": "Event / date",
+        "ticketType": "Ticket type",
+        "qty": "Qty",
+        "price": "Price",
+        "total": "Total"
+      },
+      "statusFilter": {
+        "all": "All statuses",
+        "PAID": "Paid",
+        "PENDING": "Pending",
+        "CANCELLED": "Cancelled",
+        "REFUNDED": "Refunded",
+        "FAILED": "Failed"
+      },
+      "providerFilter": {
+        "all": "All payments",
+        "stripe": "Stripe",
+        "pos_cash": "POS cash",
+        "pos_card": "POS card",
+        "comp": "Free (comp)",
+        "manual": "Manual"
+      },
+      "provider": {
+        "stripe": "Stripe",
+        "pos_cash": "POS cash",
+        "pos_card": "POS card",
+        "comp": "Free",
+        "manual": "Manual",
+        "mock": "Test"
+      },
+      "ticketStatus": {
+        "VALID": "Valid",
+        "USED": "Used",
+        "CANCELLED": "Cancelled",
+        "REFUNDED": "Refunded"
+      },
+      "refundStatus": {
+        "REQUESTED": "Pending review",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "REFUNDED": "Money refunded"
+      }
+    },
+    "refunds": {
+      "title": "Refund requests",
+      "subtitle": "Approve or reject customers' refund requests.",
+      "refresh": "Refresh",
+      "empty": "No refund requests.",
+      "notePrefix": "Note:",
+      "filters": {
+        "all": "All",
+        "REQUESTED": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "REFUNDED": "Refunded"
+      },
+      "status": {
+        "REQUESTED": "Awaiting review",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "REFUNDED": "Money refunded"
+      },
+      "table": {
+        "order": "Order",
+        "organizer": "Organizer",
+        "customer": "Customer",
+        "amount": "Amount",
+        "reason": "Reason",
+        "status": "Status",
+        "requested": "Requested",
+        "actions": "Actions"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "markRefunded": "Mark as refunded"
+      },
+      "modal": {
+        "orderLabel": "Order",
+        "cancel": "Cancel",
+        "approve": {
+          "title": "Approve refund request",
+          "amountLabel": "Refund amount ({currency})",
+          "noteLabel": "Note (optional)",
+          "stripeWarning": "This is a Stripe payment. After approving, issue the refund in the Stripe dashboard and only then confirm “Mark as refunded”.",
+          "confirm": "Approve"
+        },
+        "reject": {
+          "title": "Reject request",
+          "noteLabel": "Rejection reason (optional – visible to the customer)",
+          "hint": "The order will return to the “Paid” state and tickets will remain valid.",
+          "confirm": "Reject"
+        },
+        "mark": {
+          "title": "Mark as refunded",
+          "stripeWarning": "First issue the refund in the Stripe dashboard, then confirm. The system does not call the Stripe API – it only records the status.",
+          "confirmText": "Confirming marks the order as refunded.",
+          "invalidated": "The order's tickets will be <strong>invalidated</strong> (the scanner will reject them).",
+          "invalidatedStripe": "The order's tickets will be <strong>invalidated</strong> (the scanner will reject them) and any coupon will be returned to circulation.",
+          "confirm": "Confirm refund"
+        }
+      },
+      "errors": {
+        "load": "Failed to load requests.",
+        "action": "Action failed."
+      }
+    },
+    "pos": {
+      "title": "Point of sale",
+      "retry": "Try again",
+      "error": {
+        "forbidden": "You are not allowed to sell at this date.",
+        "server": "Server error. Please try again.",
+        "generic": "Something went wrong.",
+        "network": "We can't connect to the server."
+      },
+      "summary": {
+        "sinceLastClosure": "Since last closure:",
+        "cash": "cash",
+        "card": "card",
+        "ticketCount": "{count} tickets",
+        "closureLink": "Closure →"
+      },
+      "termin": {
+        "empty": "No active dates for sale. Create a date with the status “On sale”.",
+        "selectPrompt": "Select a date:"
+      },
+      "tickets": {
+        "otherTermin": "Other date",
+        "remaining": "{count} left",
+        "soldOut": "Sold out",
+        "couponPlaceholder": "Discount coupon (optional)",
+        "subtotal": "Subtotal ({count} pcs)",
+        "continue": "Continue"
+      },
+      "payment": {
+        "backToTickets": "Back to tickets",
+        "toPay": "To pay",
+        "ticketCount": "{count, plural, one {# ticket} other {# tickets}}",
+        "couponLabel": "coupon {code}",
+        "buyerHint": "Buyer (optional – leave empty = anonymous sale)",
+        "emailPlaceholder": "E-mail (we'll send tickets here)",
+        "namePlaceholder": "Name",
+        "cash": "CASH",
+        "card": "CARD",
+        "cardHint": "Card = confirm only after approval on the payment terminal."
+      },
+      "done": {
+        "title": "Sale completed",
+        "discount": "discount −{amount}",
+        "ticketsHint": "Tickets ({count}) – the customer takes a photo or staff scans them:",
+        "emailInputPlaceholder": "E-mail to send tickets to",
+        "sendEmail": "Send by e-mail",
+        "print": "Print",
+        "newSale": "NEW SALE",
+        "emailSent": "Tickets sent to {email}.",
+        "invalidEmail": "Enter a valid e-mail."
+      },
+      "closures": {
+        "back": "Back to point of sale",
+        "title": "Cash register closure",
+        "sinceLastClosure": "Since last closure",
+        "periodFrom": "from {date}",
+        "allPosSales": "all POS sales",
+        "closeButton": "CLOSE REGISTER",
+        "cash": "Cash",
+        "card": "Card",
+        "total": "Total",
+        "salesTicketsSummary": "{sales} sales · {tickets} tickets",
+        "noNewSales": "No new POS sales to close.",
+        "historyTitle": "Closure history",
+        "historyTitleCount": "Closure history ({count})",
+        "historyEmpty": "No closures yet.",
+        "downloadPdf": "Download PDF",
+        "toast": {
+          "closed": "Register closed: {amount} ({count} sales)."
+        },
+        "error": {
+          "forbidden": "Only the organization owner can perform a closure.",
+          "noSales": "No sales to close.",
+          "server": "Server error. Please try later."
+        },
+        "table": {
+          "closed": "Closed",
+          "period": "Period",
+          "cash": "Cash",
+          "card": "Card",
+          "total": "Total",
+          "salesPcs": "Sales/pcs",
+          "by": "By",
+          "pdf": "PDF"
+        },
+        "modal": {
+          "title": "Close the register?",
+          "notePlaceholder": "Note (optional)",
+          "notice": "The closure locks this period. Further sales start a new period.",
+          "cancel": "Cancel",
+          "confirm": "Close"
+        }
+      }
     }
   }
 }

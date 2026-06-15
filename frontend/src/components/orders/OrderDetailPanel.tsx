@@ -3,45 +3,35 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
+import { useTranslations, useFormatter } from 'next-intl';
 import { ArrowLeft, Loader2, User, Ticket as TicketIcon } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
 import { OrderDetail } from '@/lib/api/orders';
-import { formatPrice, formatDate } from '@/lib/format';
 import { OrderStatusBadge } from '@/components/dashboard/parts';
 
-const TICKET_STATUS: Record<string, { label: string; cls: string }> = {
-  VALID: { label: 'Platný', cls: 'bg-emerald-50 text-emerald-700' },
-  USED: { label: 'Použitý', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
-  CANCELLED: { label: 'Zrušený', cls: 'bg-red-50 text-red-700' },
-  REFUNDED: { label: 'Refundovaný', cls: 'bg-orange-50 text-orange-700' },
+const TICKET_STATUS_CLS: Record<string, string> = {
+  VALID: 'bg-emerald-50 text-emerald-700',
+  USED: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+  CANCELLED: 'bg-red-50 text-red-700',
+  REFUNDED: 'bg-orange-50 text-orange-700',
 };
 
-const REFUND_STATUS: Record<string, { label: string; cls: string }> = {
-  REQUESTED: { label: 'Čaká na vybavenie', cls: 'bg-amber-50 text-amber-700' },
-  APPROVED: { label: 'Schválené', cls: 'bg-sky-50 text-sky-700' },
-  REJECTED: { label: 'Zamietnuté', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
-  REFUNDED: { label: 'Peniaze vrátené', cls: 'bg-orange-50 text-orange-700' },
+const REFUND_STATUS_CLS: Record<string, string> = {
+  REQUESTED: 'bg-amber-50 text-amber-700',
+  APPROVED: 'bg-sky-50 text-sky-700',
+  REJECTED: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+  REFUNDED: 'bg-orange-50 text-orange-700',
 };
 
-const PROVIDER_LABEL: Record<string, string> = {
-  stripe: 'Stripe',
-  pos_cash: 'POS hotovosť',
-  pos_card: 'POS karta',
-  comp: 'Zdarma (comp)',
-  manual: 'Manuál',
-  mock: 'Test',
+const PROVIDER_KEYS: Record<string, string> = {
+  stripe: 'stripe',
+  pos_cash: 'pos_cash',
+  pos_card: 'pos_card',
+  comp: 'comp',
+  manual: 'manual',
+  mock: 'mock',
 };
-
-function readableError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 403) return 'Táto objednávka nepatrí vašej organizácii.';
-    if (e.status === 404) return 'Objednávka neexistuje.';
-    if (e.status === 401) return 'Vaše prihlásenie vypršalo.';
-    return e.message || 'Niečo sa pokazilo.';
-  }
-  return 'Nemôžeme sa pripojiť k serveru.';
-}
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -61,6 +51,30 @@ export function OrderDetailPanel({
   fetchOrder: (id: string, token: string) => Promise<OrderDetail>;
   backHref: string;
 }) {
+  const t = useTranslations('organizer.orders');
+  const format = useFormatter();
+  const fmtDate = (iso: string) =>
+    format.dateTime(new Date(iso), {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  const fmtPrice = (amount: number | string, currency = 'EUR') =>
+    format.number(Number(amount), { style: 'currency', currency });
+
+  const readableError = (e: unknown): string => {
+    if (e instanceof ApiError) {
+      if (e.status === 403) return t('detailErrorForbidden');
+      if (e.status === 404) return t('detailErrorNotFound');
+      if (e.status === 401) return t('detailErrorExpired');
+      return e.message || t('errorGeneric');
+    }
+    return t('errorConnection');
+  };
+
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +82,7 @@ export function OrderDetailPanel({
     let active = true;
     getValidToken().then(async (token) => {
       if (!token) {
-        if (active) setError('Vaše prihlásenie vypršalo.');
+        if (active) setError(t('detailErrorExpired'));
         return;
       }
       try {
@@ -88,7 +102,7 @@ export function OrderDetailPanel({
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-6">
       <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-brand hover:underline">
-        <ArrowLeft size={15} /> Späť na objednávky
+        <ArrowLeft size={15} /> {t('backToOrders')}
       </Link>
 
       {error ? (
@@ -102,12 +116,12 @@ export function OrderDetailPanel({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="font-mono text-2xl font-bold text-gray-900 dark:text-gray-100">{order.orderNumber}</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(order.createdAt)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{fmtDate(order.createdAt)}</p>
             </div>
             <OrderStatusBadge status={order.status} />
           </div>
 
-          <Card title="Kupujúci">
+          <Card title={t('buyer')}>
             <div className="space-y-1.5 text-sm">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-gray-800 dark:text-gray-100">{order.buyerName ?? '—'}</span>
@@ -117,30 +131,30 @@ export function OrderDetailPanel({
                     order.isGuest ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' : 'bg-sky-50 text-sky-700',
                   )}
                 >
-                  <User size={9} /> {order.isGuest ? 'hosť' : 'registrovaný'}
+                  <User size={9} /> {order.isGuest ? t('guest') : t('registered')}
                 </span>
               </div>
               <div className="text-gray-600 dark:text-gray-300">{order.buyerEmail}</div>
               {order.userEmail && order.userEmail !== order.buyerEmail && (
-                <div className="text-xs text-gray-400 dark:text-gray-500">Účet: {order.userEmail}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">{t('account')}: {order.userEmail}</div>
               )}
               {order.buyerPhone && <div className="text-gray-600 dark:text-gray-300">{order.buyerPhone}</div>}
               {order.organizerName && (
-                <div className="text-xs text-gray-400 dark:text-gray-500">Organizátor: {order.organizerName}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">{t('organizer')}: {order.organizerName}</div>
               )}
             </div>
           </Card>
 
-          <Card title="Položky">
+          <Card title={t('items')}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
-                    <th className="py-2 pr-3 font-medium">Podujatie / termín</th>
-                    <th className="py-2 px-3 font-medium">Typ lístka</th>
-                    <th className="py-2 px-3 font-medium text-right">Ks</th>
-                    <th className="py-2 px-3 font-medium text-right">Cena</th>
-                    <th className="py-2 pl-3 font-medium text-right">Spolu</th>
+                    <th className="py-2 pr-3 font-medium">{t('itemCol.event')}</th>
+                    <th className="py-2 px-3 font-medium">{t('itemCol.ticketType')}</th>
+                    <th className="py-2 px-3 font-medium text-right">{t('itemCol.qty')}</th>
+                    <th className="py-2 px-3 font-medium text-right">{t('itemCol.price')}</th>
+                    <th className="py-2 pl-3 font-medium text-right">{t('itemCol.total')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -149,13 +163,13 @@ export function OrderDetailPanel({
                       <td className="py-2.5 pr-3">
                         <div className="font-medium text-gray-800 dark:text-gray-100">{it.showTitle ?? '—'}</div>
                         {it.terminStartsAt && (
-                          <div className="text-xs text-gray-400 dark:text-gray-500">{formatDate(it.terminStartsAt)}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">{fmtDate(it.terminStartsAt)}</div>
                         )}
                       </td>
                       <td className="px-3 text-gray-600 dark:text-gray-300">{it.ticketTypeName ?? '—'}</td>
                       <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{it.quantity}</td>
-                      <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{formatPrice(it.unitPrice)}</td>
-                      <td className="pl-3 text-right tabular-nums font-medium text-gray-800 dark:text-gray-100">{formatPrice(it.lineTotal)}</td>
+                      <td className="px-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{fmtPrice(it.unitPrice)}</td>
+                      <td className="pl-3 text-right tabular-nums font-medium text-gray-800 dark:text-gray-100">{fmtPrice(it.lineTotal)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -166,34 +180,35 @@ export function OrderDetailPanel({
               {order.discountAmount > 0 && (
                 <>
                   <div className="flex justify-between text-gray-500 dark:text-gray-400">
-                    <span>Medzisúčet</span>
-                    <span className="tabular-nums">{formatPrice(subtotal)}</span>
+                    <span>{t('subtotal')}</span>
+                    <span className="tabular-nums">{fmtPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-emerald-600">
-                    <span>Zľava{order.couponCode ? ` (${order.couponCode})` : ''}</span>
-                    <span className="tabular-nums">−{formatPrice(order.discountAmount)}</span>
+                    <span>{t('discount')}{order.couponCode ? ` (${order.couponCode})` : ''}</span>
+                    <span className="tabular-nums">−{fmtPrice(order.discountAmount)}</span>
                   </div>
                 </>
               )}
               <div className="flex justify-between pt-1">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">Spolu</span>
-                <span className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums">{formatPrice(order.totalAmount)}</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">{t('grandTotal')}</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums">{fmtPrice(order.totalAmount)}</span>
               </div>
             </div>
           </Card>
 
-          <Card title={`Lístky (${order.tickets.length})`}>
+          <Card title={t('ticketsTitle', { count: order.tickets.length })}>
             {order.tickets.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500">Žiadne vygenerované lístky.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">{t('noTickets')}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {order.tickets.map((t) => {
-                  const m = TICKET_STATUS[t.status] ?? { label: t.status, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' };
+                {order.tickets.map((tk) => {
+                  const cls = TICKET_STATUS_CLS[tk.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300';
+                  const label = TICKET_STATUS_CLS[tk.status] ? t(`ticketStatus.${tk.status}`) : tk.status;
                   return (
-                    <div key={t.ticketId} className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-800 px-3 py-1.5 text-sm">
+                    <div key={tk.ticketId} className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-800 px-3 py-1.5 text-sm">
                       <TicketIcon size={13} className="text-gray-400 dark:text-gray-500" />
-                      <span className="font-mono text-gray-700 dark:text-gray-200">…{t.codeSuffix}</span>
-                      <span className={clsx('rounded-full px-1.5 py-0.5 text-[10px] font-medium', m.cls)}>{m.label}</span>
+                      <span className="font-mono text-gray-700 dark:text-gray-200">…{tk.codeSuffix}</span>
+                      <span className={clsx('rounded-full px-1.5 py-0.5 text-[10px] font-medium', cls)}>{label}</span>
                     </div>
                   );
                 })}
@@ -201,50 +216,51 @@ export function OrderDetailPanel({
             )}
           </Card>
 
-          <Card title="Platba">
+          <Card title={t('payment')}>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Spôsob</span>
+                <span className="text-gray-500 dark:text-gray-400">{t('method')}</span>
                 <span className="font-medium text-gray-800 dark:text-gray-100">
-                  {order.paymentProvider ? PROVIDER_LABEL[order.paymentProvider] ?? order.paymentProvider : '—'}
+                  {order.paymentProvider ? (PROVIDER_KEYS[order.paymentProvider] ? t(`provider.${order.paymentProvider}`) : order.paymentProvider) : '—'}
                 </span>
               </div>
               {order.paymentRef && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Referencia</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t('reference')}</span>
                   <span className="font-mono text-xs text-gray-600 dark:text-gray-300">{order.paymentRef}</span>
                 </div>
               )}
               {order.paidAt && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Zaplatené</span>
-                  <span className="text-gray-700 dark:text-gray-200">{formatDate(order.paidAt)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t('paidAt')}</span>
+                  <span className="text-gray-700 dark:text-gray-200">{fmtDate(order.paidAt)}</span>
                 </div>
               )}
               {order.refundedAt && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Refundované</span>
-                  <span className="text-gray-700 dark:text-gray-200">{formatDate(order.refundedAt)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t('refundedAt')}</span>
+                  <span className="text-gray-700 dark:text-gray-200">{fmtDate(order.refundedAt)}</span>
                 </div>
               )}
             </div>
           </Card>
 
           {order.refundRequests.length > 0 && (
-            <Card title="Vrátenie peňazí">
+            <Card title={t('refundTitle')}>
               <div className="space-y-3">
                 {order.refundRequests.map((r) => {
-                  const rs = REFUND_STATUS[r.status] ?? { label: r.status, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' };
+                  const rsCls = REFUND_STATUS_CLS[r.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300';
+                  const rsLabel = REFUND_STATUS_CLS[r.status] ? t(`refundStatus.${r.status}`) : r.status;
                   return (
                     <div key={r.id} className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 text-sm">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', rs.cls)}>{rs.label}</span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(r.requestedAt)}</span>
+                        <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', rsCls)}>{rsLabel}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">{fmtDate(r.requestedAt)}</span>
                       </div>
-                      <p className="mt-2 text-gray-600 dark:text-gray-300"><span className="text-gray-400 dark:text-gray-500">Dôvod:</span> {r.reason}</p>
-                      {r.reviewNote && <p className="mt-1 text-gray-500 dark:text-gray-400"><span className="text-gray-400 dark:text-gray-500">Poznámka:</span> {r.reviewNote}</p>}
+                      <p className="mt-2 text-gray-600 dark:text-gray-300"><span className="text-gray-400 dark:text-gray-500">{t('reason')}:</span> {r.reason}</p>
+                      {r.reviewNote && <p className="mt-1 text-gray-500 dark:text-gray-400"><span className="text-gray-400 dark:text-gray-500">{t('note')}:</span> {r.reviewNote}</p>}
                       {r.refundAmount != null && (
-                        <p className="mt-1 text-gray-500 dark:text-gray-400"><span className="text-gray-400 dark:text-gray-500">Suma:</span> {formatPrice(r.refundAmount, order.currency)}</p>
+                        <p className="mt-1 text-gray-500 dark:text-gray-400"><span className="text-gray-400 dark:text-gray-500">{t('amount')}:</span> {fmtPrice(r.refundAmount, order.currency)}</p>
                       )}
                     </div>
                   );
