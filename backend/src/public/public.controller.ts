@@ -21,6 +21,12 @@ export class PublicController {
     return this.svc.listShows({ category, dateFilter, city });
   }
 
+  // Krok 30: pool vybraných podujatí pre homepage (mix predané+najnovšie).
+  @Get('featured-shows')
+  featuredShows() {
+    return this.svc.featuredShows();
+  }
+
   @Get('filters')
   async getFilters() {
     const [categories, cities] = await Promise.all([

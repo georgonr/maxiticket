@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { Bot, ScanLine, Wallet, Users, Tag, LayoutGrid, ArrowRight, Calendar, MapPin } from 'lucide-react';
+import { Bot, ScanLine, Tag, ArrowRight } from 'lucide-react';
 import { useLandingLang } from '@/lib/landing-i18n';
 import { ChatWidget } from '@/components/assistant/ChatWidget';
+import { FeaturedEvents } from './FeaturedEvents';
 
 const REGISTER_URL = '/register';
 const ORGANIZER_LOGIN_URL = 'https://admin.ticketall.eu';
 
-const FEATURE_ICONS = [Bot, ScanLine, Wallet, Users, Tag, LayoutGrid];
+// 3 funkcie (krok 30): AI podpora, Skenovanie, Kupóny a zľavy
+const FEATURE_ICONS = [Bot, ScanLine, Tag];
 
 export function LandingPage() {
   const { lang, setLang, t } = useLandingLang();
@@ -19,7 +21,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-plum/5 bg-cream/80 backdrop-blur-md">
         <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <Link href="/" aria-label="TicketAll" className="flex-shrink-0">
-            <img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" />
+            <img src="/logo-horizontal.svg" alt="TicketAll" className="h-10 w-auto sm:h-11" />
           </Link>
 
           <div className="hidden items-center gap-7 text-sm font-medium text-muted md:flex">
@@ -54,53 +56,37 @@ export function LandingPage() {
         </nav>
       </header>
 
-      {/* ── Hero ──────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-coral shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-coral" /> {t.hero.badge}
-            </span>
-            <h1 className="mt-5 font-display text-5xl font-semibold leading-[1.05] tracking-tight text-plum sm:text-6xl">
-              {t.hero.title1}<br />
-              <span className="text-coral">{t.hero.title2}</span>
-            </h1>
-            <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">{t.hero.subtitle}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                href={REGISTER_URL}
-                className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3 text-base font-semibold text-white shadow-md transition-all hover:bg-coral-dark hover:shadow-lg"
-              >
-                {t.hero.ctaPrimary} <ArrowRight size={18} />
-              </Link>
-              <Link
-                href="/events"
-                className="inline-flex items-center gap-2 rounded-full border border-plum/15 bg-white px-6 py-3 text-base font-semibold text-plum transition-colors hover:border-plum/30"
-              >
-                {t.hero.ctaSecondary}
-              </Link>
-            </div>
-          </div>
-
-          {/* Ilustračná event-karta (self-contained, žiadne stock fotky) */}
-          <div className="relative">
-            <div className="absolute -right-6 -top-6 h-56 w-56 rounded-full bg-amber/20 blur-2xl" />
-            <div className="absolute -bottom-8 -left-4 h-48 w-48 rounded-full bg-coral/15 blur-2xl" />
-            <div className="relative mx-auto max-w-sm rounded-3xl bg-white p-5 shadow-xl ring-1 ring-plum/5">
-              <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-br from-coral via-coral-dark to-plum">
-                <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(244,165,33,0.6), transparent 45%)' }} />
-                <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-bold text-coral">{t.hero.cardPrice}</span>
-              </div>
-              <h3 className="mt-4 font-display text-xl font-semibold text-plum">{t.hero.cardEvent}</h3>
-              <div className="mt-2 space-y-1 text-sm text-muted">
-                <p className="flex items-center gap-2"><Calendar size={14} className="text-coral" /> {t.hero.cardDate}</p>
-                <p className="flex items-center gap-2"><MapPin size={14} className="text-coral" /> Bratislava</p>
-              </div>
-              <button className="mt-4 w-full rounded-xl bg-coral py-2.5 text-sm font-semibold text-white">{t.hero.cardBuy}</button>
-            </div>
+      {/* ── Hero (kompaktný pás) ──────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-plum/5">
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-amber/15 blur-3xl" />
+        <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-coral/10 blur-3xl" />
+        <div className="relative mx-auto max-w-3xl px-4 py-12 text-center sm:px-6 lg:py-16">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-coral shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-coral" /> {t.hero.badge}
+          </span>
+          <h1 className="mx-auto mt-5 max-w-2xl font-display text-4xl font-semibold leading-[1.08] tracking-tight text-plum sm:text-5xl">
+            {t.hero.title1} <span className="text-coral">{t.hero.title2}</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted">{t.hero.subtitle}</p>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={REGISTER_URL}
+              className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3 text-base font-semibold text-white shadow-md transition-all hover:bg-coral-dark hover:shadow-lg"
+            >
+              {t.hero.ctaPrimary} <ArrowRight size={18} />
+            </Link>
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-2 rounded-full border border-plum/15 bg-white px-6 py-3 text-base font-semibold text-plum transition-colors hover:border-plum/30"
+            >
+              {t.hero.ctaSecondary}
+            </Link>
           </div>
         </div>
       </section>
+
+      {/* ── Vybrané podujatia (reálne, auto-preklápanie) ──── */}
+      <FeaturedEvents t={t.featured} />
 
       {/* ── Features ──────────────────────────────────────── */}
       <section id="features" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">

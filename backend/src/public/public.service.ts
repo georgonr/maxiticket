@@ -150,6 +150,77 @@ export class PublicService {
     });
   }
 
+  /**
+   * Krok 30: pool vybraných verejných podujatí pre homepage (až 36), mix
+   * NAJNAVŠTEVOVANEJŠIE (počet predaných lístkov, reálna metrika) + NAJNOVŠIE (recency tiebreak)
+   * + promované navrch. Rovnaký tvar ako listShows → frontend reuse karty.
+   */
+  async featuredShows() {
+    const terminWhere = { status: { in: SALE_STATUSES }, visible: true };
+    const candidates = await this.prisma.show.findMany({
+      where: { status: EventStatus.PUBLISHED, termins: { some: terminWhere } },
+      include: {
+        images: { where: { isCover: true }, take: 1 },
+        termins: {
+          where: terminWhere,
+          orderBy: { startsAt: 'asc' },
+          take: 1,
+          include: {
+            venue: { select: { name: true, city: true } },
+            ticketTypes: { where: { isActive: true }, orderBy: { price: 'asc' }, take: 1 },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' }, // recency baseline
+      take: 80,
+    });
+    if (candidates.length === 0) return [];
+
+    const showIds = candidates.map((s) => s.id);
+    // predané lístky per show (cez terminId → showId)
+    const termins = await this.prisma.termin.findMany({
+      where: { showId: { in: showIds } },
+      select: { id: true, showId: true },
+    });
+    const terminToShow = new Map(termins.map((t) => [t.id, t.showId]));
+    const sold = await this.prisma.orderItem.groupBy({
+      by: ['terminId'],
+      where: { termin: { showId: { in: showIds } }, order: { status: 'PAID' } },
+      _sum: { quantity: true },
+    });
+    const soldByShow = new Map<string, number>();
+    for (const r of sold) {
+      const sid = r.terminId ? terminToShow.get(r.terminId) : undefined;
+      if (sid) soldByShow.set(sid, (soldByShow.get(sid) ?? 0) + (r._sum.quantity ?? 0));
+    }
+
+    const ranked = [...candidates].sort((a, b) => {
+      if (a.isPromoted !== b.isPromoted) return a.isPromoted ? -1 : 1;
+      const sa = soldByShow.get(a.id) ?? 0;
+      const sb = soldByShow.get(b.id) ?? 0;
+      if (sb !== sa) return sb - sa; // najnavštevovanejšie
+      return b.createdAt.getTime() - a.createdAt.getTime(); // najnovšie tiebreak
+    }).slice(0, 36);
+
+    return ranked.map((show) => ({
+      id: show.id,
+      slug: show.slug,
+      name: show.name,
+      category: show.category ?? null,
+      coverUrl: show.images[0]?.squareUrl ?? null,
+      termins: show.termins.map((t) => ({
+        id: t.id,
+        startsAt: t.startsAt,
+        timezone: t.timezone,
+        status: t.status,
+        city: (t.venue as any)?.city ?? null,
+        venueName: (t.venue as any)?.name ?? null,
+        minPrice: t.ticketTypes[0] ? Number(t.ticketTypes[0].price) : null,
+        currency: t.ticketTypes[0]?.currency ?? 'EUR',
+      })),
+    }));
+  }
+
   async getCategories(): Promise<string[]> {
     const rows = await this.prisma.show.findMany({
       where: { status: EventStatus.PUBLISHED, category: { not: null } },

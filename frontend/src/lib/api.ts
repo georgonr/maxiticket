@@ -452,6 +452,8 @@ export const publicApi = {
     return apiFetch<PublicShow[]>(`/v1/public/shows${qs ? '?' + qs : ''}`);
   },
   getShow: (slug: string) => apiFetch<PublicShowDetail>(`/v1/public/shows/${slug}`),
+  // Krok 30: pool vybraných podujatí pre homepage
+  featuredShows: () => apiFetch<PublicShow[]>('/v1/public/featured-shows'),
   getFilters: () => apiFetch<{ categories: string[]; cities: string[] }>('/v1/public/filters'),
   getHero: () => apiFetch<HeroSlideType[]>('/v1/public/hero'),
   // Úloha 22/3b: sedadlá SEATED sekcií termínu so statusom (pre seat-picker)

@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 
-// Krok 29: ľahká i18n pre marketingovú homepage (SK/EN). Žiadne hardcoded texty v komponentoch.
+// Krok 29/30: ľahká i18n pre marketingovú homepage (SK/EN). Žiadne hardcoded texty v komponentoch.
 export type Lang = 'sk' | 'en';
 
 export interface LandingMessages {
   nav: { events: string; features: string; how: string; login: string; cta: string };
-  hero: { badge: string; title1: string; title2: string; subtitle: string; ctaPrimary: string; ctaSecondary: string; cardEvent: string; cardDate: string; cardPrice: string; cardBuy: string };
+  hero: { badge: string; title1: string; title2: string; subtitle: string; ctaPrimary: string; ctaSecondary: string };
+  featured: { heading: string; sub: string; allEvents: string; priceFrom: string; empty: string };
   features: { heading: string; sub: string; items: { title: string; desc: string }[] };
   steps: { heading: string; sub: string; items: { title: string; desc: string }[] };
   finalCta: { title: string; sub: string; button: string };
@@ -18,26 +19,26 @@ const sk: LandingMessages = {
   nav: { events: 'Podujatia', features: 'Funkcie', how: 'Ako to funguje', login: 'Prihlásiť', cta: 'Začni zadarmo' },
   hero: {
     badge: 'Predaj vstupeniek pre moderných organizátorov',
-    title1: 'Predávaj vstupenky,',
-    title2: 'ktoré ľudia milujú.',
-    subtitle: 'TicketAll je teplý, jednoduchý nástroj na predaj lístkov online – od malého koncertu po vypredanú halu. Spustíš podujatie za pár minút.',
+    title1: 'Vstupenky, ktoré',
+    title2: 'ľudia milujú.',
+    subtitle: 'Spusti predaj lístkov online za pár minút – od malého koncertu po vypredanú halu.',
     ctaPrimary: 'Začni zadarmo',
     ctaSecondary: 'Prezri podujatia',
-    cardEvent: 'Letný hudobný večer',
-    cardDate: 'Sob · 21:00 · Klub Nu Spirit',
-    cardPrice: 'od 12 €',
-    cardBuy: 'Kúpiť lístok',
+  },
+  featured: {
+    heading: 'Vybrané podujatia',
+    sub: 'Najnavštevovanejšie a najnovšie akcie, ktoré práve frčia.',
+    allEvents: 'Všetky podujatia',
+    priceFrom: 'od',
+    empty: 'Momentálne nie sú zverejnené žiadne podujatia.',
   },
   features: {
-    heading: 'Všetko pre predaj na jednom mieste',
-    sub: 'Nástroje, ktoré inde platíš zvlášť – u nás v jednom.',
+    heading: 'Všetky nástroje, jedna platforma',
+    sub: 'To, čo inde platíš zvlášť – u nás v jednom.',
     items: [
       { title: 'AI podpora 24/7', desc: 'Chat asistent pomôže zákazníkom s lístkami a objednávkami kedykoľvek.' },
       { title: 'Skenovanie a check-in', desc: 'Rýchle skenovanie QR pri vstupe – funguje aj offline.' },
-      { title: 'Výplaty organizátorom', desc: 'Prehľadné tržby a jednoduché výplaty z predaja.' },
-      { title: 'CRM návštevníkov', desc: 'Spoznaj svojich fanúšikov a oslov ich znova.' },
       { title: 'Kupóny a zľavy', desc: 'Promo kódy, zľavy a kampane na pár klikov.' },
-      { title: 'Seat mapy', desc: 'Predaj číslovaných sedadiel s vizuálnym plánikom sály.' },
     ],
   },
   steps: {
@@ -67,26 +68,26 @@ const en: LandingMessages = {
   nav: { events: 'Events', features: 'Features', how: 'How it works', login: 'Sign in', cta: 'Start free' },
   hero: {
     badge: 'Ticketing for modern organizers',
-    title1: 'Sell tickets',
-    title2: 'people love.',
-    subtitle: 'TicketAll is a warm, simple way to sell tickets online – from a tiny gig to a sold-out arena. Launch your event in minutes.',
+    title1: 'Tickets people',
+    title2: 'love.',
+    subtitle: 'Start selling tickets online in minutes – from a tiny gig to a sold-out arena.',
     ctaPrimary: 'Start free',
     ctaSecondary: 'Browse events',
-    cardEvent: 'Summer Music Night',
-    cardDate: 'Sat · 9:00 PM · Nu Spirit Club',
-    cardPrice: 'from €12',
-    cardBuy: 'Buy ticket',
+  },
+  featured: {
+    heading: 'Featured events',
+    sub: 'The most popular and newest events trending right now.',
+    allEvents: 'All events',
+    priceFrom: 'from',
+    empty: 'No events are published right now.',
   },
   features: {
-    heading: 'Everything to sell, in one place',
-    sub: 'Tools you pay extra for elsewhere – bundled here.',
+    heading: 'All the tools, one platform',
+    sub: 'What you pay extra for elsewhere – bundled here.',
     items: [
       { title: 'AI support 24/7', desc: 'A chat assistant helps your buyers with tickets and orders anytime.' },
       { title: 'Scanning & check-in', desc: 'Fast QR scanning at the door – works offline too.' },
-      { title: 'Organizer payouts', desc: 'Clear revenue and simple payouts from your sales.' },
-      { title: 'Visitor CRM', desc: 'Get to know your fans and reach them again.' },
       { title: 'Coupons & discounts', desc: 'Promo codes, discounts and campaigns in a few clicks.' },
-      { title: 'Seat maps', desc: 'Sell numbered seats with a visual venue plan.' },
     ],
   },
   steps: {
