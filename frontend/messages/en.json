@@ -1,6 +1,12 @@
 {
   "landing": {
-    "nav": { "events": "Events", "features": "Features", "how": "How it works", "login": "Sign in", "cta": "Start free" },
+    "nav": {
+      "events": "Events",
+      "features": "Features",
+      "how": "How it works",
+      "login": "Sign in",
+      "cta": "Start free"
+    },
     "hero": {
       "badge": "Ticketing for modern organizers",
       "title1": "Tickets people",
@@ -20,18 +26,36 @@
       "heading": "All the tools, one platform",
       "sub": "What you pay extra for elsewhere – bundled here.",
       "items": [
-        { "title": "AI support 24/7", "desc": "A chat assistant helps your buyers with tickets and orders anytime." },
-        { "title": "Scanning & check-in", "desc": "Fast QR scanning at the door – works offline too." },
-        { "title": "Coupons & discounts", "desc": "Promo codes, discounts and campaigns in a few clicks." }
+        {
+          "title": "AI support 24/7",
+          "desc": "A chat assistant helps your buyers with tickets and orders anytime."
+        },
+        {
+          "title": "Scanning & check-in",
+          "desc": "Fast QR scanning at the door – works offline too."
+        },
+        {
+          "title": "Coupons & discounts",
+          "desc": "Promo codes, discounts and campaigns in a few clicks."
+        }
       ]
     },
     "steps": {
       "heading": "3 steps to launch your event",
       "sub": "From idea to selling in minutes.",
       "items": [
-        { "title": "Tell us about the event", "desc": "Name, venue, date – add a few details and your page is ready." },
-        { "title": "Set up ticket types", "desc": "Prices, capacities, discounts or a seat map as needed." },
-        { "title": "Share & sell", "desc": "Share the link, sell online and track revenue in real time." }
+        {
+          "title": "Tell us about the event",
+          "desc": "Name, venue, date – add a few details and your page is ready."
+        },
+        {
+          "title": "Set up ticket types",
+          "desc": "Prices, capacities, discounts or a seat map as needed."
+        },
+        {
+          "title": "Share & sell",
+          "desc": "Share the link, sell online and track revenue in real time."
+        }
       ]
     },
     "finalCta": {
@@ -43,8 +67,71 @@
       "tagline": "Ticketing that feels right.",
       "product": "Product",
       "company": "Company",
-      "links": { "events": "Events", "features": "Features", "how": "How it works", "faq": "FAQ", "organizers": "For organizers", "contact": "Contact" },
+      "links": {
+        "events": "Events",
+        "features": "Features",
+        "how": "How it works",
+        "faq": "FAQ",
+        "organizers": "For organizers",
+        "contact": "Contact"
+      },
       "rights": "All rights reserved."
     }
+  },
+  "nav": {
+    "home": "TicketAll – home",
+    "organizerQ": "Are you an organizer?",
+    "organizerQArrow": "Are you an organizer? →",
+    "events": "Events",
+    "faq": "FAQ",
+    "forOrganizers": "For organizers",
+    "myTickets": "My tickets",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "register": "Sign up",
+    "account": "Account",
+    "menuOpen": "Open menu",
+    "menuClose": "Close menu"
+  },
+  "footer": {
+    "tagline": "International ticketing platform for every event. Fast, secure, modern.",
+    "rights": "All rights reserved.",
+    "colAbout": "About",
+    "colOrganizers": "For organizers",
+    "colHelp": "Help",
+    "colLegal": "Legal",
+    "ourStory": "Our story",
+    "contact": "Contact",
+    "blog": "Blog",
+    "register": "Sign up",
+    "pricing": "Pricing",
+    "terms": "Terms",
+    "faq": "FAQ",
+    "vop": "Terms & Conditions",
+    "gdpr": "Privacy policy",
+    "cookies": "Cookies"
+  },
+  "chat": {
+    "title": "TicketAll Assistant",
+    "welcome": "Hi 👋 I can help you with your orders and tickets. Pick an option below or type your question.",
+    "placeholder": "Type a message…",
+    "open": "Open assistant",
+    "close": "Close",
+    "send": "Send",
+    "unavailable": "The assistant is currently unavailable.",
+    "quickTicketNotReceived": "My ticket didn't arrive",
+    "quickShowQr": "Show my ticket QR code",
+    "quickDownloadPdf": "Download ticket PDF",
+    "quickResend": "Resend my tickets"
+  },
+  "hero": {
+    "buyTickets": "Buy tickets",
+    "showMore": "Show more",
+    "slider": "Hero slider",
+    "prev": "Previous slide",
+    "next": "Next slide",
+    "nav": "Slide navigation",
+    "slidePosition": "{index} of {total}: {title}",
+    "goToSlide": "Go to slide {n}"
   }
 }

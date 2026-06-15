@@ -1,39 +1,42 @@
-import Link from 'next/link';
+import NextLink from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
+// Krok 31b1: i18n texty (namespace `footer`) + locale-aware linky. `flat` = nelokalizovaná staff cesta.
 const FOOTER_COLS = [
   {
-    title: 'O nás',
+    titleKey: 'colAbout',
     links: [
-      { href: '/o-nas', label: 'Náš príbeh' },
-      { href: '/kontakt', label: 'Kontakt' },
-      { href: '/blog', label: 'Blog' },
+      { href: '/o-nas', key: 'ourStory' },
+      { href: '/kontakt', key: 'contact' },
+      { href: '/blog', key: 'blog' },
     ],
   },
   {
-    title: 'Pre organizátorov',
+    titleKey: 'colOrganizers',
     links: [
-      { href: '/admin/register', label: 'Registrácia' },
-      { href: '/cennik', label: 'Cenník' },
-      { href: '/podmienky', label: 'Podmienky' },
+      { href: '/admin/register', key: 'register', flat: true },
+      { href: '/cennik', key: 'pricing' },
+      { href: '/podmienky', key: 'terms' },
     ],
   },
   {
-    title: 'Pomoc',
+    titleKey: 'colHelp',
     links: [
-      { href: '/faq', label: 'FAQ' },
-      { href: '/kontakt', label: 'Kontakt' },
-      { href: '/vop', label: 'VOP' },
+      { href: '/faq', key: 'faq' },
+      { href: '/kontakt', key: 'contact' },
+      { href: '/vop', key: 'vop' },
     ],
   },
   {
-    title: 'Právne',
+    titleKey: 'colLegal',
     links: [
-      { href: '/gdpr', label: 'Ochrana osobných údajov' },
-      { href: '/cookies', label: 'Cookies' },
+      { href: '/gdpr', key: 'gdpr' },
+      { href: '/cookies', key: 'cookies' },
     ],
   },
-];
+] as const;
 
 const SOCIAL_LINKS = [
   {
@@ -75,6 +78,7 @@ const SOCIAL_LINKS = [
 ];
 
 export function PublicFooter() {
+  const t = useTranslations('footer');
   return (
     <footer className="bg-slate-950 text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-16 pb-8">
@@ -93,7 +97,7 @@ export function PublicFooter() {
               />
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              Medzinárodná vstupenková platforma pre každé podujatie. Rýchlo, bezpečne, moderne.
+              {t('tagline')}
             </p>
             {/* Social icons */}
             <div className="flex items-center gap-3 mt-6">
@@ -114,21 +118,24 @@ export function PublicFooter() {
 
           {/* Link columns */}
           {FOOTER_COLS.map((col) => (
-            <div key={col.title} className="lg:col-span-1">
+            <div key={col.titleKey} className="lg:col-span-1">
               <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
-                {col.title}
+                {t(col.titleKey)}
               </h3>
               <ul className="space-y-3">
-                {col.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-slate-400 hover:text-white transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map((link, i) => {
+                  const cls = 'text-sm text-slate-400 hover:text-white transition-colors';
+                  const isFlat = 'flat' in link && link.flat;
+                  return (
+                    <li key={`${link.href}-${i}`}>
+                      {isFlat ? (
+                        <NextLink href={link.href} className={cls}>{t(link.key)}</NextLink>
+                      ) : (
+                        <Link href={link.href} className={cls}>{t(link.key)}</Link>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
@@ -137,7 +144,7 @@ export function PublicFooter() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500">
-            © {new Date().getFullYear()} TicketAll. Všetky práva vyhradené.
+            © {new Date().getFullYear()} TicketAll. {t('rights')}
           </p>
           <a
             href="mailto:info@ticketall.eu"

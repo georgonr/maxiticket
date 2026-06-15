@@ -1,6 +1,12 @@
 {
   "landing": {
-    "nav": { "events": "Podujatia", "features": "Funkcie", "how": "Ako to funguje", "login": "Prihlásiť", "cta": "Začni zadarmo" },
+    "nav": {
+      "events": "Podujatia",
+      "features": "Funkcie",
+      "how": "Ako to funguje",
+      "login": "Prihlásiť",
+      "cta": "Začni zadarmo"
+    },
     "hero": {
       "badge": "Predaj vstupeniek pre moderných organizátorov",
       "title1": "Vstupenky, ktoré",
@@ -20,18 +26,36 @@
       "heading": "Všetky nástroje, jedna platforma",
       "sub": "To, čo inde platíš zvlášť – u nás v jednom.",
       "items": [
-        { "title": "AI podpora 24/7", "desc": "Chat asistent pomôže zákazníkom s lístkami a objednávkami kedykoľvek." },
-        { "title": "Skenovanie a check-in", "desc": "Rýchle skenovanie QR pri vstupe – funguje aj offline." },
-        { "title": "Kupóny a zľavy", "desc": "Promo kódy, zľavy a kampane na pár klikov." }
+        {
+          "title": "AI podpora 24/7",
+          "desc": "Chat asistent pomôže zákazníkom s lístkami a objednávkami kedykoľvek."
+        },
+        {
+          "title": "Skenovanie a check-in",
+          "desc": "Rýchle skenovanie QR pri vstupe – funguje aj offline."
+        },
+        {
+          "title": "Kupóny a zľavy",
+          "desc": "Promo kódy, zľavy a kampane na pár klikov."
+        }
       ]
     },
     "steps": {
       "heading": "3 kroky k spusteniu podujatia",
       "sub": "Od nápadu k predaju za pár minút.",
       "items": [
-        { "title": "Povedz nám o podujatí", "desc": "Názov, miesto, dátum – pridáš pár detailov a máš hotovú stránku." },
-        { "title": "Nastav typy lístkov", "desc": "Ceny, kapacity, zľavy alebo seat mapu podľa potreby." },
-        { "title": "Zdieľaj a predávaj", "desc": "Pošli odkaz, predávaj online a sleduj tržby v reálnom čase." }
+        {
+          "title": "Povedz nám o podujatí",
+          "desc": "Názov, miesto, dátum – pridáš pár detailov a máš hotovú stránku."
+        },
+        {
+          "title": "Nastav typy lístkov",
+          "desc": "Ceny, kapacity, zľavy alebo seat mapu podľa potreby."
+        },
+        {
+          "title": "Zdieľaj a predávaj",
+          "desc": "Pošli odkaz, predávaj online a sleduj tržby v reálnom čase."
+        }
       ]
     },
     "finalCta": {
@@ -43,8 +67,71 @@
       "tagline": "Predaj vstupeniek, ktorý ti sadne.",
       "product": "Produkt",
       "company": "Spoločnosť",
-      "links": { "events": "Podujatia", "features": "Funkcie", "how": "Ako to funguje", "faq": "Časté otázky", "organizers": "Pre organizátorov", "contact": "Kontakt" },
+      "links": {
+        "events": "Podujatia",
+        "features": "Funkcie",
+        "how": "Ako to funguje",
+        "faq": "Časté otázky",
+        "organizers": "Pre organizátorov",
+        "contact": "Kontakt"
+      },
       "rights": "Všetky práva vyhradené."
     }
+  },
+  "nav": {
+    "home": "TicketAll – domov",
+    "organizerQ": "Som organizátor?",
+    "organizerQArrow": "Som organizátor? →",
+    "events": "Podujatia",
+    "faq": "FAQ",
+    "forOrganizers": "Pre organizátorov",
+    "myTickets": "Moje lístky",
+    "signIn": "Prihlásiť sa",
+    "signOut": "Odhlásiť sa",
+    "register": "Registrácia",
+    "account": "Účet",
+    "menuOpen": "Otvoriť menu",
+    "menuClose": "Zavrieť menu"
+  },
+  "footer": {
+    "tagline": "Medzinárodná vstupenková platforma pre každé podujatie. Rýchlo, bezpečne, moderne.",
+    "rights": "Všetky práva vyhradené.",
+    "colAbout": "O nás",
+    "colOrganizers": "Pre organizátorov",
+    "colHelp": "Pomoc",
+    "colLegal": "Právne",
+    "ourStory": "Náš príbeh",
+    "contact": "Kontakt",
+    "blog": "Blog",
+    "register": "Registrácia",
+    "pricing": "Cenník",
+    "terms": "Podmienky",
+    "faq": "FAQ",
+    "vop": "VOP",
+    "gdpr": "Ochrana osobných údajov",
+    "cookies": "Cookies"
+  },
+  "chat": {
+    "title": "Asistent TicketAll",
+    "welcome": "Dobrý deň 👋 Pomôžem vám s vašimi objednávkami a vstupenkami. Vyberte si nižšie alebo napíšte otázku.",
+    "placeholder": "Napíšte správu…",
+    "open": "Otvoriť asistenta",
+    "close": "Zavrieť",
+    "send": "Odoslať",
+    "unavailable": "Asistent je momentálne nedostupný.",
+    "quickTicketNotReceived": "Neprišiel mi lístok",
+    "quickShowQr": "Ukáž mi QR kód vstupenky",
+    "quickDownloadPdf": "Stiahnuť PDF vstupenku",
+    "quickResend": "Znova mi pošli vstupenky"
+  },
+  "hero": {
+    "buyTickets": "Kúpiť lístky",
+    "showMore": "Zobraziť viac",
+    "slider": "Hero slider",
+    "prev": "Predchádzajúci slide",
+    "next": "Nasledujúci slide",
+    "nav": "Slide navigácia",
+    "slidePosition": "{index} z {total}: {title}",
+    "goToSlide": "Prejsť na slide {n}"
   }
 }

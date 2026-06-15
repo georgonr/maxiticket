@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { MessageCircle, X, Send, Download, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getValidToken } from '@/lib/auth';
@@ -17,14 +18,14 @@ interface ChatMsg {
   attachments?: Attachment[];
 }
 
-const QUICK_REPLIES = [
-  'Neprišiel mi lístok',
-  'Ukáž mi QR kód vstupenky',
-  'Stiahnuť PDF vstupenku',
-  'Znova mi pošli vstupenky',
-];
-
 export function ChatWidget() {
+  const t = useTranslations('chat');
+  const quickReplies = [
+    t('quickTicketNotReceived'),
+    t('quickShowQr'),
+    t('quickDownloadPdf'),
+    t('quickResend'),
+  ];
   const { isAuthenticated, isCustomer, isLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -88,10 +89,10 @@ export function ChatWidget() {
         const lines = buf.split('\n');
         buf = lines.pop() ?? '';
         for (const line of lines) {
-          const t = line.trim();
-          if (!t.startsWith('data:')) continue;
+          const ln = line.trim();
+          if (!ln.startsWith('data:')) continue;
           let ev: any;
-          try { ev = JSON.parse(t.slice(5).trim()); } catch { continue; }
+          try { ev = JSON.parse(ln.slice(5).trim()); } catch { continue; }
           if (ev.type === 'status') setStatus(ev.text);
           else if (ev.type === 'delta') { setStatus(''); update((m) => ({ ...m, content: m.content + ev.text })); }
           else if (ev.type === 'attachment') update((m) => ({ ...m, attachments: [...(m.attachments ?? []), ev.attachment] }));
@@ -100,7 +101,7 @@ export function ChatWidget() {
         }
       }
     } catch {
-      setMessages((prev) => prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: m.content || '⚠️ Asistent je momentálne nedostupný.' } : m)));
+      setMessages((prev) => prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: m.content || ('⚠️ ' + t('unavailable')) } : m)));
     } finally {
       setBusy(false);
       setStatus('');
@@ -114,7 +115,7 @@ export function ChatWidget() {
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-coral text-white shadow-lg hover:bg-coral-dark"
-          aria-label="Otvoriť asistenta"
+          aria-label={t('open')}
         >
           <MessageCircle size={24} />
         </button>
@@ -126,15 +127,15 @@ export function ChatWidget() {
           <div className="flex items-center justify-between bg-coral px-4 py-3 text-white">
             <div className="flex items-center gap-2">
               <MessageCircle size={18} />
-              <span className="font-semibold text-sm">Asistent TicketAll</span>
+              <span className="font-semibold text-sm">{t('title')}</span>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Zavrieť"><X size={18} /></button>
+            <button onClick={() => setOpen(false)} aria-label={t('close')}><X size={18} /></button>
           </div>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3">
             {messages.length === 0 && (
               <div className="rounded-xl bg-white p-3 text-sm text-slate-600 shadow-sm">
-                Dobrý deň 👋 Pomôžem vám s vašimi objednávkami a vstupenkami. Vyberte si nižšie alebo napíšte otázku.
+                {t('welcome')}
               </div>
             )}
             {messages.map((m, i) => (
@@ -176,7 +177,7 @@ export function ChatWidget() {
           {/* Quick replies */}
           {messages.length === 0 && (
             <div className="flex flex-wrap gap-1.5 border-t border-slate-100 p-2">
-              {QUICK_REPLIES.map((q) => (
+              {quickReplies.map((q) => (
                 <button key={q} onClick={() => send(q)} disabled={busy} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-50">
                   {q}
                 </button>
@@ -189,11 +190,11 @@ export function ChatWidget() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Napíšte správu…"
+              placeholder={t('placeholder')}
               disabled={busy}
               className="flex-1 rounded-full border border-slate-300 bg-white text-slate-900 px-3 py-2 text-sm outline-none focus:border-coral"
             />
-            <button type="submit" disabled={busy || !input.trim()} className="flex h-9 w-9 items-center justify-center rounded-full bg-coral text-white hover:bg-coral-dark disabled:opacity-40" aria-label="Odoslať">
+            <button type="submit" disabled={busy || !input.trim()} className="flex h-9 w-9 items-center justify-center rounded-full bg-coral text-white hover:bg-coral-dark disabled:opacity-40" aria-label={t('send')}>
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             </button>
           </form>

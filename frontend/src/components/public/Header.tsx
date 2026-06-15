@@ -1,24 +1,27 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { usePublicAuth } from '@/lib/public-auth';
 import { Ticket, LogOut, LogIn, Menu, X, UserCircle2, ChevronDown, ShoppingBag } from 'lucide-react';
 
+// Krok 31b1: zdieľaný public header – locale-aware linky + i18n texty (namespace `nav`).
 const NAV_LINKS = [
-  { href: '/events', label: 'Podujatia' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/pre-organizatorov', label: 'Pre organizátorov' },
+  { href: '/events', key: 'events' as const, icon: ShoppingBag },
+  { href: '/faq', key: 'faq' as const },
+  { href: '/pre-organizatorov', key: 'forOrganizers' as const },
 ];
 
 export function PublicHeader() {
+  const t = useTranslations('nav');
   const { isLoggedIn, isLoading, signOut } = usePublicAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close user menu when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -29,7 +32,6 @@ export function PublicHeader() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
 
-  // Close mobile menu on route change (simple window event)
   useEffect(() => {
     setMobileOpen(false);
   }, []);
@@ -40,7 +42,7 @@ export function PublicHeader() {
 
         {/* Logo */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Link href="/" aria-label="TicketAll – domov">
+          <Link href="/" aria-label={t('home')}>
             <Image
               src="/logo-horizontal.svg"
               alt="TicketAll"
@@ -54,7 +56,7 @@ export function PublicHeader() {
             href="https://admin.ticketall.eu"
             className="hidden lg:inline text-xs text-slate-400 hover:text-slate-600 transition-colors"
           >
-            Som organizátor?
+            {t('organizerQ')}
           </a>
         </div>
 
@@ -66,7 +68,7 @@ export function PublicHeader() {
               href={link.href}
               className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
             >
-              {link.label}
+              {t(link.key)}
             </Link>
           ))}
         </nav>
@@ -82,13 +84,13 @@ export function PublicHeader() {
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
               >
                 <Ticket size={15} />
-                Moje lístky
+                {t('myTickets')}
               </Link>
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                  aria-label="Účet"
+                  aria-label={t('account')}
                 >
                   <UserCircle2 size={18} className="text-purple-700" />
                   <ChevronDown size={13} className={`text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -100,7 +102,7 @@ export function PublicHeader() {
                       className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                     >
                       <LogOut size={14} />
-                      Odhlásiť sa
+                      {t('signOut')}
                     </button>
                   </div>
                 )}
@@ -113,14 +115,14 @@ export function PublicHeader() {
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
               >
                 <LogIn size={15} />
-                Prihlásiť sa
+                {t('signIn')}
               </Link>
-              <Link
+              <NextLink
                 href="/register"
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl shadow-sm hover:shadow transition-all"
               >
-                Registrácia
-              </Link>
+                {t('register')}
+              </NextLink>
             </>
           )}
         </div>
@@ -129,7 +131,7 @@ export function PublicHeader() {
         <button
           className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? 'Zavrieť menu' : 'Otvoriť menu'}
+          aria-label={mobileOpen ? t('menuClose') : t('menuOpen')}
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -138,17 +140,20 @@ export function PublicHeader() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 space-y-0.5 animate-fade-in">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
-            >
-              {link.label === 'Podujatia' && <ShoppingBag size={15} />}
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+              >
+                {Icon && <Icon size={15} />}
+                {t(link.key)}
+              </Link>
+            );
+          })}
           <div className="pt-3 mt-2 border-t border-slate-100 space-y-1.5">
             {isLoading ? null : isLoggedIn ? (
               <>
@@ -157,13 +162,13 @@ export function PublicHeader() {
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  <Ticket size={15} /> Moje lístky
+                  <Ticket size={15} /> {t('myTickets')}
                 </Link>
                 <button
                   onClick={() => { signOut(); setMobileOpen(false); }}
                   className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  <LogOut size={15} /> Odhlásiť sa
+                  <LogOut size={15} /> {t('signOut')}
                 </button>
               </>
             ) : (
@@ -173,21 +178,21 @@ export function PublicHeader() {
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
                 >
-                  <LogIn size={15} /> Prihlásiť sa
+                  <LogIn size={15} /> {t('signIn')}
                 </Link>
-                <Link
+                <NextLink
                   href="/register"
                   onClick={() => setMobileOpen(false)}
                   className="block px-3 py-2.5 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl text-center transition-colors"
                 >
-                  Registrácia
-                </Link>
+                  {t('register')}
+                </NextLink>
                 <a
                   href="https://admin.ticketall.eu"
                   onClick={() => setMobileOpen(false)}
                   className="block px-3 py-2 text-sm text-slate-500 text-center"
                 >
-                  Som organizátor? →
+                  {t('organizerQArrow')}
                 </a>
               </>
             )}

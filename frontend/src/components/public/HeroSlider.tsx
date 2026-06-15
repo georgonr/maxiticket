@@ -5,6 +5,7 @@ import {
 } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { publicApi, HeroSlideType } from '@/lib/api';
 import { formatDate } from '@/lib/format';
@@ -28,9 +29,9 @@ function slideSubtitle(s: HeroSlideType): string | null {
   return s.subtitle;
 }
 
-function slideCtaLabel(s: HeroSlideType): string {
-  if (s.type === 'show') return 'Kúpiť lístky';
-  return s.ctaLabel ?? 'Zobraziť viac';
+function slideCtaLabel(s: HeroSlideType, t: (key: string) => string): string {
+  if (s.type === 'show') return t('buyTickets');
+  return s.ctaLabel ?? t('showMore');
 }
 
 function slideCtaUrl(s: HeroSlideType): string {
@@ -58,6 +59,7 @@ function HeroSkeleton() {
 // ─── HeroSlider ───────────────────────────────────────────────────────────────
 
 export function HeroSlider() {
+  const t = useTranslations('hero');
   const [slides, setSlides] = useState<HeroSlideType[] | null>(null);
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -114,7 +116,7 @@ export function HeroSlider() {
       ref={trackRef}
       role="region"
       aria-roledescription="carousel"
-      aria-label="Hero slider"
+      aria-label={t('slider')}
       tabIndex={0}
       className="relative w-full overflow-hidden select-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/60"
       style={{ height: 'clamp(280px, 38vw, 520px)' }}
@@ -133,7 +135,7 @@ export function HeroSlider() {
           <div
             key={s.id}
             aria-roledescription="slide"
-            aria-label={`${i + 1} z ${slides.length}: ${slideTitle(s)}`}
+            aria-label={t('slidePosition', { index: i + 1, total: slides.length, title: slideTitle(s) })}
             aria-hidden={i !== active}
             className={`absolute inset-0 transition-opacity duration-700 ${i === active ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           >
@@ -175,7 +177,7 @@ export function HeroSlider() {
                       className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-500 hover:bg-rose-600 active:bg-rose-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                       tabIndex={i === active ? 0 : -1}
                     >
-                      {slideCtaLabel(s)}
+                      {slideCtaLabel(s, t)}
                     </Link>
                   )}
                 </div>
@@ -191,14 +193,14 @@ export function HeroSlider() {
           <button
             onClick={() => go(active - 1, slides.length)}
             className="absolute left-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/50 sm:flex"
-            aria-label="Predchádzajúci slide"
+            aria-label={t('prev')}
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={() => go(active + 1, slides.length)}
             className="absolute right-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/50 sm:flex"
-            aria-label="Nasledujúci slide"
+            aria-label={t('next')}
           >
             <ChevronRight size={20} />
           </button>
@@ -210,14 +212,14 @@ export function HeroSlider() {
         <div
           className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 flex items-center gap-1.5"
           role="tablist"
-          aria-label="Slide navigácia"
+          aria-label={t('nav')}
         >
           {slides.map((_, i) => (
             <button
               key={i}
               role="tab"
               aria-selected={i === active}
-              aria-label={`Prejsť na slide ${i + 1}`}
+              aria-label={t('goToSlide', { n: i + 1 })}
               onClick={() => go(i, slides.length)}
               className={`rounded-full transition-all duration-300 ${
                 i === active
