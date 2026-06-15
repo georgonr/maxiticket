@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
 import { ticketTypesApi, terminsApi, TicketType, CreateTicketTypeBody, TerminSectionRow } from '@/lib/api';
 import { seatmapsApi, SeatMapSummary } from '@/lib/api/seatmaps';
@@ -24,14 +25,16 @@ function toLocalDT(iso: string) {
 function nowDT() { return toLocalDT(new Date().toISOString()); }
 
 function getSaleBadge(tt: TicketType) {
-  if (!tt.isActive) return { label: 'Neaktívny', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
+  if (!tt.isActive) return { key: 'badgeInactive', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
   const now = new Date();
-  if (tt.saleEndsAt && new Date(tt.saleEndsAt) <= now) return { label: 'Predaj ukončený', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
-  if (tt.saleStartsAt && new Date(tt.saleStartsAt) > now) return { label: 'Čoskoro v predaji', cls: 'bg-blue-100 text-blue-700' };
-  return { label: 'V predaji', cls: 'bg-green-100 text-green-700' };
+  if (tt.saleEndsAt && new Date(tt.saleEndsAt) <= now) return { key: 'badgeSaleEnded', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
+  if (tt.saleStartsAt && new Date(tt.saleStartsAt) > now) return { key: 'badgeComingSoon', cls: 'bg-blue-100 text-blue-700' };
+  return { key: 'badgeOnSale', cls: 'bg-green-100 text-green-700' };
 }
 
 export default function TicketTypesPage() {
+  const t = useTranslations('organizer.termin');
+  const format = useFormatter();
   const router = useRouter();
   const { id, terminId } = useParams<{ id: string; terminId: string }>();
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -78,7 +81,7 @@ export default function TicketTypesPage() {
         setSeatMaps(maps);
         if ((termin.mode ?? 'GENERAL') === 'SEATMAP') await loadSections(token);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Chyba pri načítaní');
+        setError(e instanceof Error ? e.message : t('errorLoad'));
       } finally {
         setLoading(false);
       }
@@ -118,14 +121,14 @@ export default function TicketTypesPage() {
       setForm({ ...EMPTY_FORM });
       setStartSaleNow(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nepodarilo sa vytvoriť typ lístka');
+      setError(err instanceof Error ? err.message : t('errorCreateTicketType'));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(ttId: string) {
-    if (!confirm('Naozaj chcete odstrániť tento typ lístka?')) return;
+    if (!confirm(t('confirmDeleteTicketType'))) return;
     setError('');
     const token = await getValidToken();
     if (!token) { router.replace('/login'); return; }
@@ -134,7 +137,7 @@ export default function TicketTypesPage() {
       const token2 = await getValidToken();
       if (token2) await loadTicketTypes(token2);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Chyba pri mazaní');
+      setError(e instanceof Error ? e.message : t('errorDelete'));
     }
   }
 
@@ -153,7 +156,7 @@ export default function TicketTypesPage() {
       if (token2 && nextMode === 'SEATMAP') await loadSections(token2);
       else setSections([]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Nepodarilo sa zmeniť režim termínu');
+      setError(e instanceof Error ? e.message : t('errorSwitchMode'));
     } finally {
       setModeSaving(false);
     }
@@ -168,7 +171,7 @@ export default function TicketTypesPage() {
       const token2 = await getValidToken();
       if (token2) await loadSections(token2);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Nepodarilo sa uložiť cenu');
+      setError(e instanceof Error ? e.message : t('errorSavePrice'));
     }
   }
 
@@ -184,11 +187,11 @@ export default function TicketTypesPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
+        <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">← {t('backToShow')}</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-8 space-y-6">
-        <h1 className="text-2xl font-bold">Predaj na termíne</h1>
+        <h1 className="text-2xl font-bold">{t('saleOnTermin')}</h1>
 
         {error && (
           <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
@@ -196,7 +199,7 @@ export default function TicketTypesPage() {
 
         {/* Úloha 22/3a: režim predaja */}
         <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
-          <h2 className="font-semibold">Režim predaja</h2>
+          <h2 className="font-semibold">{t('saleMode')}</h2>
           <div className="flex gap-3">
             <button
               type="button"
@@ -204,8 +207,8 @@ export default function TicketTypesPage() {
               onClick={() => mode !== 'GENERAL' && handleSwitchMode('GENERAL')}
               className={`flex-1 rounded-lg border px-4 py-3 text-sm text-left ${mode === 'GENERAL' ? 'border-brand bg-brand/5 dark:bg-brand/10' : 'border-gray-200 dark:border-gray-700'}`}
             >
-              <span className="font-medium block">Všeobecný (GENERAL)</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Typy lístkov s cenou a počtom</span>
+              <span className="font-medium block">{t('modeGeneral')}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{t('modeGeneralDesc')}</span>
             </button>
             <button
               type="button"
@@ -213,15 +216,15 @@ export default function TicketTypesPage() {
               onClick={() => mode !== 'SEATMAP' && handleSwitchMode('SEATMAP')}
               className={`flex-1 rounded-lg border px-4 py-3 text-sm text-left disabled:opacity-50 ${mode === 'SEATMAP' ? 'border-brand bg-brand/5 dark:bg-brand/10' : 'border-gray-200 dark:border-gray-700'}`}
             >
-              <span className="font-medium block">Plánik (SEATMAP)</span>
+              <span className="font-medium block">{t('modeSeatmap')}</span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {seatMaps.length === 0 ? 'Najprv vytvorte plánik pre miesto konania' : 'Predaj po sekciách'}
+                {seatMaps.length === 0 ? t('modeSeatmapNoMap') : t('modeSeatmapDesc')}
               </span>
             </button>
           </div>
           {mode === 'SEATMAP' && seatMaps.length > 0 && (
             <div>
-              <label className="text-sm font-medium block mb-1">Plánik</label>
+              <label className="text-sm font-medium block mb-1">{t('seatmapLabel')}</label>
               <select
                 value={seatMapId ?? ''}
                 disabled={modeSaving}
@@ -229,7 +232,7 @@ export default function TicketTypesPage() {
                 className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
               >
                 {seatMaps.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.sectionCount} sekcií)</option>
+                  <option key={m.id} value={m.id}>{m.name} ({t('sectionCount', { count: m.sectionCount })})</option>
                 ))}
               </select>
             </div>
@@ -239,9 +242,9 @@ export default function TicketTypesPage() {
         {/* Úloha 22/3a: SEATMAP – ceny sekcií */}
         {mode === 'SEATMAP' && (
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
-            <h2 className="font-semibold">Sekcie a ceny</h2>
+            <h2 className="font-semibold">{t('sectionsAndPrices')}</h2>
             {sections.length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Plánik nemá žiadne sekcie.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('noSections')}</p>
             )}
             {sections.map((ts) => (
               <div key={ts.id} className="flex items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0 last:pb-0">
@@ -249,11 +252,11 @@ export default function TicketTypesPage() {
                   <p className="font-medium text-sm">{ts.name}</p>
                   {ts.sellable ? (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Kapacita {ts.capacity ?? '—'} · predané {ts.sold}
-                      {ts.remaining != null ? ` · zostáva ${ts.remaining}` : ''}
+                      {t('sectionCapacity', { capacity: ts.capacity ?? '—' })} · {t('sectionSold', { sold: ts.sold })}
+                      {ts.remaining != null ? ` · ${t('sectionRemaining', { remaining: ts.remaining })}` : ''}
                     </p>
                   ) : (
-                    <p className="text-xs text-amber-600">Sedadlá – predaj sedadiel pripravujeme (Fáza 3b)</p>
+                    <p className="text-xs text-amber-600">{t('sectionSeatsPending')}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -264,7 +267,7 @@ export default function TicketTypesPage() {
                     onChange={(e) => setPriceDraft((d) => ({ ...d, [ts.id]: e.target.value }))}
                   />
                   <span className="text-xs text-gray-500">{ts.currency}</span>
-                  <Button size="sm" variant="outline" onClick={() => handleSavePrice(ts)}>Uložiť</Button>
+                  <Button size="sm" variant="outline" onClick={() => handleSavePrice(ts)}>{t('save')}</Button>
                 </div>
               </div>
             ))}
@@ -283,23 +286,23 @@ export default function TicketTypesPage() {
                   <div>
                     <p className="font-medium text-sm">{tt.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {tt.price} {tt.currency}
-                      {tt.totalQuantity ? ` · ${tt.totalQuantity} ks` : ''}
-                      {` · max ${tt.maxPerOrder}/objednávka`}
+                      {format.number(Number(tt.price), { style: 'currency', currency: tt.currency })}
+                      {tt.totalQuantity ? ` · ${t('quantityPcs', { count: tt.totalQuantity })}` : ''}
+                      {` · ${t('maxPerOrder', { count: tt.maxPerOrder })}`}
                     </p>
                     {tt.saleStartsAt && (
                       <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Predaj od: {new Date(tt.saleStartsAt).toLocaleString('sk-SK')}
-                        {tt.saleEndsAt ? ` – ${new Date(tt.saleEndsAt).toLocaleString('sk-SK')}` : ''}
+                        {t('saleFrom')} {format.dateTime(new Date(tt.saleStartsAt), { dateStyle: 'medium', timeStyle: 'short' })}
+                        {tt.saleEndsAt ? ` – ${format.dateTime(new Date(tt.saleEndsAt), { dateStyle: 'medium', timeStyle: 'short' })}` : ''}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
-                      {badge.label}
+                      {t(badge.key)}
                     </span>
                     <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => handleDelete(tt.id)}>
-                      Odstrániť
+                      {t('delete')}
                     </Button>
                   </div>
                 </div>
@@ -309,39 +312,39 @@ export default function TicketTypesPage() {
         )}
 
         {ticketTypes.length === 0 && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Žiadne typy lístkov.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('noTicketTypes')}</p>
         )}
 
         {/* Add form */}
         <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
-          <h2 className="font-semibold mb-4">Pridať typ lístka</h2>
+          <h2 className="font-semibold mb-4">{t('addTicketType')}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              id="ttName" label="Názov *" required
+              id="ttName" label={t('nameLabel')} required
               value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="napr. Štandardný lístok"
+              placeholder={t('namePlaceholder')}
             />
             <div className="grid grid-cols-2 gap-4">
               <Input
-                id="price" label="Cena *" type="number" min={0} step="0.01" required
+                id="price" label={t('priceLabel')} type="number" min={0} step="0.01" required
                 value={form.price === 0 ? '' : form.price}
                 onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
                 placeholder="9.90"
               />
               <Input
-                id="currency" label="Mena"
+                id="currency" label={t('currencyLabel')}
                 value={form.currency ?? 'EUR'}
                 onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Input
-                id="totalQty" label="Celkový počet (voliteľné)" type="number" min={1}
+                id="totalQty" label={t('totalQtyLabel')} type="number" min={1}
                 value={form.totalQuantity ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, totalQuantity: e.target.value ? Number(e.target.value) : undefined }))}
               />
               <Input
-                id="maxPerOrder" label="Max. na objednávku"
+                id="maxPerOrder" label={t('maxPerOrderLabel')}
                 type="number" min={1}
                 value={form.maxPerOrder ?? 10}
                 onChange={(e) => setForm((f) => ({ ...f, maxPerOrder: Number(e.target.value) }))}
@@ -357,19 +360,19 @@ export default function TicketTypesPage() {
                 className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand"
               />
               <span className="font-medium text-indigo-800">
-                Okamžite začať predaj
-                <span className="ml-1 font-normal text-indigo-600">(vyplní „Predaj od" = teraz, „Predaj do" = dátum termínu)</span>
+                {t('startSaleNow')}
+                <span className="ml-1 font-normal text-indigo-600">{t('startSaleNowHint')}</span>
               </span>
             </label>
 
             <DateTimePicker
-              id="saleStartsAt" label="Predaj od (voliteľné)" showQuickButtons
+              id="saleStartsAt" label={t('saleFromLabel')} showQuickButtons
               disabled={startSaleNow}
               value={form.saleStartsAt ?? ''}
               onChange={(v) => setForm((f) => ({ ...f, saleStartsAt: v }))}
             />
             <DateTimePicker
-              id="saleEndsAt" label="Predaj do (voliteľné)" showQuickButtons
+              id="saleEndsAt" label={t('saleToLabel')} showQuickButtons
               disabled={startSaleNow}
               value={form.saleEndsAt ?? ''}
               onChange={(v) => setForm((f) => ({ ...f, saleEndsAt: v }))}
@@ -382,10 +385,10 @@ export default function TicketTypesPage() {
                 onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
                 className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand"
               />
-              Aktívny (dostupný na predaj)
+              {t('activeForSale')}
             </label>
             <div className="flex justify-end pt-2">
-              <Button type="submit" loading={saving}>Pridať typ lístka</Button>
+              <Button type="submit" loading={saving}>{t('addTicketType')}</Button>
             </div>
           </form>
         </div>

@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
 import { couponsAdminApi, CouponDetail } from '@/lib/api/coupons';
-import { formatPrice } from '@/lib/format';
 import {
   ModalShell,
   ScopeBadge,
   StatusBadge,
-  typeValueLabel,
-  usageLabel,
-  validityLabel,
+  useCouponLabels,
 } from './couponUi';
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -24,6 +22,8 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function CouponDetailModal({ couponId, onClose }: { couponId: string; onClose: () => void }) {
+  const t = useTranslations('organizer.coupon');
+  const { typeValueLabel, usageLabel, validityLabel, fmtPrice } = useCouponLabels();
   const [coupon, setCoupon] = useState<CouponDetail | null>(null);
   const [error, setError] = useState('');
 
@@ -31,23 +31,23 @@ export function CouponDetailModal({ couponId, onClose }: { couponId: string; onC
     let active = true;
     getValidToken().then(async (token) => {
       if (!token) {
-        if (active) setError('Vyžaduje sa prihlásenie.');
+        if (active) setError(t('errors.loginRequired'));
         return;
       }
       try {
         const data = await couponsAdminApi.get(couponId, token);
         if (active) setCoupon(data);
       } catch (e) {
-        if (active) setError(e instanceof Error ? e.message : 'Načítanie zlyhalo.');
+        if (active) setError(e instanceof Error ? e.message : t('errors.loadFailed'));
       }
     });
     return () => {
       active = false;
     };
-  }, [couponId]);
+  }, [couponId, t]);
 
   return (
-    <ModalShell title="Detail kupónu" onClose={onClose}>
+    <ModalShell title={t('detailTitle')} onClose={onClose}>
       {error ? (
         <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
       ) : !coupon ? (
@@ -61,22 +61,22 @@ export function CouponDetailModal({ couponId, onClose }: { couponId: string; onC
             <StatusBadge status={coupon.status} />
           </div>
           <div className="divide-y divide-gray-50 dark:divide-gray-800">
-            <Row label="Zľava" value={typeValueLabel(coupon.type, coupon.value)} />
-            <Row label="Rozsah" value={<ScopeBadge scope={coupon.scope} />} />
-            {coupon.scopeTargetName && <Row label="Platí pre" value={coupon.scopeTargetName} />}
-            <Row label="Platnosť" value={validityLabel(coupon.validFrom, coupon.validUntil)} />
-            <Row label="Použitia" value={usageLabel(coupon.usedCount, coupon.maxUses)} />
-            <Row label="Max. na používateľa" value={coupon.maxUsesPerUser ?? '∞'} />
+            <Row label={t('rows.discount')} value={typeValueLabel(coupon.type, coupon.value)} />
+            <Row label={t('rows.scope')} value={<ScopeBadge scope={coupon.scope} />} />
+            {coupon.scopeTargetName && <Row label={t('rows.appliesTo')} value={coupon.scopeTargetName} />}
+            <Row label={t('rows.validity')} value={validityLabel(coupon.validFrom, coupon.validUntil)} />
+            <Row label={t('rows.usage')} value={usageLabel(coupon.usedCount, coupon.maxUses)} />
+            <Row label={t('rows.maxPerUser')} value={coupon.maxUsesPerUser ?? '∞'} />
             <Row
-              label="Min. suma objednávky"
-              value={coupon.minOrderAmount != null ? formatPrice(coupon.minOrderAmount) : '—'}
+              label={t('rows.minOrderAmount')}
+              value={coupon.minOrderAmount != null ? fmtPrice(coupon.minOrderAmount) : '—'}
             />
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Posledné použitia</p>
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">{t('recentRedemptions')}</p>
             {coupon.redemptions.length === 0 ? (
-              <p className="rounded-lg bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm text-gray-400 dark:text-gray-500">Zatiaľ nepoužitý</p>
+              <p className="rounded-lg bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm text-gray-400 dark:text-gray-500">{t('notUsedYet')}</p>
             ) : (
               <div className="divide-y divide-gray-50 dark:divide-gray-800">
                 {coupon.redemptions.map((r) => (
@@ -85,7 +85,7 @@ export function CouponDetailModal({ couponId, onClose }: { couponId: string; onC
                       <span className="font-medium text-gray-700 dark:text-gray-200">{r.orderNumber}</span>
                       {r.userEmail && <span className="ml-2 text-gray-400 dark:text-gray-500">{r.userEmail}</span>}
                     </div>
-                    <span className="text-gray-600 dark:text-gray-300">−{formatPrice(r.discountAmount)}</span>
+                    <span className="text-gray-600 dark:text-gray-300">−{fmtPrice(r.discountAmount)}</span>
                   </div>
                 ))}
               </div>

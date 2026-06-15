@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Archive } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
 import { showsApi, Show, ShowImage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
 export default function ShowsPage() {
+  const t = useTranslations('organizer.shows');
   const router = useRouter();
   const [shows, setShows] = useState<Show[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function ShowsPage() {
         const data = await showsApi.list(token);
         setShows(data);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Nepodarilo sa načítať podujatia');
+        setError(e instanceof Error ? e.message : t('loadError'));
       } finally {
         setLoading(false);
       }
@@ -46,13 +48,13 @@ export default function ShowsPage() {
       await showsApi.updateStatus(id, next, token);
       setToast({
         msg: next === 'PUBLISHED'
-          ? 'Podujatie publikované – už je viditeľné na ticketall.eu/events'
-          : 'Podujatie skryté – už nie je viditeľné',
+          ? t('toastPublished')
+          : t('toastHidden'),
         ok: true,
       });
     } catch {
       setShows((cur) => cur.map((s) => s.id === id ? { ...s, status: prev } : s));
-      setToast({ msg: 'Nepodarilo sa zmeniť stav podujatia', ok: false });
+      setToast({ msg: t('toastStatusError'), ok: false });
     } finally {
       setTogglingId(null);
     }
@@ -82,8 +84,8 @@ export default function ShowsPage() {
 
       <main className="mx-auto max-w-5xl p-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Podujatia</h1>
-          <Button onClick={() => router.push('/organizer/shows/new')}>Nové podujatie</Button>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <Button onClick={() => router.push('/organizer/shows/new')}>{t('newShow')}</Button>
         </div>
 
         {error && (
@@ -94,8 +96,8 @@ export default function ShowsPage() {
 
         {shows.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-12 text-center">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">Zatiaľ nemáte žiadne podujatia.</p>
-            <Button onClick={() => router.push('/organizer/shows/new')}>Vytvoriť prvé podujatie</Button>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">{t('emptyTitle')}</p>
+            <Button onClick={() => router.push('/organizer/shows/new')}>{t('createFirst')}</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -111,7 +113,7 @@ export default function ShowsPage() {
                     {cover ? (
                       <img src={cover.squareUrl} alt={show.name} className="w-full h-40 object-cover" />
                     ) : (
-                      <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs">Bez obrázka</div>
+                      <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs">{t('noImage')}</div>
                     )}
                   </div>
 
@@ -120,12 +122,12 @@ export default function ShowsPage() {
                       <h3 className="font-semibold text-gray-900 dark:text-gray-100 leading-tight">{show.name}</h3>
                       {/* Status toggle button */}
                       {isArchived ? (
-                        <button title="Archivované" disabled className="flex-shrink-0 rounded p-1 text-slate-400 cursor-not-allowed">
+                        <button title={t('statusArchived')} disabled className="flex-shrink-0 rounded p-1 text-slate-400 cursor-not-allowed">
                           <Archive size={16} />
                         </button>
                       ) : show.status === 'PUBLISHED' ? (
                         <button
-                          title="Skryť z verejnej ponuky"
+                          title={t('actionHide')}
                           disabled={togglingId === show.id}
                           onClick={() => toggleStatus(show.id, 'DRAFT')}
                           className="flex-shrink-0 rounded p-1 text-green-600 hover:text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-50"
@@ -134,7 +136,7 @@ export default function ShowsPage() {
                         </button>
                       ) : (
                         <button
-                          title="Publikovať (zverejniť)"
+                          title={t('actionPublish')}
                           disabled={togglingId === show.id}
                           onClick={() => toggleStatus(show.id, 'PUBLISHED')}
                           className="flex-shrink-0 rounded p-1 text-slate-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
@@ -147,12 +149,12 @@ export default function ShowsPage() {
                     {/* Status badge for non-published */}
                     {isDraft && (
                       <span className="inline-block mb-2 rounded-full px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-600">
-                        Koncept – nezobrazuje sa verejne
+                        {t('badgeDraft')}
                       </span>
                     )}
                     {isArchived && (
                       <span className="inline-block mb-2 rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
-                        Archivované
+                        {t('statusArchived')}
                       </span>
                     )}
 
@@ -165,7 +167,7 @@ export default function ShowsPage() {
                       className="w-full"
                       onClick={() => router.push(`/organizer/shows/${show.id}`)}
                     >
-                      Spravovať
+                      {t('manage')}
                     </Button>
                   </div>
                 </div>

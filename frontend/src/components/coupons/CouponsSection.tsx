@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Ticket, Plus, Layers, Trash2, Eye, RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -12,9 +13,7 @@ import { SectionCard, Skeleton } from '@/components/dashboard/parts';
 import {
   ScopeBadge,
   StatusBadge,
-  typeValueLabel,
-  usageLabel,
-  validityLabel,
+  useCouponLabels,
 } from './couponUi';
 import { CreateCouponModal } from './CreateCouponModal';
 import { BulkGenerateModal } from './BulkGenerateModal';
@@ -39,6 +38,8 @@ export function CouponsSection({
 }) {
   void showTitle;
   void organizerId;
+  const t = useTranslations('organizer.coupon');
+  const { typeValueLabel, usageLabel, validityLabel } = useCouponLabels();
   const { user } = useAuth();
   const [coupons, setCoupons] = useState<CouponListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,15 +55,15 @@ export function CouponsSection({
     setError('');
     try {
       const token = await getValidToken();
-      if (!token) throw new Error('Vyžaduje sa prihlásenie.');
+      if (!token) throw new Error(t('errors.loginRequired'));
       const res = await couponsAdminApi.list({ relevantToShowId: showId, limit: 100 }, token);
       setCoupons(res.items);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Načítanie kupónov zlyhalo.');
+      setError(e instanceof Error ? e.message : t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [showId]);
+  }, [showId, t]);
 
   useEffect(() => {
     load();
@@ -76,16 +77,16 @@ export function CouponsSection({
 
   async function handleDelete(c: CouponListItem) {
     if (c.usedCount > 0 || isInherited(c)) return;
-    if (!window.confirm(`Naozaj zmazať kupón ${c.code}?`)) return;
+    if (!window.confirm(t('confirmDelete', { code: c.code }))) return;
     setDeletingId(c.id);
     try {
       const token = await getValidToken();
-      if (!token) throw new Error('Vyžaduje sa prihlásenie.');
+      if (!token) throw new Error(t('errors.loginRequired'));
       await couponsAdminApi.delete(c.id, token);
       setCoupons((prev) => prev.filter((x) => x.id !== c.id));
-      setToast({ msg: `Kupón ${c.code} zmazaný.`, ok: true });
+      setToast({ msg: t('toast.deleted', { code: c.code }), ok: true });
     } catch (e) {
-      setToast({ msg: e instanceof Error ? e.message : 'Zmazanie zlyhalo.', ok: false });
+      setToast({ msg: e instanceof Error ? e.message : t('errors.deleteFailed'), ok: false });
     } finally {
       setDeletingId(null);
     }
@@ -104,20 +105,20 @@ export function CouponsSection({
         onClick={() => setShowBulk(true)}
         className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
       >
-        <Layers size={15} /> Generovať viac kódov
+        <Layers size={15} /> {t('generateMore')}
       </button>
       <button
         onClick={() => setShowCreate(true)}
         className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
       >
-        <Plus size={15} /> Pridať kupón
+        <Plus size={15} /> {t('addCoupon')}
       </button>
     </div>
   );
 
   return (
     <SectionCard
-      title={`Kupóny${!loading ? ` (${coupons.length})` : ''}`}
+      title={`${t('title')}${!loading ? ` (${coupons.length})` : ''}`}
       action={headerActions}
     >
       {toast && (
@@ -136,15 +137,15 @@ export function CouponsSection({
         <div className="flex flex-col items-start gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
           <span>{error}</span>
           <button onClick={load} className="inline-flex items-center gap-1 font-medium underline">
-            <RefreshCw size={13} /> Skúsiť znova
+            <RefreshCw size={13} /> {t('retry')}
           </button>
         </div>
       ) : coupons.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
           <Ticket size={28} className="text-gray-300" />
-          <p>Pre toto podujatie zatiaľ nie sú žiadne kupóny.</p>
+          <p>{t('empty')}</p>
           <button onClick={() => setShowCreate(true)} className="font-medium text-brand hover:underline">
-            + Pridať prvý kupón
+            {t('addFirst')}
           </button>
         </div>
       ) : (
@@ -152,13 +153,13 @@ export function CouponsSection({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800 text-left text-xs text-gray-400 dark:text-gray-500">
-                <th className="py-2 pr-3 font-medium">Kód</th>
-                <th className="py-2 px-3 font-medium">Zľava</th>
-                <th className="py-2 px-3 font-medium">Rozsah</th>
-                <th className="py-2 px-3 font-medium">Platnosť</th>
-                <th className="py-2 px-3 font-medium">Použitia</th>
-                <th className="py-2 px-3 font-medium">Stav</th>
-                <th className="py-2 pl-3 font-medium text-right">Akcie</th>
+                <th className="py-2 pr-3 font-medium">{t('table.code')}</th>
+                <th className="py-2 px-3 font-medium">{t('table.discount')}</th>
+                <th className="py-2 px-3 font-medium">{t('table.scope')}</th>
+                <th className="py-2 px-3 font-medium">{t('table.validity')}</th>
+                <th className="py-2 px-3 font-medium">{t('table.usage')}</th>
+                <th className="py-2 px-3 font-medium">{t('table.status')}</th>
+                <th className="py-2 pl-3 font-medium text-right">{t('table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -178,7 +179,7 @@ export function CouponsSection({
                         <button
                           onClick={() => setDetailId(c.id)}
                           className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700"
-                          title="Detail"
+                          title={t('actions.detail')}
                         >
                           <Eye size={15} />
                         </button>
@@ -188,10 +189,10 @@ export function CouponsSection({
                           className="rounded p-1.5 text-gray-400 dark:text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400"
                           title={
                             inherited
-                              ? 'Dedený kupón – upravte v jeho vlastnom rozsahu'
+                              ? t('actions.inheritedTitle')
                               : c.usedCount > 0
-                                ? 'Použitý kupón nie je možné zmazať'
-                                : 'Zmazať'
+                                ? t('actions.usedTitle')
+                                : t('actions.delete')
                           }
                         >
                           <Trash2 size={15} />

@@ -2,6 +2,7 @@
 
 import { useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
 import { showsApi, CreateShowBody } from '@/lib/api';
@@ -21,6 +22,7 @@ function toSlug(value: string): string {
 
 export default function NewShowPage() {
   const router = useRouter();
+  const t = useTranslations('organizer.showForm');
   const [form, setForm] = useState<CreateShowBody>({
     name: '', slug: '', description: '', category: '', seoTitle: '', seoDescription: '',
   });
@@ -48,7 +50,7 @@ export default function NewShowPage() {
       const show = await showsApi.create(form, token);
       router.push(`/organizer/shows/${show.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nepodarilo sa vytvoriť podujatie');
+      setError(err instanceof Error ? err.message : t('errorCreate'));
       setLoading(false);
     }
   }
@@ -57,11 +59,11 @@ export default function NewShowPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
+        <Link href="/organizer/shows" className="text-sm text-brand hover:underline">{t('backToShows')}</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-8">
-        <h1 className="text-2xl font-bold mb-6">Nové podujatie</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('titleNew')}</h1>
 
         {error && (
           <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -71,38 +73,38 @@ export default function NewShowPage() {
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <Input
-            id="name" label="Názov podujatia *" required
+            id="name" label={t('labelName')} required
             value={form.name} onChange={handleNameChange}
-            placeholder="napr. Silvestrovský koncert 2025"
+            placeholder={t('placeholderName')}
           />
           <Input
-            id="slug" label="URL slug *" required
+            id="slug" label={t('labelSlug')} required
             value={form.slug} onChange={handleSlugChange}
-            placeholder="silvestrovsky-koncert-2025"
+            placeholder={t('placeholderSlug')}
           />
           <Input
-            id="category" label="Kategória"
+            id="category" label={t('labelCategory')}
             value={form.category ?? ''} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            placeholder="napr. Hudba, Divadlo, Šport..."
+            placeholder={t('placeholderCategory')}
           />
           <Textarea
-            id="description" label="Popis"
+            id="description" label={t('labelDescription')}
             value={form.description ?? ''} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Stručný popis podujatia..."
+            placeholder={t('placeholderDescription')}
             rows={4}
           />
           <Input
-            id="seoTitle" label="SEO titulok"
+            id="seoTitle" label={t('labelSeoTitle')}
             value={form.seoTitle ?? ''} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))}
           />
           <Textarea
-            id="seoDescription" label="SEO popis"
+            id="seoDescription" label={t('labelSeoDescription')}
             value={form.seoDescription ?? ''} onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))}
             rows={2}
           />
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => router.push('/organizer/shows')}>Zrušiť</Button>
-            <Button type="submit" loading={loading}>Vytvoriť podujatie</Button>
+            <Button type="button" variant="outline" onClick={() => router.push('/organizer/shows')}>{t('cancel')}</Button>
+            <Button type="submit" loading={loading}>{t('createButton')}</Button>
           </div>
         </form>
       </main>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
 import { showsApi, CreateShowBody } from '@/lib/api';
@@ -10,15 +11,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 
-const STATUS_OPTIONS = [
-  { value: 'DRAFT', label: 'Koncept' },
-  { value: 'PUBLISHED', label: 'Zverejnené' },
-  { value: 'ARCHIVED', label: 'Archivované' },
-];
-
 export default function EditShowPage() {
   const router = useRouter();
+  const t = useTranslations('organizer.showForm');
   const { id } = useParams<{ id: string }>();
+  const STATUS_OPTIONS = [
+    { value: 'DRAFT', label: t('statusDraft') },
+    { value: 'PUBLISHED', label: t('statusPublished') },
+    { value: 'ARCHIVED', label: t('statusArchived') },
+  ];
   const [form, setForm] = useState<CreateShowBody & { status: string }>({
     name: '', slug: '', description: '', category: '', seoTitle: '', seoDescription: '', status: 'DRAFT',
   });
@@ -41,12 +42,12 @@ export default function EditShowPage() {
           status: show.status,
         });
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Chyba pri načítaní');
+        setError(e instanceof Error ? e.message : t('errorLoad'));
       } finally {
         setLoading(false);
       }
     });
-  }, [id, router]);
+  }, [id, router, t]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -58,7 +59,7 @@ export default function EditShowPage() {
       await showsApi.update(id, form, token);
       router.push(`/organizer/shows/${id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nepodarilo sa uložiť zmeny');
+      setError(err instanceof Error ? err.message : t('errorSave'));
       setSaving(false);
     }
   }
@@ -75,11 +76,11 @@ export default function EditShowPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">← Späť na podujatie</Link>
+        <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">{t('backToShow')}</Link>
       </header>
 
       <main className="mx-auto max-w-2xl p-8">
-        <h1 className="text-2xl font-bold mb-6">Editovať podujatie</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('titleEdit')}</h1>
 
         {error && (
           <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
@@ -87,40 +88,40 @@ export default function EditShowPage() {
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 space-y-4">
           <Input
-            id="name" label="Názov podujatia *" required
+            id="name" label={t('labelName')} required
             value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
           />
           <Input
-            id="slug" label="URL slug *" required
+            id="slug" label={t('labelSlug')} required
             value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
           />
           <Input
-            id="category" label="Kategória"
+            id="category" label={t('labelCategory')}
             value={form.category ?? ''} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
           />
           <Textarea
-            id="description" label="Popis"
+            id="description" label={t('labelDescription')}
             value={form.description ?? ''} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             rows={4}
           />
           <Select
-            id="status" label="Stav"
+            id="status" label={t('labelStatus')}
             value={form.status}
             options={STATUS_OPTIONS}
             onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
           />
           <Input
-            id="seoTitle" label="SEO titulok"
+            id="seoTitle" label={t('labelSeoTitle')}
             value={form.seoTitle ?? ''} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))}
           />
           <Textarea
-            id="seoDescription" label="SEO popis"
+            id="seoDescription" label={t('labelSeoDescription')}
             value={form.seoDescription ?? ''} onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))}
             rows={2}
           />
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => router.push(`/organizer/shows/${id}`)}>Zrušiť</Button>
-            <Button type="submit" loading={saving}>Uložiť zmeny</Button>
+            <Button type="button" variant="outline" onClick={() => router.push(`/organizer/shows/${id}`)}>{t('cancel')}</Button>
+            <Button type="submit" loading={saving}>{t('saveButton')}</Button>
           </div>
         </form>
       </main>

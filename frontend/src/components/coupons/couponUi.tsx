@@ -3,7 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { formatPrice } from '@/lib/format';
+import { useTranslations, useFormatter } from 'next-intl';
 import type {
   CouponType,
   CouponScope,
@@ -12,62 +12,78 @@ import type {
 
 // ── Labels ──────────────────────────────────────────────────────────────────
 
-export function typeValueLabel(type: CouponType, value: number): string {
-  if (type === 'PERCENTAGE') return `${value} %`;
-  if (type === 'FIXED_AMOUNT') return formatPrice(value);
-  return 'Zdarma';
-}
-
-const SCOPE_META: Record<CouponScope, { label: string; cls: string }> = {
-  GLOBAL: { label: 'Globálny', cls: 'bg-purple-50 text-purple-700' },
-  ORGANIZER: { label: 'Organizátor', cls: 'bg-indigo-50 text-indigo-700' },
-  SHOW: { label: 'Podujatie', cls: 'bg-sky-50 text-sky-700' },
-  TICKET_TYPE: { label: 'Typ lístka', cls: 'bg-teal-50 text-teal-700' },
+const SCOPE_CLS: Record<CouponScope, string> = {
+  GLOBAL: 'bg-purple-50 text-purple-700',
+  ORGANIZER: 'bg-indigo-50 text-indigo-700',
+  SHOW: 'bg-sky-50 text-sky-700',
+  TICKET_TYPE: 'bg-teal-50 text-teal-700',
 };
 
+const STATUS_CLS: Record<CouponStatus, string> = {
+  active: 'bg-emerald-50 text-emerald-700',
+  scheduled: 'bg-blue-50 text-blue-700',
+  expired: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+  exhausted: 'bg-orange-50 text-orange-700',
+};
+
+/**
+ * Locale-aware label helpers pre kupóny. Hook (nie module-level konštanty),
+ * aby sa dali použiť useTranslations/useFormatter.
+ */
+export function useCouponLabels() {
+  const t = useTranslations('organizer.coupon');
+  const format = useFormatter();
+
+  const fmtPrice = (amount: number) =>
+    format.number(amount, { style: 'currency', currency: 'EUR' });
+
+  const fmtShortDate = (s: string) =>
+    format.dateTime(new Date(s), { day: 'numeric', month: 'numeric', year: '2-digit' });
+
+  const typeValueLabel = (type: CouponType, value: number): string => {
+    if (type === 'PERCENTAGE') return `${value} %`;
+    if (type === 'FIXED_AMOUNT') return fmtPrice(value);
+    return t('type.FREE_TICKET_value');
+  };
+
+  const usageLabel = (usedCount: number, maxUses: number | null): string =>
+    `${usedCount}/${maxUses ?? '∞'}`;
+
+  const validityLabel = (validFrom: string | null, validUntil: string | null): string => {
+    if (!validFrom && !validUntil) return t('validity.unlimited');
+    if (validFrom && validUntil) return `${fmtShortDate(validFrom)} – ${fmtShortDate(validUntil)}`;
+    if (validUntil) return t('validity.until', { date: fmtShortDate(validUntil) });
+    return t('validity.from', { date: fmtShortDate(validFrom as string) });
+  };
+
+  return { typeValueLabel, usageLabel, validityLabel, fmtPrice };
+}
+
 export function ScopeBadge({ scope, inherited }: { scope: CouponScope; inherited?: boolean }) {
-  const m = SCOPE_META[scope];
+  const t = useTranslations('organizer.coupon');
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', m.cls)}>{m.label}</span>
+      <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', SCOPE_CLS[scope])}>
+        {t(`scope.${scope}`)}
+      </span>
       {inherited && (
         <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400">
-          dedené
+          {t('inherited')}
         </span>
       )}
     </span>
   );
 }
 
-const STATUS_META: Record<CouponStatus, { label: string; cls: string }> = {
-  active: { label: 'Aktívny', cls: 'bg-emerald-50 text-emerald-700' },
-  scheduled: { label: 'Naplánovaný', cls: 'bg-blue-50 text-blue-700' },
-  expired: { label: 'Expirovaný', cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
-  exhausted: { label: 'Vyčerpaný', cls: 'bg-orange-50 text-orange-700' },
-};
-
 export function StatusBadge({ status }: { status: CouponStatus }) {
-  const m = STATUS_META[status] ?? { label: status, cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' };
+  const t = useTranslations('organizer.coupon');
+  const cls = STATUS_CLS[status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400';
+  const label = STATUS_CLS[status] ? t(`status.${status}`) : status;
   return (
-    <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', m.cls)}>
-      {m.label}
+    <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium', cls)}>
+      {label}
     </span>
   );
-}
-
-export function usageLabel(usedCount: number, maxUses: number | null): string {
-  return `${usedCount}/${maxUses ?? '∞'}`;
-}
-
-export function validityLabel(validFrom: string | null, validUntil: string | null): string {
-  const fmt = (s: string) =>
-    new Intl.DateTimeFormat('sk-SK', { day: 'numeric', month: 'numeric', year: '2-digit' }).format(
-      new Date(s),
-    );
-  if (!validFrom && !validUntil) return 'Bez obmedzenia';
-  if (validFrom && validUntil) return `${fmt(validFrom)} – ${fmt(validUntil)}`;
-  if (validUntil) return `do ${fmt(validUntil)}`;
-  return `od ${fmt(validFrom as string)}`;
 }
 
 // ── Modal shell (projektový pattern: fixed inset-0, bez externej knižnice) ─────
@@ -83,6 +99,7 @@ export function ModalShell({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const t = useTranslations('organizer.coupon');
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -105,7 +122,7 @@ export function ModalShell({
           <button
             onClick={onClose}
             className="rounded-lg p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600"
-            aria-label="Zavrieť"
+            aria-label={t('close')}
           >
             <X size={18} />
           </button>

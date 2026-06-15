@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
 import { couponsAdminApi, BulkGenerateInput } from '@/lib/api/coupons';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ export function BulkGenerateModal({
   onClose: () => void;
   onGenerated: (msg: string) => void;
 }) {
+  const t = useTranslations('organizer.coupon');
   const { node, buildBase } = useCouponFields({ showId, ticketTypes });
   const [count, setCount] = useState('10');
   const [email, setEmail] = useState(defaultEmail);
@@ -33,48 +35,48 @@ export function BulkGenerateModal({
       const base = buildBase();
       const n = Number(count);
       if (!Number.isInteger(n) || n < 1 || n > 100) {
-        throw new Error('Počet kódov musí byť celé číslo 1–100.');
+        throw new Error(t('errors.countRange'));
       }
       const mail = email.trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
-        throw new Error('Zadajte platný e-mail pre doručenie PDF.');
+        throw new Error(t('errors.emailInvalid'));
       }
       payload = { ...base, count: n, sendToEmail: mail };
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Neplatné údaje.');
+      setError(e instanceof Error ? e.message : t('errors.invalid'));
       return;
     }
 
     setSubmitting(true);
     try {
       const token = await getValidToken();
-      if (!token) throw new Error('Vyžaduje sa prihlásenie.');
+      if (!token) throw new Error(t('errors.loginRequired'));
       const res = await couponsAdminApi.bulkGenerate(payload, token);
-      onGenerated(`Vygenerovaných ${res.count} kódov, PDF poslané na ${res.sentTo}.`);
+      onGenerated(t('toast.generated', { count: res.count, email: res.sentTo }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Generovanie kódov zlyhalo.');
+      setError(e instanceof Error ? e.message : t('errors.generateFailed'));
       setSubmitting(false);
     }
   }
 
   return (
     <ModalShell
-      title="Generovať viac kódov"
+      title={t('generateMore')}
       onClose={onClose}
       footer={
         <>
           <Button variant="outline" onClick={onClose} disabled={submitting}>
-            Zrušiť
+            {t('cancel')}
           </Button>
           <Button onClick={handleSubmit} loading={submitting} disabled={submitting}>
-            Generovať
+            {t('generate')}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Počet kódov" hint="1–100">
+          <Field label={t('fields.count')} hint={t('hints.countRange')}>
             <input
               type="number"
               min={1}
@@ -84,7 +86,7 @@ export function BulkGenerateModal({
               className={inputCls}
             />
           </Field>
-          <Field label="PDF poslať na" hint="e-mail">
+          <Field label={t('fields.sendPdfTo')} hint={t('hints.email')}>
             <input
               type="email"
               value={email}

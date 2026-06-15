@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, ChangeEvent, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
 import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi, refundExportApi, eventOpsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,8 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function ShowDetailPage() {
+  const t = useTranslations('organizer.editor');
+  const format = useFormatter();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [show, setShow] = useState<ShowDetail | null>(null);
@@ -38,7 +41,7 @@ export default function ShowDetailPage() {
     getValidToken().then(async (token) => {
       if (!token) { router.replace('/login'); return; }
       try { await load(token); } catch (e) {
-        setError(e instanceof Error ? e.message : 'Chyba pri načítaní');
+        setError(e instanceof Error ? e.message : t('errLoad'));
       } finally { setLoading(false); }
     });
   }, [id, router, load]);
@@ -63,7 +66,7 @@ export default function ShowDetailPage() {
       setUploadPreviews([]);
       await load(token);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Chyba pri nahrávaní');
+      setError(e instanceof Error ? e.message : t('errUpload'));
     } finally { setUploading(false); }
   }
 
@@ -74,39 +77,39 @@ export default function ShowDetailPage() {
     try {
       await showImagesApi.setCover(id, imageId, token);
       await load(token);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba'); }
+    } catch (e) { setError(e instanceof Error ? e.message : t('errGeneric')); }
   }
 
   async function handleDeleteImage(imageId: string) {
-    if (!confirm('Odstrániť tento obrázok?')) return;
+    if (!confirm(t('confirmDeleteImage'))) return;
     setError('');
     const token = await getValidToken();
     if (!token) { router.replace('/login'); return; }
     try {
       await showImagesApi.delete(id, imageId, token);
       await load(token);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba pri mazaní'); }
+    } catch (e) { setError(e instanceof Error ? e.message : t('errDelete')); }
   }
 
   async function handleDeleteTermin(terminId: string) {
-    if (!confirm('Naozaj chcete odstrániť tento termín?')) return;
+    if (!confirm(t('confirmDeleteTermin'))) return;
     const token = await getValidToken();
     if (!token) { router.replace('/login'); return; }
     try {
       const { terminsApi } = await import('@/lib/api');
       await terminsApi.delete(id, terminId, token);
       await load(token);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba pri mazaní termínu'); }
+    } catch (e) { setError(e instanceof Error ? e.message : t('errDeleteTermin')); }
   }
 
   async function handleDeleteTicketType(terminId: string, ticketTypeId: string) {
-    if (!confirm('Naozaj chcete odstrániť tento typ lístka?')) return;
+    if (!confirm(t('confirmDeleteTicketType'))) return;
     const token = await getValidToken();
     if (!token) { router.replace('/login'); return; }
     try {
       await ticketTypesApi.delete(terminId, ticketTypeId, token);
       await load(token);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Chyba pri mazaní'); }
+    } catch (e) { setError(e instanceof Error ? e.message : t('errDelete')); }
   }
 
   const [exporting, setExporting] = useState(false);
@@ -119,7 +122,7 @@ export default function ShowDetailPage() {
     if (!token) { router.replace('/login'); return; }
     const res = await eventOpsApi.cancelOccurrence(id, occurrenceId, token);
     setCancelTermin(null);
-    setNotice(`Termín zrušený. Objednávky na refund: ${res.orderCount}, odoslaných e-mailov: ${res.emailsSent}.`);
+    setNotice(t('terminCancelledNotice', { orderCount: res.orderCount, emailsSent: res.emailsSent }));
     await load(token);
   }
 
@@ -140,7 +143,7 @@ export default function ShowDetailPage() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Export platieb zlyhal');
+      setError(e instanceof Error ? e.message : t('errRefundExport'));
     } finally {
       setExporting(false);
     }
@@ -151,7 +154,7 @@ export default function ShowDetailPage() {
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
     </div>
   );
-  if (!show) return <div className="p-8 text-red-600">{error || 'Podujatie nenájdené'}</div>;
+  if (!show) return <div className="p-8 text-red-600">{error || t('notFound')}</div>;
 
   const cover = show.images?.find((i) => i.isCover);
 
@@ -159,7 +162,7 @@ export default function ShowDetailPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← Späť na podujatia</Link>
+        <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← {t('backToShows')}</Link>
       </header>
 
       <main className="mx-auto max-w-4xl p-8 space-y-6">
@@ -181,7 +184,7 @@ export default function ShowDetailPage() {
                 <div className="flex items-center gap-3 mb-1">
                   <h1 className="text-2xl font-bold">{show.name}</h1>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[show.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
-                    {show.status}
+                    {t.has(`terminStatus.${show.status}`) ? t(`terminStatus.${show.status}`) : show.status}
                   </span>
                 </div>
                 {show.category && <p className="text-sm text-gray-500 dark:text-gray-400">{show.category}</p>}
@@ -189,19 +192,19 @@ export default function ShowDetailPage() {
               </div>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
-              <Button variant="outline" size="sm" loading={exporting} onClick={() => handleRefundExport()} title="CSV platieb na manuálny refund cez Stripe">
-                Export platieb pre refund (CSV)
+              <Button variant="outline" size="sm" loading={exporting} onClick={() => handleRefundExport()} title={t('refundExportTitle')}>
+                {t('refundExportBtn')}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => router.push(`/organizer/shows/${id}/edit`)}>Editovať</Button>
+              <Button variant="outline" size="sm" onClick={() => router.push(`/organizer/shows/${id}/edit`)}>{t('edit')}</Button>
             </div>
           </div>
         </div>
 
         {/* Gallery */}
         <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
-          <h2 className="text-lg font-semibold mb-1">Galéria</h2>
+          <h2 className="text-lg font-semibold mb-1">{t('galleryTitle')}</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            Prvý nahraný obrázok sa automaticky stane titulkou. Titulku môžete neskôr zmeniť kliknutím na ľubovoľný obrázok.
+            {t('galleryHint')}
           </p>
 
           {/* Existing images */}
@@ -214,7 +217,7 @@ export default function ShowDetailPage() {
 
                   {img.isCover && (
                     <span className="absolute top-1 left-1 bg-indigo-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                      Titulka
+                      {t('coverBadge')}
                     </span>
                   )}
 
@@ -225,14 +228,14 @@ export default function ShowDetailPage() {
                         onClick={() => handleSetCover(img.id)}
                         className="w-full text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded px-2 py-1"
                       >
-                        Nastaviť titulku
+                        {t('setCover')}
                       </button>
                     )}
                     <button
                       onClick={() => handleDeleteImage(img.id)}
                       className="w-full text-xs bg-red-600 hover:bg-red-700 text-white rounded px-2 py-1"
                     >
-                      Odstrániť
+                      {t('delete')}
                     </button>
                   </div>
                 </div>
@@ -241,7 +244,7 @@ export default function ShowDetailPage() {
           )}
 
           {show.images?.length === 0 && (
-            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Žiadne obrázky. Nahrajte prvý obrázok.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">{t('noImages')}</p>
           )}
 
           {/* Upload new images */}
@@ -257,7 +260,7 @@ export default function ShowDetailPage() {
 
             {uploadPreviews.length === 0 ? (
               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                + Pridať obrázky
+                + {t('addImages')}
               </Button>
             ) : (
               <div className="space-y-3">
@@ -278,10 +281,10 @@ export default function ShowDetailPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" loading={uploading} onClick={handleUpload}>
-                    Nahrať ({uploadPreviews.length})
+                    {t('uploadCount', { count: uploadPreviews.length })}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => { uploadPreviews.forEach((p) => URL.revokeObjectURL(p.preview)); setUploadPreviews([]); }}>
-                    Zrušiť
+                    {t('cancel')}
                   </Button>
                 </div>
               </div>
@@ -292,12 +295,12 @@ export default function ShowDetailPage() {
         {/* Termins */}
         <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Termíny</h2>
-            <Button size="sm" onClick={() => router.push(`/organizer/shows/${id}/termins/new`)}>+ Pridať termín</Button>
+            <h2 className="text-lg font-semibold">{t('terminsTitle')}</h2>
+            <Button size="sm" onClick={() => router.push(`/organizer/shows/${id}/termins/new`)}>+ {t('addTermin')}</Button>
           </div>
 
           {(!show.termins || show.termins.length === 0) ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Žiadne termíny. Pridajte prvý termín.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('noTermins')}</p>
           ) : (
             <div className="space-y-4">
               {show.termins.map((termin: Termin) => (
@@ -330,7 +333,7 @@ export default function ShowDetailPage() {
       {cancelTermin && (
         <CancelTerminModal
           showName={show.name}
-          terminLabel={new Date(cancelTermin.startsAt).toLocaleString('sk-SK')}
+          terminLabel={format.dateTime(new Date(cancelTermin.startsAt), { dateStyle: 'medium', timeStyle: 'short' })}
           onClose={() => setCancelTermin(null)}
           onConfirm={() => handleCancelTermin(cancelTermin.id)}
         />
@@ -350,7 +353,9 @@ function TerminCard({
   onRequestCancel: () => void;
   onExportRefund: () => void;
 }) {
-  const date = new Date(termin.startsAt).toLocaleString('sk-SK');
+  const t = useTranslations('organizer.editor');
+  const format = useFormatter();
+  const date = format.dateTime(new Date(termin.startsAt), { dateStyle: 'medium', timeStyle: 'short' });
   const ticketTypes: TicketType[] = termin.ticketTypes ?? [];
   const isCancelled = termin.status === 'CANCELLED';
 
@@ -363,30 +368,30 @@ function TerminCard({
             <p className="text-xs text-gray-500 dark:text-gray-400">{termin.venue.name}{termin.venue.city ? `, ${termin.venue.city}` : ''}</p>
           )}
           <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[termin.status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
-            {isCancelled ? 'ZRUŠENÝ' : termin.status}
+            {isCancelled ? t('terminStatus.CANCELLED') : (t.has(`terminStatus.${termin.status}`) ? t(`terminStatus.${termin.status}`) : termin.status)}
           </span>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <button onClick={onExportRefund} className="text-xs text-brand hover:underline">Export refund CSV</button>
+          <button onClick={onExportRefund} className="text-xs text-brand hover:underline">{t('exportRefundCsv')}</button>
           {!isCancelled && (
-            <button onClick={onRequestCancel} className="text-xs font-medium text-red-600 hover:underline">Zrušiť termín</button>
+            <button onClick={onRequestCancel} className="text-xs font-medium text-red-600 hover:underline">{t('cancelTermin')}</button>
           )}
-          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={onDelete}>Odstrániť</Button>
+          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={onDelete}>{t('delete')}</Button>
         </div>
       </div>
 
       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Typy lístkov ({ticketTypes.length})</p>
-          <button onClick={onAddTicketType} className="text-xs text-brand hover:underline">+ Pridať typ lístka</button>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">{t('ticketTypes', { count: ticketTypes.length })}</p>
+          <button onClick={onAddTicketType} className="text-xs text-brand hover:underline">+ {t('addTicketType')}</button>
         </div>
         {ticketTypes.length > 0 && (
           <div className="space-y-1">
             {ticketTypes.map((tt) => (
               <div key={tt.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-900 rounded px-2 py-1">
                 <span className="font-medium">{tt.name}</span>
-                <span className="text-gray-500 dark:text-gray-400">{tt.price} {tt.currency}</span>
-                <span className={tt.isActive ? 'text-green-600' : 'text-gray-400 dark:text-gray-500'}>{tt.isActive ? 'Aktívny' : 'Neaktívny'}</span>
+                <span className="text-gray-500 dark:text-gray-400">{format.number(Number(tt.price), { style: 'currency', currency: tt.currency })}</span>
+                <span className={tt.isActive ? 'text-green-600' : 'text-gray-400 dark:text-gray-500'}>{tt.isActive ? t('active') : t('inactive')}</span>
                 <button onClick={() => onDeleteTicketType(tt.id)} className="text-red-500 hover:text-red-700 ml-2">×</button>
               </div>
             ))}
