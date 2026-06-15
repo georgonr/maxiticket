@@ -3,7 +3,7 @@ import { TicketCheck, Store } from 'lucide-react';
 
 export function PublicRegisterPage() {
   return (
-    <div className="py-12 px-4">
+    <div className="min-h-screen bg-cream py-12 px-4">
       <div className="mx-auto max-w-2xl text-center mb-10">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-rose-500 shadow-lg">
           <TicketCheck size={28} className="text-white" strokeWidth={2.2} />

@@ -9,7 +9,6 @@ import { ChatWidget } from '@/components/assistant/ChatWidget';
 import { FeaturedEvents } from './FeaturedEvents';
 
 const REGISTER_URL = '/register'; // ploché (nelokalizované) – staff/customer registrácia
-const ORGANIZER_LOGIN_URL = 'https://admin.ticketall.eu';
 
 // 3 funkcie (krok 30): AI podpora, Skenovanie, Kupóny a zľavy
 const FEATURE_ICONS = [Bot, ScanLine, Tag];
@@ -69,9 +68,9 @@ export function LandingPage() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <LangSwitch />
-            <a href={ORGANIZER_LOGIN_URL} className="hidden text-sm font-medium text-plum hover:text-coral sm:inline">
+            <Link href="/account/login" className="hidden text-sm font-medium text-plum hover:text-coral sm:inline">
               {t('nav.login')}
-            </a>
+            </Link>
             <NextLink
               href={REGISTER_URL}
               className="rounded-full bg-coral px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-coral-dark"
