@@ -312,7 +312,9 @@ export class OrdersService {
   ): Promise<{ url: string }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: { include: { ticketType: true } } },
+      include: {
+        items: { include: { ticketType: true, termin: { select: { id: true, showId: true } } } },
+      },
     });
     if (!order) throw new NotFoundException();
     // Guest order (userId=null) → autorizácia cez cuid id; user order → musí sedieť vlastník.
@@ -367,6 +369,14 @@ export class OrdersService {
     // Úloha 25: provider aktívnej brány. Default STRIPE_LIVE → ten istý injektovaný instance ako
     // doteraz (this.paymentProvider) → byte-identické správanie. Iné brány len po prepnutí SUPERADMIN-om.
     const provider = await this.gateways.getActiveProvider();
+
+    // Úloha 26: metadata pre Stripe (filtrovanie/hromadný refund pri zrušení podujatia).
+    const firstTermin = order.items.find((i) => i.termin)?.termin;
+    const metadata: Record<string, string> = {
+      orderRef: order.orderNumber,
+      ...(firstTermin ? { eventId: firstTermin.showId, occurrenceId: firstTermin.id } : {}),
+    };
+
     const result = await provider.createCheckoutSession({
       orderId: order.id,
       orderNumber: order.orderNumber,
@@ -375,6 +385,7 @@ export class OrdersService {
       customerEmail: order.buyerEmail,
       successUrl,
       cancelUrl,
+      metadata,
     });
 
     await this.prisma.order.update({

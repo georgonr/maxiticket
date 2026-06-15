@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, ChangeEvent, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getValidToken } from '@/lib/auth';
-import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi } from '@/lib/api';
+import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi, refundExportApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { CouponsSection } from '@/components/coupons/CouponsSection';
 
@@ -108,6 +108,30 @@ export default function ShowDetailPage() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Chyba pri mazaní'); }
   }
 
+  const [exporting, setExporting] = useState(false);
+  // Úloha 26: stiahne CSV platieb na manuálny refund (príprava na zrušenie podujatia).
+  async function handleRefundExport(occurrenceId?: string) {
+    setError('');
+    setExporting(true);
+    try {
+      const token = await getValidToken();
+      if (!token) { router.replace('/login'); return; }
+      const blob = await refundExportApi.download(id, token, occurrenceId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `refund-export-${id}${occurrenceId ? '-' + occurrenceId : ''}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Export platieb zlyhal');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
@@ -147,7 +171,12 @@ export default function ShowDetailPage() {
                 {show.description && <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">{show.description}</p>}
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => router.push(`/organizer/shows/${id}/edit`)}>Editovať</Button>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              <Button variant="outline" size="sm" loading={exporting} onClick={() => handleRefundExport()} title="CSV platieb na manuálny refund cez Stripe">
+                Export platieb pre refund (CSV)
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => router.push(`/organizer/shows/${id}/edit`)}>Editovať</Button>
+            </div>
           </div>
         </div>
 

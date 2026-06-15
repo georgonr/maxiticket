@@ -8,6 +8,8 @@ export interface CreateCheckoutParams {
   customerEmail?: string;
   successUrl: string;
   cancelUrl: string;
+  /** Úloha 26: metadata na session + PaymentIntent (eventId/occurrenceId/orderId/orderRef) – pre Stripe filtrovanie a hromadný refund. */
+  metadata?: Record<string, string>;
 }
 
 export interface CheckoutResult {

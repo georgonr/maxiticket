@@ -164,6 +164,18 @@ export const organizersApi = {
   list: (token: string) => apiFetch<OrganizerLite[]>('/v1/organizers', { token }),
 };
 
+// Úloha 26: CSV export platieb na refund (ADMIN + ORGANIZER vlastník)
+export const refundExportApi = {
+  download: async (eventId: string, token: string, occurrenceId?: string): Promise<Blob> => {
+    const qs = occurrenceId ? `?occurrenceId=${encodeURIComponent(occurrenceId)}` : '';
+    const res = await fetch(`${API_BASE}/v1/events/${eventId}/refund-export${qs}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error(`Export zlyhal (HTTP ${res.status})`);
+    return res.blob();
+  },
+};
+
 // Úloha 25: platobné brány (SUPERADMIN/STAFF)
 export type PaymentGatewayId = 'STRIPE_SANDBOX' | 'STRIPE_LIVE' | 'COMGATE_TEST' | 'COMGATE_LIVE';
 export interface PaymentGatewayStatus {

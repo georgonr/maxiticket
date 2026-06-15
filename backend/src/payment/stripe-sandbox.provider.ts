@@ -38,7 +38,10 @@ export class StripeSandboxPaymentProvider implements PaymentProvider {
         },
         quantity: item.quantity,
       })),
-      metadata: { orderId: params.orderId, orderNumber: params.orderNumber },
+      metadata: { orderId: params.orderId, orderNumber: params.orderNumber, ...(params.metadata ?? {}) },
+      payment_intent_data: {
+        metadata: { orderId: params.orderId, orderNumber: params.orderNumber, ...(params.metadata ?? {}) },
+      },
       ...(params.customerEmail ? { customer_email: params.customerEmail } : {}),
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
