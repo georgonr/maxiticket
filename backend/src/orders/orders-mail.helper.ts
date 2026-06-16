@@ -71,6 +71,14 @@ export async function sendTicketsForOrder(
     locale: order.locale,
     buyerName: order.buyerName ?? undefined,
     orderNumber: order.orderNumber,
+    // Krok 2/2: súhrn platby (celkom = cena lístkov po zľave + zákaznícky poplatok).
+    summary: {
+      subtotal: Number(order.totalAmount) + Number(order.discountAmount),
+      discountAmount: Number(order.discountAmount),
+      customerFeeAmount: Number(order.feeAmount),
+      total: Number(order.totalAmount) + Number(order.feeAmount),
+      currency: order.currency,
+    },
     showName: show.name,
     startsAt: termin.startsAt,
     timezone: termin.timezone,

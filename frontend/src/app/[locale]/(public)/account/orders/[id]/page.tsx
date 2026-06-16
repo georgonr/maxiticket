@@ -168,13 +168,16 @@ export default function AccountOrderDetailPage() {
           ))}
         </div>
         <div className="mt-3 space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm">
-          {order.discountAmount > 0 && (
-            <>
-              <div className="flex justify-between text-slate-500 dark:text-slate-400"><span>{t('subtotal')}</span><span>{format.number(subtotal, { style: 'currency', currency: order.currency })}</span></div>
-              <div className="flex justify-between text-emerald-600"><span>{t('discount')}{order.couponCode ? ` (${order.couponCode})` : ''}</span><span>−{format.number(order.discountAmount, { style: 'currency', currency: order.currency })}</span></div>
-            </>
+          {(order.discountAmount > 0 || order.feeAmount > 0) && (
+            <div className="flex justify-between text-slate-500 dark:text-slate-400"><span>{t('subtotal')}</span><span>{format.number(subtotal, { style: 'currency', currency: order.currency })}</span></div>
           )}
-          <div className="flex justify-between pt-1"><span className="font-semibold text-slate-900 dark:text-slate-100">{t('total')}</span><span className="text-lg font-bold text-slate-900 dark:text-slate-100">{format.number(order.totalAmount, { style: 'currency', currency: order.currency })}</span></div>
+          {order.discountAmount > 0 && (
+            <div className="flex justify-between text-emerald-600"><span>{t('discount')}{order.couponCode ? ` (${order.couponCode})` : ''}</span><span>−{format.number(order.discountAmount, { style: 'currency', currency: order.currency })}</span></div>
+          )}
+          {order.feeAmount > 0 && (
+            <div className="flex justify-between text-slate-500 dark:text-slate-400"><span>{t('processingFee')}</span><span>{format.number(order.feeAmount, { style: 'currency', currency: order.currency })}</span></div>
+          )}
+          <div className="flex justify-between pt-1"><span className="font-semibold text-slate-900 dark:text-slate-100">{t('total')}</span><span className="text-lg font-bold text-slate-900 dark:text-slate-100">{format.number(order.totalAmount + order.feeAmount, { style: 'currency', currency: order.currency })}</span></div>
         </div>
       </div>
 

@@ -68,6 +68,7 @@ export interface AccountOrderDetail {
   currency: string;
   totalAmount: number;
   discountAmount: number;
+  feeAmount: number;
   couponCode: string | null;
   paymentProvider: string | null;
   buyerName: string | null;

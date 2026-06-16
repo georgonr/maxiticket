@@ -487,8 +487,9 @@ model Order {
   status        OrderStatus @default(PENDING)
   currency      String      @default("EUR")
   locale        String      @default("sk")  // jazyk kupujúceho zachytený pri checkoute (sk/en/cs) – pre e-maily (aj async Stripe webhook)
-  totalAmount   Decimal     @db.Decimal(10, 2)  // subtotal - discountAmount
-  feeAmount     Decimal     @default(0) @db.Decimal(10, 2)
+  totalAmount   Decimal     @db.Decimal(10, 2)  // subtotal - discountAmount (cena lístkov; bez poplatku)
+  feeAmount     Decimal     @default(0) @db.Decimal(10, 2)  // zákaznícky poplatok za spracovanie (online checkout); grand total = totalAmount + feeAmount
+  customerFeePct Decimal    @default(0) @db.Decimal(5, 2)   // aplikovaný % poplatku (audit; z Organizer.customerFeePercent v čase platby)
   discountAmount Decimal    @default(0) @db.Decimal(10, 2)  // 0 ak bez kupónu
 
   // Payment

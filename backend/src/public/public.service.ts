@@ -411,4 +411,20 @@ export class PublicService {
     }
     return null;
   }
+
+  /**
+   * Krok 2/2: vypočíta zákaznícky poplatok za spracovanie pre danú sumu (display
+   * v checkoute). Vracia LEN sumu poplatku – %-konfig organizátora sa von neposiela.
+   * Autoritatívny poplatok sa prepočíta server-side až pri initiateCheckout.
+   */
+  async checkoutFeeQuote(terminId: string, amount: number) {
+    const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 0;
+    const termin = await this.prisma.termin.findUnique({
+      where: { id: terminId },
+      select: { show: { select: { organizer: { select: { customerFeePercent: true } } } } },
+    });
+    const pct = Number(termin?.show?.organizer?.customerFeePercent ?? 0);
+    const feeAmount = safeAmount > 0 ? Math.round(safeAmount * pct) / 100 : 0;
+    return { feeAmount };
+  }
 }

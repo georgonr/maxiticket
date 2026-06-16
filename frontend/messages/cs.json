@@ -270,7 +270,8 @@
     "ticketUsed": "Vstupenka byla použita",
     "orderShort": "Obj:",
     "qrSingleUse": "QR kód je jednorázový",
-    "showQrAtEntryFull": "Předložte QR kód při vstupu na akci"
+    "showQrAtEntryFull": "Předložte QR kód při vstupu na akci",
+    "processingFee": "Poplatek za zpracování"
   },
   "accountSettings": {
     "title": "Nastavení",
@@ -337,7 +338,8 @@
     "purchasedTickets": "Zakoupené vstupenky",
     "totalLabel": "Celkem",
     "viewMyTickets": "Zobrazit moje lístky",
-    "moreEvents": "Další akce"
+    "moreEvents": "Další akce",
+    "processingFee": "Poplatek za zpracování"
   },
   "coupon": {
     "error": "Kupón se nepodařilo ověřit. Zkuste to znovu.",

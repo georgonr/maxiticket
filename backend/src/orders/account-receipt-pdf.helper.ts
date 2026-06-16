@@ -22,6 +22,7 @@ export interface ReceiptPdfData {
   subtotal: number;
   discountAmount: number;
   couponCode: string | null;
+  customerFeeAmount?: number;
   total: number;
   platform: {
     legalName: string;
@@ -127,9 +128,15 @@ export async function generateReceiptPdf(data: ReceiptPdfData): Promise<Buffer> 
       doc.fillColor(bold ? BRAND : BLACK).font('GeistBold').fontSize(bold ? 14 : 10).text(value, left, y, { width, align: 'right' });
       y += bold ? 24 : 18;
     };
-    if (data.discountAmount > 0) {
+    const fee = data.customerFeeAmount ?? 0;
+    if (data.discountAmount > 0 || fee > 0) {
       sumRow('Medzisúčet', fmt(data.subtotal, data.currency));
-      sumRow(`Zľava${data.couponCode ? ` (${data.couponCode})` : ''}`, `−${fmt(data.discountAmount, data.currency)}`);
+      if (data.discountAmount > 0) {
+        sumRow(`Zľava${data.couponCode ? ` (${data.couponCode})` : ''}`, `−${fmt(data.discountAmount, data.currency)}`);
+      }
+      if (fee > 0) {
+        sumRow('Poplatok za spracovanie', fmt(fee, data.currency));
+      }
     }
     sumRow('SPOLU', fmt(data.total, data.currency), true);
     y += 4;

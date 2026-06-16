@@ -53,4 +53,10 @@ export class PublicController {
   contact(@Body() dto: ContactDto, @Ip() _ip: string) {
     return this.svc.sendContactEmail(dto);
   }
+
+  // Krok 2/2: poplatok za spracovanie pre danú sumu (display v checkoute). Len suma.
+  @Get('checkout/fee-quote')
+  feeQuote(@Query('terminId') terminId: string, @Query('amount') amount?: string) {
+    return this.svc.checkoutFeeQuote(terminId, Number(amount));
+  }
 }

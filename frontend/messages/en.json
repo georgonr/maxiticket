@@ -270,7 +270,8 @@
     "ticketUsed": "The ticket has been used",
     "orderShort": "Order:",
     "qrSingleUse": "The QR code is single-use",
-    "showQrAtEntryFull": "Show the QR code at the entrance"
+    "showQrAtEntryFull": "Show the QR code at the entrance",
+    "processingFee": "Processing fee"
   },
   "accountSettings": {
     "title": "Settings",
@@ -337,7 +338,8 @@
     "purchasedTickets": "Purchased tickets",
     "totalLabel": "Total",
     "viewMyTickets": "View my tickets",
-    "moreEvents": "More events"
+    "moreEvents": "More events",
+    "processingFee": "Processing fee"
   },
   "coupon": {
     "error": "Couldn't verify the coupon. Please try again.",

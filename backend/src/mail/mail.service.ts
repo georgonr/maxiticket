@@ -38,6 +38,14 @@ export interface TicketEmailData {
   venueCity?: string;
   organizer?: OrganizerPdfInfo;
   platform?: PlatformPdfInfo;
+  // Krok 2/2: súhrn platby pre e-mail (medzisúčet/zľava/poplatok/celkom). Celkom = totalAmount + poplatok.
+  summary?: {
+    subtotal: number;
+    discountAmount: number;
+    customerFeeAmount: number;
+    total: number;
+    currency: string;
+  };
   tickets: {
     id: string;
     typeName: string;
@@ -124,6 +132,16 @@ export class MailService {
     <p style="color:#374151;margin:4px 0;">📍 ${data.venueName}${data.venueCity ? `, ${data.venueCity}` : ''}</p>
   </div>
   ${ticketHtmlParts.join('')}
+  ${data.summary ? `
+  <div style="background:#f9fafb;border-radius:8px;padding:16px;margin:8px 0 20px;">
+    <p style="font-size:13px;font-weight:600;color:#374151;margin:0 0 8px;">${m.summaryTitle}</p>
+    ${data.summary.discountAmount > 0 || data.summary.customerFeeAmount > 0 ? `
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin:2px 0;"><span>${m.subtotalLabel}</span><span>${mailFormatPrice(data.summary.subtotal, data.summary.currency, locale)}</span></div>
+    ${data.summary.discountAmount > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#059669;margin:2px 0;"><span>${m.discountLabel}</span><span>−${mailFormatPrice(data.summary.discountAmount, data.summary.currency, locale)}</span></div>` : ''}
+    ${data.summary.customerFeeAmount > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin:2px 0;"><span>${m.feeLabel}</span><span>${mailFormatPrice(data.summary.customerFeeAmount, data.summary.currency, locale)}</span></div>` : ''}
+    ` : ''}
+    <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#111827;border-top:1px solid #e5e7eb;margin-top:6px;padding-top:6px;"><span>${m.totalLabel}</span><span>${mailFormatPrice(data.summary.total, data.summary.currency, locale)}</span></div>
+  </div>` : ''}
   <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
     ${m.footer}
   </p>

@@ -6,7 +6,7 @@ import NextLink from 'next/link';
 import { useTranslations, useFormatter, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { getCart, clearCart, cartTotal, Cart } from '@/lib/cart';
-import { ordersApi } from '@/lib/api';
+import { ordersApi, publicApi } from '@/lib/api';
 import { couponsApi } from '@/lib/api/coupons';
 import { getValidToken } from '@/lib/auth';
 import { localizeApiError } from '@/lib/api-error';
@@ -44,6 +44,7 @@ function CheckoutContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [processingFee, setProcessingFee] = useState(0);  // Krok 2/2: zákaznícky poplatok (server quote)
   // Guest checkout – buyer údaje (pre prihlásených ich neukazujeme, server berie z účtu)
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerName, setBuyerName] = useState('');
@@ -84,6 +85,18 @@ function CheckoutContent() {
         /* tichý fail – neplatný URL kupón nezablokuje checkout */
       });
   }, [searchParams, cart, appliedCoupon]);
+
+  // Krok 2/2: zákaznícky poplatok za spracovanie – server quote (vracia LEN sumu) zo sumy po zľave.
+  useEffect(() => {
+    if (!cart) { setProcessingFee(0); return; }
+    const base = appliedCoupon ? appliedCoupon.finalAmount : cartTotal(cart);
+    if (base <= 0) { setProcessingFee(0); return; }
+    let active = true;
+    publicApi.feeQuote(cart.terminId, base)
+      .then((r) => { if (active) setProcessingFee(r.feeAmount ?? 0); })
+      .catch(() => { if (active) setProcessingFee(0); });
+    return () => { active = false; };
+  }, [cart, appliedCoupon]);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
   const guestFieldsOk = isLoggedIn || (emailValid && buyerName.trim().length > 0);
@@ -142,6 +155,7 @@ function CheckoutContent() {
   const total = cartTotal(cart);
   const currency = cart.items[0]?.currency ?? 'EUR';
   const finalTotal = appliedCoupon ? appliedCoupon.finalAmount : total;
+  const grandTotal = finalTotal + processingFee;  // Krok 2/2: cena lístkov (po zľave) + poplatok
 
   return (
     <div className="mx-auto max-w-lg">
@@ -224,21 +238,27 @@ function CheckoutContent() {
 
         {/* Súčty */}
         <div className="mt-4 space-y-1.5 border-t pt-3">
+          {(appliedCoupon || processingFee > 0) && (
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>{t('subtotal')}</span>
+              <span>{fmtPrice(total, currency)}</span>
+            </div>
+          )}
           {appliedCoupon && (
-            <>
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>{t('subtotal')}</span>
-                <span>{fmtPrice(total, currency)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-emerald-600">
-                <span>{t('discount', { code: appliedCoupon.code })}</span>
-                <span>−{fmtPrice(appliedCoupon.discount, currency)}</span>
-              </div>
-            </>
+            <div className="flex items-center justify-between text-sm text-emerald-600">
+              <span>{t('discount', { code: appliedCoupon.code })}</span>
+              <span>−{fmtPrice(appliedCoupon.discount, currency)}</span>
+            </div>
+          )}
+          {processingFee > 0 && (
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>{t('processingFee')}</span>
+              <span>{fmtPrice(processingFee, currency)}</span>
+            </div>
           )}
           <div className="flex items-center justify-between pt-1">
             <span className="font-semibold text-gray-900">{t('total')}</span>
-            <span className="text-xl font-bold text-indigo-600">{fmtPrice(finalTotal, currency)}</span>
+            <span className="text-xl font-bold text-indigo-600">{fmtPrice(grandTotal, currency)}</span>
           </div>
         </div>
       </div>
@@ -276,7 +296,7 @@ function CheckoutContent() {
         className="w-full gap-2"
       >
         <ShoppingBag size={16} />
-        {submitting ? t('redirecting') : t('pay', { amount: fmtPrice(finalTotal, currency) })}
+        {submitting ? t('redirecting') : t('pay', { amount: fmtPrice(grandTotal, currency) })}
       </Button>
 
       <p className="mt-3 text-center text-xs text-gray-400">

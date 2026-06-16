@@ -18,6 +18,14 @@ import { codedBadRequest, codedNotFound, codedConflict } from '../common/errors/
 import { CouponsService } from '../coupons/coupons.service';
 import { generatePosClosurePdf, PosClosureByTermin } from './pos-closure-pdf.helper';
 
+// Krok 2/2: názov riadku poplatku na Stripe (podľa jazyka objednávky). Sumu vidí
+// zákazník; %-konfig organizátora NIE.
+const FEE_LABEL: Record<string, string> = {
+  sk: 'Poplatok za spracovanie',
+  en: 'Processing fee',
+  cs: 'Poplatek za zpracování',
+};
+
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
@@ -336,6 +344,9 @@ export class OrdersService {
       quantity: item.quantity,
     }));
 
+    // Základ pre poplatok = suma lístkov PO zľave (čo zákazník reálne platí za lístky).
+    let chargeBase = Number(order.totalAmount);
+
     // Kupón (voliteľný): server-side RE-validácia (nedôverujeme klientovi)
     if (couponCode) {
       const subtotal = order.items.reduce((s, i) => s + Number(i.unitPrice) * i.quantity, 0);
@@ -357,6 +368,7 @@ export class OrdersService {
           totalAmount: validation.finalAmount,
         },
       });
+      chargeBase = validation.finalAmount;
 
       // Stripe vidí len finálnu sumu – jeden konsolidovaný riadok (per-item rozpis ostáva v našom Order)
       lineItems = [
@@ -366,6 +378,29 @@ export class OrdersService {
           quantity: 1,
         },
       ];
+    }
+
+    // ── Zákaznícky poplatok za spracovanie (Krok 2/2, online checkout) ──────────
+    // % z organizátora podujatia – číta sa SERVER-SIDE, do UI/Stripe ide len suma.
+    const organizer = await this.prisma.organizer.findUnique({
+      where: { id: order.organizerId },
+      select: { customerFeePercent: true },
+    });
+    const feePct = Number(organizer?.customerFeePercent ?? 0);
+    // round na centy; free lístky (chargeBase 0) → 0.
+    const customerFeeAmount = chargeBase > 0 ? Math.round(chargeBase * feePct) / 100 : 0;
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: { feeAmount: customerFeeAmount, customerFeePct: feePct },
+    });
+
+    if (customerFeeAmount > 0) {
+      lineItems.push({
+        name: FEE_LABEL[order.locale] ?? FEE_LABEL.sk,
+        unitPrice: customerFeeAmount,
+        quantity: 1,
+      });
     }
 
     // Úloha 25: provider aktívnej brány. Default STRIPE_LIVE → ten istý injektovaný instance ako

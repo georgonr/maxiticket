@@ -270,7 +270,8 @@
     "ticketUsed": "Vstupenka bola použitá",
     "orderShort": "Obj:",
     "qrSingleUse": "QR kód je jednorazový",
-    "showQrAtEntryFull": "Predložte QR kód pri vstupe na podujatie"
+    "showQrAtEntryFull": "Predložte QR kód pri vstupe na podujatie",
+    "processingFee": "Poplatok za spracovanie"
   },
   "accountSettings": {
     "title": "Nastavenia",
@@ -337,7 +338,8 @@
     "purchasedTickets": "Zakúpené vstupenky",
     "totalLabel": "Celkom",
     "viewMyTickets": "Zobraziť moje lístky",
-    "moreEvents": "Ďalšie podujatia"
+    "moreEvents": "Ďalšie podujatia",
+    "processingFee": "Poplatok za spracovanie"
   },
   "coupon": {
     "error": "Kupón sa nepodarilo overiť. Skúste znova.",

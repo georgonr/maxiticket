@@ -458,6 +458,9 @@ export const publicApi = {
   getHero: () => apiFetch<HeroSlideType[]>('/v1/public/hero'),
   // Úloha 22/3b: sedadlá SEATED sekcií termínu so statusom (pre seat-picker)
   getTerminSeats: (terminId: string) => apiFetch<PublicTerminSeats>(`/v1/public/termins/${terminId}/seats`),
+  // Krok 2/2: zákaznícky poplatok za spracovanie pre danú sumu (display v checkoute; vracia LEN sumu).
+  feeQuote: (terminId: string, amount: number) =>
+    apiFetch<{ feeAmount: number }>(`/v1/public/checkout/fee-quote?terminId=${terminId}&amount=${amount}`),
 };
 
 // ── Public seat picker (úloha 22/3b) ───────────────────────────────────────────

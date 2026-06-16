@@ -347,6 +347,7 @@ export class OrdersQueryService {
       currency: o.currency,
       totalAmount: Number(o.totalAmount),
       discountAmount: Number(o.discountAmount),
+      feeAmount: Number(o.feeAmount),
       couponCode: o.coupon?.code ?? null,
       paymentProvider: o.paymentProvider ?? null,
       buyerName: o.buyerName,
@@ -395,6 +396,7 @@ export class OrdersQueryService {
     }
     const platform = await this.prisma.platformInfo.findFirst();
     const subtotal = Number(o.totalAmount) + Number(o.discountAmount);
+    const customerFeeAmount = Number(o.feeAmount);
 
     const pdf = await generateReceiptPdf({
       orderNumber: o.orderNumber,
@@ -414,7 +416,9 @@ export class OrdersQueryService {
       subtotal,
       discountAmount: Number(o.discountAmount),
       couponCode: o.coupon?.code ?? null,
-      total: Number(o.totalAmount),
+      customerFeeAmount,
+      // SPOLU = cena lístkov (po zľave) + zákaznícky poplatok = čo zákazník reálne zaplatil.
+      total: Number(o.totalAmount) + customerFeeAmount,
       platform: {
         legalName: platform?.legalName ?? 'TicketAll s.r.o.',
         ico: platform?.ico ?? null,

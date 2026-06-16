@@ -54,7 +54,10 @@ export function mailFormatDateShort(date: Date, locale: MailLocale): string {
 }
 
 interface MailStrings {
-  tickets: { subjectPrefix: string; heading: string; orderLabel: string; qrAlt: string; footer: string };
+  tickets: {
+    subjectPrefix: string; heading: string; orderLabel: string; qrAlt: string; footer: string;
+    summaryTitle: string; subtotalLabel: string; discountLabel: string; feeLabel: string; totalLabel: string;
+  };
   terminCancelled: {
     subjectPrefix: string; heading: string; orderLabel: string; cancelledNotice: string;
     refundLabel: string; footer: string;
@@ -117,6 +120,7 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       orderLabel: 'Objednávka',
       qrAlt: 'QR kód vstupenky',
       footer: 'Vstupenku predložte pri vstupe. Každý QR kód je jednorazový.',
+      summaryTitle: 'Súhrn platby', subtotalLabel: 'Medzisúčet', discountLabel: 'Zľava', feeLabel: 'Poplatok za spracovanie', totalLabel: 'Celkom',
     },
     terminCancelled: {
       subjectPrefix: 'Termín zrušený',
@@ -233,6 +237,7 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       orderLabel: 'Order',
       qrAlt: 'Ticket QR code',
       footer: 'Present your ticket at the entrance. Each QR code is single-use.',
+      summaryTitle: 'Payment summary', subtotalLabel: 'Subtotal', discountLabel: 'Discount', feeLabel: 'Processing fee', totalLabel: 'Total',
     },
     terminCancelled: {
       subjectPrefix: 'Date cancelled',
@@ -349,6 +354,7 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       orderLabel: 'Objednávka',
       qrAlt: 'QR kód vstupenky',
       footer: 'Vstupenku předložte při vstupu. Každý QR kód je jednorázový.',
+      summaryTitle: 'Souhrn platby', subtotalLabel: 'Mezisoučet', discountLabel: 'Sleva', feeLabel: 'Poplatek za zpracování', totalLabel: 'Celkem',
     },
     terminCancelled: {
       subjectPrefix: 'Termín zrušen',
