@@ -572,7 +572,8 @@
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
       "langLabel": "Language",
-      "organizers": "Organizers"
+      "organizers": "Organizers",
+      "billing": "Billing"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1798,7 +1799,12 @@
         "saved": "Billing settings saved.",
         "saveErr": "Save failed.",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "billingMode": "Billing mode",
+        "modePerEvent": "Per event",
+        "modeMonthly": "Monthly",
+        "refundFeePerTicket": "Fee per refunded ticket (€)",
+        "refundFeeHint": "Empty = platform default €0.40."
       }
     }
   },
@@ -1849,5 +1855,41 @@
     "organizerTitle": "Organizer",
     "organizerDesc": "I want to sell tickets and manage events.",
     "organizerCta": "Register as an organizer"
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Read-only statement calculation overview (step 13a).",
+    "empty": "No organizers.",
+    "errLoad": "Failed to load.",
+    "col": {
+      "organizer": "Organizer",
+      "mode": "Mode",
+      "revenue": "Revenue",
+      "payout": "Payout (est.)"
+    },
+    "mode": {
+      "PER_EVENT": "Per event",
+      "MONTHLY": "Monthly"
+    },
+    "back": "Back to billing",
+    "openDetail": "Detail",
+    "scopeTermin": "By date",
+    "scopeMonth": "By month",
+    "selectTermin": "Select a date",
+    "selectMonth": "Select a month",
+    "pickPrompt": "Select a date or month to show the statement.",
+    "noTermins": "No finished dates.",
+    "stmtTitle": "Statement",
+    "ticketsSold": "Tickets sold",
+    "revenue": "Ticket revenue",
+    "commission": "Commission",
+    "vat": "VAT",
+    "refundedTickets": "Refunded tickets",
+    "refundFee": "Fee / refunded ticket",
+    "refundFees": "Refund fees",
+    "netPayout": "NET PAYOUT",
+    "customerFees": "Customer fees",
+    "customerFeesNote": "Our income – not part of payout.",
+    "perTicketSuffix": "/ ticket"
   }
 }

@@ -572,7 +572,8 @@
       "openMenu": "Otvoriť menu",
       "closeMenu": "Zavrieť menu",
       "langLabel": "Jazyk",
-      "organizers": "Organizátori"
+      "organizers": "Organizátori",
+      "billing": "Fakturácia"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1798,7 +1799,12 @@
         "saved": "Fakturačné nastavenia uložené.",
         "saveErr": "Uloženie zlyhalo.",
         "yes": "Áno",
-        "no": "Nie"
+        "no": "Nie",
+        "billingMode": "Režim fakturácie",
+        "modePerEvent": "Po termíne",
+        "modeMonthly": "Mesačne",
+        "refundFeePerTicket": "Poplatok za refundovaný lístok (€)",
+        "refundFeeHint": "Prázdne = platformový default 0,40 €."
       }
     }
   },
@@ -1849,5 +1855,41 @@
     "organizerTitle": "Usporiadateľ",
     "organizerDesc": "Chcem predávať vstupenky a spravovať podujatia.",
     "organizerCta": "Registrovať ako usporiadateľ"
+  },
+  "billing": {
+    "title": "Fakturácia",
+    "subtitle": "Read-only prehľad výpočtu vyúčtovania (krok 13a).",
+    "empty": "Žiadni organizátori.",
+    "errLoad": "Načítanie zlyhalo.",
+    "col": {
+      "organizer": "Organizátor",
+      "mode": "Režim",
+      "revenue": "Tržba",
+      "payout": "Odhad výplaty"
+    },
+    "mode": {
+      "PER_EVENT": "Po termíne",
+      "MONTHLY": "Mesačne"
+    },
+    "back": "Späť na fakturáciu",
+    "openDetail": "Detail",
+    "scopeTermin": "Podľa termínu",
+    "scopeMonth": "Podľa mesiaca",
+    "selectTermin": "Vyberte termín",
+    "selectMonth": "Vyberte mesiac",
+    "pickPrompt": "Vyberte termín alebo mesiac pre zobrazenie rozpisu.",
+    "noTermins": "Žiadne skončené termíny.",
+    "stmtTitle": "Rozpis vyúčtovania",
+    "ticketsSold": "Predané lístky",
+    "revenue": "Tržba za lístky",
+    "commission": "Provízia",
+    "vat": "DPH",
+    "refundedTickets": "Refundované lístky",
+    "refundFee": "Poplatok / refund. lístok",
+    "refundFees": "Refund poplatky",
+    "netPayout": "NETTO VÝPLATA",
+    "customerFees": "Zákaznícke poplatky",
+    "customerFeesNote": "Náš príjem – nevstupuje do výplaty.",
+    "perTicketSuffix": "/ lístok"
   }
 }

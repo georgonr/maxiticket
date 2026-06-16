@@ -31,6 +31,12 @@ enum OrganizerStatus {
   SUSPENDED
 }
 
+// Fakturačný systém (krok 13a): režim vyúčtovania organizátora.
+enum BillingMode {
+  PER_EVENT  // vyúčtovanie po každom (skončenom) termíne
+  MONTHLY    // mesačné vyúčtovanie agregátom termínov
+}
+
 enum VatStatus {
   NON_PAYER
   PAYER
@@ -148,6 +154,9 @@ model Organizer {
   vatPercent         Decimal       @default(23.00) @db.Decimal(5, 2)  // DPH % pre fakturáciu provízie (0 pri prenes. dani)
   feesIncluded       Boolean       @default(false)                    // s poplatkami / bez poplatkov
   customerFeePercent Decimal       @default(1.00)  @db.Decimal(5, 2)  // zákaznícky poplatok % (checkout, krok 2)
+  // Fakturačný systém (krok 13a) – LEN super-admin (stripBilling); organizátor nevidí.
+  billingMode             BillingMode @default(PER_EVENT)  // režim vyúčtovania
+  refundFeePerTicketCents Int?                             // override poplatku za refund/lístok (cents); null = platformová konštanta (40)
 
   // Customisation
   ticketFooterText String?         // printed on every ticket

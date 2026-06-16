@@ -1,4 +1,5 @@
-import { IsBoolean, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, Max, Min, ValidateIf } from 'class-validator';
+import { BillingMode } from '@prisma/client';
 
 /** Per-organizátor fakturačná konfigurácia – LEN super-admin/staff. */
 export class UpdateOrganizerBillingDto {
@@ -6,4 +7,9 @@ export class UpdateOrganizerBillingDto {
   @IsOptional() @IsNumber() @Min(0) @Max(100) vatPercent?: number;
   @IsOptional() @IsBoolean() feesIncluded?: boolean;
   @IsOptional() @IsNumber() @Min(0) @Max(100) customerFeePercent?: number;
+
+  // Fakturačný systém (krok 13a)
+  @IsOptional() @IsEnum(BillingMode) billingMode?: BillingMode;
+  // null = platformová konštanta (40); inak 0..10000 cents
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsInt() @Min(0) @Max(10000) refundFeePerTicketCents?: number | null;
 }

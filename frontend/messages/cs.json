@@ -572,7 +572,8 @@
       "openMenu": "Otevřít menu",
       "closeMenu": "Zavřít menu",
       "langLabel": "Jazyk",
-      "organizers": "Pořadatelé"
+      "organizers": "Pořadatelé",
+      "billing": "Fakturace"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1798,7 +1799,12 @@
         "saved": "Fakturační nastavení uloženo.",
         "saveErr": "Uložení selhalo.",
         "yes": "Ano",
-        "no": "Ne"
+        "no": "Ne",
+        "billingMode": "Režim fakturace",
+        "modePerEvent": "Po akci",
+        "modeMonthly": "Měsíčně",
+        "refundFeePerTicket": "Poplatek za refundovanou vstupenku (€)",
+        "refundFeeHint": "Prázdné = platformový default 0,40 €."
       }
     }
   },
@@ -1849,5 +1855,41 @@
     "organizerTitle": "Pořadatel",
     "organizerDesc": "Chci prodávat vstupenky a spravovat akce.",
     "organizerCta": "Registrovat jako pořadatel"
+  },
+  "billing": {
+    "title": "Fakturace",
+    "subtitle": "Read-only přehled výpočtu vyúčtování (krok 13a).",
+    "empty": "Žádní pořadatelé.",
+    "errLoad": "Načtení selhalo.",
+    "col": {
+      "organizer": "Pořadatel",
+      "mode": "Režim",
+      "revenue": "Tržby",
+      "payout": "Odhad výplaty"
+    },
+    "mode": {
+      "PER_EVENT": "Po akci",
+      "MONTHLY": "Měsíčně"
+    },
+    "back": "Zpět na fakturaci",
+    "openDetail": "Detail",
+    "scopeTermin": "Podle termínu",
+    "scopeMonth": "Podle měsíce",
+    "selectTermin": "Vyberte termín",
+    "selectMonth": "Vyberte měsíc",
+    "pickPrompt": "Vyberte termín nebo měsíc pro zobrazení rozpisu.",
+    "noTermins": "Žádné skončené termíny.",
+    "stmtTitle": "Rozpis vyúčtování",
+    "ticketsSold": "Prodané vstupenky",
+    "revenue": "Tržby za vstupenky",
+    "commission": "Provize",
+    "vat": "DPH",
+    "refundedTickets": "Refundované vstupenky",
+    "refundFee": "Poplatek / refund. vstupenka",
+    "refundFees": "Refund poplatky",
+    "netPayout": "NETTO VÝPLATA",
+    "customerFees": "Zákaznické poplatky",
+    "customerFeesNote": "Náš příjem – nevstupuje do výplaty.",
+    "perTicketSuffix": "/ vstupenka"
   }
 }

@@ -26,6 +26,7 @@ import { HeroBannersModule } from './hero-banners/hero-banners.module';
 import { ScanModule } from './scan/scan.module';
 import { PlatformInfoModule } from './platform-info/platform-info.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { BillingModule } from './billing/billing.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { ScannersModule } from './scanners/scanners.module';
 import { MembersModule } from './members/members.module';
@@ -60,6 +61,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     ScanModule,
     PlatformInfoModule,
     MetricsModule,
+    BillingModule,
     CouponsModule,
     ScannersModule,
     MembersModule,

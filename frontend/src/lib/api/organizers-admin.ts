@@ -52,12 +52,16 @@ function qs(params: Record<string, string | number | undefined>): string {
   return s ? `?${s}` : '';
 }
 
+export type BillingMode = 'PER_EVENT' | 'MONTHLY';
+
 /** Fakturačná konfigurácia (LEN super-admin/staff – organizátor NEVIDÍ). */
 export interface OrganizerBilling {
   commissionPercent: number;
   vatPercent: number;
   feesIncluded: boolean;
   customerFeePercent: number;
+  billingMode: BillingMode;
+  refundFeePerTicketCents: number | null;
 }
 
 /** SUPERADMIN/STAFF – zoznam VŠETKÝCH organizátorov + detail + fakturácia. */

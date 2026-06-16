@@ -71,6 +71,8 @@ export default function AdminOrganizerDetailPage() {
         vatPercent: Number(billing.vatPercent),
         feesIncluded: billing.feesIncluded,
         customerFeePercent: Number(billing.customerFeePercent),
+        billingMode: billing.billingMode,
+        refundFeePerTicketCents: billing.refundFeePerTicketCents,
       }, token);
       setBilling(saved);
       setBillingToast({ msg: t('organizers.billing.saved'), ok: true });
@@ -175,6 +177,29 @@ export default function AdminOrganizerDetailPage() {
                       <span className="block text-sm font-medium text-gray-700 dark:text-gray-200">{t('organizers.billing.feesIncluded')}</span>
                       <span className="block text-xs text-gray-400 dark:text-gray-500">{t('organizers.billing.feesIncludedHint')}</span>
                     </span>
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('organizers.billing.billingMode')}</span>
+                    <select
+                      value={billing.billingMode}
+                      onChange={(e) => setBillingField('billingMode', e.target.value as OrganizerBilling['billingMode'])}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm"
+                    >
+                      <option value="PER_EVENT">{t('organizers.billing.modePerEvent')}</option>
+                      <option value="MONTHLY">{t('organizers.billing.modeMonthly')}</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('organizers.billing.refundFeePerTicket')}</span>
+                    <Input
+                      type="number" step="0.01" min={0} max={100}
+                      value={billing.refundFeePerTicketCents != null ? String(billing.refundFeePerTicketCents / 100) : ''}
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        setBillingField('refundFeePerTicketCents', v === '' ? null : (Math.round(Number(v) * 100) as unknown as number));
+                      }}
+                    />
+                    <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{t('organizers.billing.refundFeeHint')}</span>
                   </label>
                 </div>
                 <div className="mt-5 flex items-center gap-3">

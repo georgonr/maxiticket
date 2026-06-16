@@ -21,6 +21,8 @@ export class OrganizersService {
     delete (rest as Record<string, unknown>).vatPercent;
     delete (rest as Record<string, unknown>).feesIncluded;
     delete (rest as Record<string, unknown>).customerFeePercent;
+    delete (rest as Record<string, unknown>).billingMode;
+    delete (rest as Record<string, unknown>).refundFeePerTicketCents;
     return rest;
   }
 

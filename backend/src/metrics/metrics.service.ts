@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, UserRole, OrderStatus } from '@prisma/client';
+import { Prisma, UserRole, OrderStatus, BillingMode } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
 
@@ -260,7 +260,10 @@ export class MetricsService {
   async organizerBilling(id: string) {
     const org = await this.prisma.organizer.findUnique({
       where: { id },
-      select: { commissionPercent: true, vatPercent: true, feesIncluded: true, customerFeePercent: true },
+      select: {
+        commissionPercent: true, vatPercent: true, feesIncluded: true, customerFeePercent: true,
+        billingMode: true, refundFeePerTicketCents: true,
+      },
     });
     if (!org) throw new NotFoundException('Organizátor neexistuje.');
     return {
@@ -268,13 +271,18 @@ export class MetricsService {
       vatPercent: Number(org.vatPercent),
       feesIncluded: org.feesIncluded,
       customerFeePercent: Number(org.customerFeePercent),
+      billingMode: org.billingMode,
+      refundFeePerTicketCents: org.refundFeePerTicketCents,
     };
   }
 
   /** Update fakturačnej konfigurácie (super-admin/staff). Len zadané polia. */
   async updateOrganizerBilling(
     id: string,
-    dto: { commissionPercent?: number; vatPercent?: number; feesIncluded?: boolean; customerFeePercent?: number },
+    dto: {
+      commissionPercent?: number; vatPercent?: number; feesIncluded?: boolean; customerFeePercent?: number;
+      billingMode?: BillingMode; refundFeePerTicketCents?: number | null;
+    },
   ) {
     const exists = await this.prisma.organizer.findUnique({ where: { id }, select: { id: true } });
     if (!exists) throw new NotFoundException('Organizátor neexistuje.');
@@ -285,6 +293,8 @@ export class MetricsService {
         ...(dto.vatPercent !== undefined ? { vatPercent: dto.vatPercent } : {}),
         ...(dto.feesIncluded !== undefined ? { feesIncluded: dto.feesIncluded } : {}),
         ...(dto.customerFeePercent !== undefined ? { customerFeePercent: dto.customerFeePercent } : {}),
+        ...(dto.billingMode !== undefined ? { billingMode: dto.billingMode } : {}),
+        ...(dto.refundFeePerTicketCents !== undefined ? { refundFeePerTicketCents: dto.refundFeePerTicketCents } : {}),
       },
     });
     return this.organizerBilling(id);

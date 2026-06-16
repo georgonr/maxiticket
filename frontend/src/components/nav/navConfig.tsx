@@ -57,6 +57,7 @@ export function buildNavGroups(role: string): NavGroup[] {
       titleKey: 'groupPlatform',
       items: [
         { labelKey: 'organizers', href: '/admin/organizers', roles: ['SUPERADMIN', 'STAFF'] },
+        { labelKey: 'billing', href: '/admin/billing', roles: ['SUPERADMIN', 'STAFF'] },
         { labelKey: 'heroSlider', href: '/admin/hero', roles: ['SUPERADMIN'] },
         { labelKey: 'platformInfo', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
         { labelKey: 'paymentGateways', href: '/admin/payment-gateways', roles: ['SUPERADMIN', 'STAFF'] },
