@@ -161,7 +161,7 @@ export class AuthService {
     });
   }
 
-  async forgotPassword(email: string): Promise<void> {
+  async forgotPassword(email: string, locale?: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     // Always return silently – do not reveal whether the email exists
     if (!user || !user.isActive || !user.passwordHash) return;
@@ -187,6 +187,7 @@ export class AuthService {
 
     await this.mail.sendPasswordReset({
       to: email,
+      locale,
       firstName: user.firstName ?? undefined,
       resetLink,
     }).catch((e) => console.error('Password reset email failed:', e));

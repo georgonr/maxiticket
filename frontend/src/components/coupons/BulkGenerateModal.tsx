@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
 import { couponsAdminApi, BulkGenerateInput } from '@/lib/api/coupons';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ export function BulkGenerateModal({
   onGenerated: (msg: string) => void;
 }) {
   const t = useTranslations('organizer.coupon');
+  const locale = useLocale() as 'sk' | 'en' | 'cs';
   const { node, buildBase } = useCouponFields({ showId, ticketTypes });
   const [count, setCount] = useState('10');
   const [email, setEmail] = useState(defaultEmail);
@@ -41,7 +42,7 @@ export function BulkGenerateModal({
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
         throw new Error(t('errors.emailInvalid'));
       }
-      payload = { ...base, count: n, sendToEmail: mail };
+      payload = { ...base, count: n, sendToEmail: mail, locale };
     } catch (e) {
       setError(e instanceof Error ? e.message : t('errors.invalid'));
       return;

@@ -63,6 +63,23 @@ interface MailStrings {
     ticketWord: string; orderPrefix: string; organizerLabel: string; addressLabel: string;
     priceLabel: string; vatIncludedPrefix: string; vatNonPayer: string; platformLinePrefix: string;
   };
+  // Krok 31e2: účtové e-maily (locale = request-time, default sk)
+  passwordReset: {
+    subject: string; heading: string; greeting: string;
+    bodyPrefix: string; validity: string; button: string; ignore: string;
+  };
+  teamInvite: {
+    subjectPrefix: string; subjectSuffix: string; heading: string; greeting: string;
+    bodyPrefix: string; bodySuffix: string; body2Prefix: string; validity: string;
+    button: string; ignore: string;
+  };
+  contact: { subjectTag: string; heading: string; nameLabel: string; emailLabel: string; subjectLabel: string };
+  couponBatch: {
+    subjectPrefix: string; countSuffix: string; heading: string;
+    generatedPrefix: string; generatedSuffix: string;
+    batchIdLabel: string; typeLabel: string; scopeLabel: string; validityLabel: string;
+    body: string; footer: string;
+  };
 }
 
 export const mailMessages: Record<MailLocale, MailStrings> = {
@@ -128,6 +145,47 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       vatNonPayer: 'neplatca DPH',
       platformLinePrefix: 'Predaj v mene a na účet organizátora:',
     },
+    passwordReset: {
+      subject: 'Reset hesla – TicketAll',
+      heading: 'Reset hesla',
+      greeting: 'Dobrý deň',
+      bodyPrefix: 'Dostali sme žiadosť o reset hesla pre váš účet. Kliknite na tlačidlo nižšie – link je platný',
+      validity: '1 hodinu',
+      button: 'Nastaviť nové heslo',
+      ignore: 'Ak ste o reset nepožiadali, tento e-mail ignorujte. Vaše heslo zostane nezmenené.',
+    },
+    teamInvite: {
+      subjectPrefix: 'Pozvánka do tímu',
+      subjectSuffix: '– TicketAll',
+      heading: 'Pozvánka do tímu',
+      greeting: 'Dobrý deň',
+      bodyPrefix: 'Boli ste pozvaný do tímu',
+      bodySuffix: 'na platforme TicketAll. Ako člen tímu môžete spravovať podujatia, predávať na pokladni a skenovať vstupenky.',
+      body2Prefix: 'Kliknutím nastavíte svoje heslo – link je platný',
+      validity: '7 dní',
+      button: 'Nastaviť heslo a vstúpiť',
+      ignore: 'Ak ste túto pozvánku neočakávali, tento e-mail môžete ignorovať.',
+    },
+    contact: {
+      subjectTag: '[Kontakt]',
+      heading: 'Správa z kontaktného formulára',
+      nameLabel: 'Meno:',
+      emailLabel: 'E-mail:',
+      subjectLabel: 'Predmet:',
+    },
+    couponBatch: {
+      subjectPrefix: 'Vaše zľavové kupóny',
+      countSuffix: 'ks',
+      heading: 'Vaše zľavové kupóny',
+      generatedPrefix: 'Vygenerovaných',
+      generatedSuffix: 'kódov',
+      batchIdLabel: 'Batch ID:',
+      typeLabel: 'Typ zľavy:',
+      scopeLabel: 'Rozsah:',
+      validityLabel: 'Platnosť:',
+      body: 'Kompletný zoznam kódov nájdete v priloženom PDF. Kódy distribuujte podľa vlastného uváženia.',
+      footer: 'Tento e-mail je určený organizátorovi, nie koncovým zákazníkom.',
+    },
   },
   en: {
     tickets: {
@@ -191,6 +249,47 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       vatNonPayer: 'not a VAT payer',
       platformLinePrefix: 'Sold in the name and on behalf of the organizer:',
     },
+    passwordReset: {
+      subject: 'Password reset – TicketAll',
+      heading: 'Password reset',
+      greeting: 'Hello',
+      bodyPrefix: 'We received a request to reset the password for your account. Click the button below – the link is valid for',
+      validity: '1 hour',
+      button: 'Set a new password',
+      ignore: 'If you did not request a reset, please ignore this e-mail. Your password will remain unchanged.',
+    },
+    teamInvite: {
+      subjectPrefix: 'Invitation to the team',
+      subjectSuffix: '– TicketAll',
+      heading: 'Invitation to the team',
+      greeting: 'Hello',
+      bodyPrefix: 'You have been invited to the team',
+      bodySuffix: 'on the TicketAll platform. As a team member you can manage events, sell at the point of sale and scan tickets.',
+      body2Prefix: 'Click to set your password – the link is valid for',
+      validity: '7 days',
+      button: 'Set password and enter',
+      ignore: 'If you were not expecting this invitation, you can ignore this e-mail.',
+    },
+    contact: {
+      subjectTag: '[Contact]',
+      heading: 'Message from the contact form',
+      nameLabel: 'Name:',
+      emailLabel: 'E-mail:',
+      subjectLabel: 'Subject:',
+    },
+    couponBatch: {
+      subjectPrefix: 'Your discount coupons',
+      countSuffix: 'pcs',
+      heading: 'Your discount coupons',
+      generatedPrefix: 'Generated',
+      generatedSuffix: 'codes',
+      batchIdLabel: 'Batch ID:',
+      typeLabel: 'Discount type:',
+      scopeLabel: 'Scope:',
+      validityLabel: 'Validity:',
+      body: 'The complete list of codes is in the attached PDF. Distribute the codes at your own discretion.',
+      footer: 'This e-mail is intended for the organizer, not for end customers.',
+    },
   },
   cs: {
     tickets: {
@@ -253,6 +352,47 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       vatIncludedPrefix: 'včetně DPH',
       vatNonPayer: 'neplátce DPH',
       platformLinePrefix: 'Prodej jménem a na účet pořadatele:',
+    },
+    passwordReset: {
+      subject: 'Reset hesla – TicketAll',
+      heading: 'Reset hesla',
+      greeting: 'Dobrý den',
+      bodyPrefix: 'Obdrželi jsme žádost o reset hesla pro váš účet. Klikněte na tlačítko níže – odkaz je platný',
+      validity: '1 hodinu',
+      button: 'Nastavit nové heslo',
+      ignore: 'Pokud jste o reset nežádali, tento e-mail ignorujte. Vaše heslo zůstane nezměněno.',
+    },
+    teamInvite: {
+      subjectPrefix: 'Pozvánka do týmu',
+      subjectSuffix: '– TicketAll',
+      heading: 'Pozvánka do týmu',
+      greeting: 'Dobrý den',
+      bodyPrefix: 'Byli jste pozváni do týmu',
+      bodySuffix: 'na platformě TicketAll. Jako člen týmu můžete spravovat akce, prodávat na pokladně a skenovat vstupenky.',
+      body2Prefix: 'Kliknutím nastavíte své heslo – odkaz je platný',
+      validity: '7 dní',
+      button: 'Nastavit heslo a vstoupit',
+      ignore: 'Pokud jste tuto pozvánku neočekávali, můžete tento e-mail ignorovat.',
+    },
+    contact: {
+      subjectTag: '[Kontakt]',
+      heading: 'Zpráva z kontaktního formuláře',
+      nameLabel: 'Jméno:',
+      emailLabel: 'E-mail:',
+      subjectLabel: 'Předmět:',
+    },
+    couponBatch: {
+      subjectPrefix: 'Vaše slevové kupóny',
+      countSuffix: 'ks',
+      heading: 'Vaše slevové kupóny',
+      generatedPrefix: 'Vygenerováno',
+      generatedSuffix: 'kódů',
+      batchIdLabel: 'Batch ID:',
+      typeLabel: 'Typ slevy:',
+      scopeLabel: 'Rozsah:',
+      validityLabel: 'Platnost:',
+      body: 'Kompletní seznam kódů najdete v přiloženém PDF. Kódy distribuujte podle vlastního uvážení.',
+      footer: 'Tento e-mail je určen pořadateli, nikoli koncovým zákazníkům.',
     },
   },
 };

@@ -24,10 +24,13 @@ export function ForgotPasswordForm({ isAdmin }: Props) {
   async function onSubmit(data: Fields) {
     setLoading(true);
     try {
+      // Krok 31e2: flat route (mimo next-intl providera) → locale z cookie staff prepínača, inak sk.
+      const m = typeof document !== 'undefined' ? document.cookie.match(/(?:^|; )mt_staff_lang=(sk|en|cs)/) : null;
+      const locale = m ? m[1] : 'sk';
       await fetch(`${API}/v1/auth/password/forgot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: data.email }),
+        body: JSON.stringify({ email: data.email, locale }),
       });
     } catch { /* always show success */ }
     setDone(true);

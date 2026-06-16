@@ -245,6 +245,7 @@ export class CouponsService {
       const pdf = await generateCouponBatchPdf(pdfData);
       await this.mail.sendCouponBatch({
         to: sendTo,
+        locale: dto.locale,
         count: dto.count,
         batchId: bulkBatchId,
         typeLabel: pdfData.typeLabel,

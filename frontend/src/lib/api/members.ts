@@ -13,6 +13,8 @@ export interface Member {
 export interface CreateMemberInput {
   email: string;
   name?: string;
+  // Krok 31e2: jazyk pozývajúceho pre lokalizovaný invite e-mail
+  locale?: 'sk' | 'en' | 'cs';
 }
 
 export const membersApi = {
@@ -33,11 +35,11 @@ export const membersApi = {
       token,
     }),
 
-  resendInvite: (id: string, token: string) =>
-    apiFetch<{ sent: boolean; email: string }>(`/v1/organizer/members/${id}/resend-invite`, {
-      method: 'POST',
-      token,
-    }),
+  resendInvite: (id: string, token: string, locale?: 'sk' | 'en' | 'cs') =>
+    apiFetch<{ sent: boolean; email: string }>(
+      `/v1/organizer/members/${id}/resend-invite${locale ? `?locale=${locale}` : ''}`,
+      { method: 'POST', token },
+    ),
 
   delete: (id: string, token: string) =>
     apiFetch<{ deleted: boolean }>('/v1/organizer/members/' + id, {

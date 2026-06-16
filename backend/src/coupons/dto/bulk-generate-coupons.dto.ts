@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsInt,
+  IsIn,
   Min,
   Max,
   IsDateString,
@@ -65,4 +66,9 @@ export class BulkGenerateCouponsDto {
   @IsOptional()
   @IsEmail()
   sendToEmail?: string;
+
+  // Krok 31e2: jazyk staff aktéra pre lokalizovaný coupon-batch e-mail (chrome).
+  @IsOptional()
+  @IsIn(['sk', 'en', 'cs'])
+  locale?: 'sk' | 'en' | 'cs';
 }

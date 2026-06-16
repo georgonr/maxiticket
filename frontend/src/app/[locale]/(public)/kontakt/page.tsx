@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Mail, MapPin, Send, CheckCircle, AlertCircle } from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
@@ -10,6 +10,7 @@ type Status = 'idle' | 'sending' | 'ok' | 'error';
 
 export default function KontaktPage() {
   const t = useTranslations('contact');
+  const locale = useLocale();
   const [form, setForm] = useState({ meno: '', email: '', predmet: '', sprava: '' });
   const [status, setStatus] = useState<Status>('idle');
   const [errMsg, setErrMsg] = useState('');
@@ -26,7 +27,7 @@ export default function KontaktPage() {
       const res = await fetch(`${API_BASE}/v1/public/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, locale }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

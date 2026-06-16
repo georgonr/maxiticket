@@ -60,7 +60,7 @@ export class AuthController {
   @Post('password/forgot')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    await this.authService.forgotPassword(dto.email);
+    await this.authService.forgotPassword(dto.email, dto.locale);
     return { message: 'Ak účet existuje, e-mail bol odoslaný.' };
   }
 

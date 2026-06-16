@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import { X } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { membersApi } from '@/lib/api/members';
@@ -16,6 +17,7 @@ export function InviteMemberModal({
   onClose: () => void;
   onInvited: (msg: string) => void;
 }) {
+  const locale = useLocale() as 'sk' | 'en' | 'cs';
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -32,7 +34,7 @@ export function InviteMemberModal({
     try {
       const token = await getValidToken();
       if (!token) throw new Error('Vyžaduje sa prihlásenie.');
-      await membersApi.create({ email: mail, name: name.trim() || undefined }, token);
+      await membersApi.create({ email: mail, name: name.trim() || undefined, locale }, token);
       onInvited(`Pozvánka odoslaná na ${mail}.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Pozvánka zlyhala.');

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslations, useFormatter } from 'next-intl';
+import { useTranslations, useFormatter, useLocale } from 'next-intl';
 import { clsx } from 'clsx';
 import { Users, UserPlus, Power, Trash2, Send } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
@@ -14,6 +14,7 @@ import { InviteMemberModal } from '@/components/members/InviteMemberModal';
 export default function MembersPage() {
   const t = useTranslations('organizer.members');
   const format = useFormatter();
+  const locale = useLocale() as 'sk' | 'en' | 'cs';
   const { user, isLoading: authLoading } = useAuth();
   const canManage = user?.role === 'ORGANIZER_OWNER' || user?.role === 'SUPERADMIN' || user?.role === 'STAFF';
 
@@ -89,7 +90,7 @@ export default function MembersPage() {
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
-      await membersApi.resendInvite(m.id, token);
+      await membersApi.resendInvite(m.id, token, locale);
       setToast({ msg: t('toast.inviteResent', { email: m.email }), ok: true });
     } catch (e) {
       setToast({ msg: readableError(e), ok: false });

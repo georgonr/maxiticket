@@ -126,6 +126,8 @@ export interface BulkGenerateInput extends CouponBaseInput {
   count: number;
   /** Default = email tvorcu (doplní backend). */
   sendToEmail?: string;
+  /** Krok 31e2: jazyk staff aktéra pre lokalizovaný coupon-batch e-mail. */
+  locale?: 'sk' | 'en' | 'cs';
 }
 
 export interface BulkGenerateResult {

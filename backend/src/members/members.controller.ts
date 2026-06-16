@@ -36,8 +36,8 @@ export class MembersController {
 
   @Post(':id/resend-invite')
   @HttpCode(HttpStatus.OK)
-  resend(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.svc.resendInvite(id, user);
+  resend(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Query('locale') locale?: string) {
+    return this.svc.resendInvite(id, user, locale);
   }
 
   @Delete(':id')

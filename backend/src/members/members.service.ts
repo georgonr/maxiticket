@@ -69,7 +69,7 @@ export class MembersService {
     };
   }
 
-  private async sendInvite(member: { id: string; email: string; firstName: string | null }, organizerId: string) {
+  private async sendInvite(member: { id: string; email: string; firstName: string | null }, organizerId: string, locale?: string) {
     // Zruš predošlé nepoužité tokeny
     await this.prisma.passwordResetToken.updateMany({
       where: { userId: member.id, usedAt: null },
@@ -91,6 +91,7 @@ export class MembersService {
     await this.mail
       .sendTeamInvite({
         to: member.email,
+        locale,
         organizerName: org?.name ?? 'TicketAll',
         inviteLink,
         firstName: member.firstName ?? undefined,
@@ -116,7 +117,7 @@ export class MembersService {
       },
     });
 
-    await this.sendInvite(member, organizerId);
+    await this.sendInvite(member, organizerId, dto.locale);
     return this.serialize(member as MemberRow);
   }
 
@@ -155,13 +156,13 @@ export class MembersService {
     return this.serialize(updated);
   }
 
-  async resendInvite(id: string, user: JwtPayload) {
+  async resendInvite(id: string, user: JwtPayload, locale?: string) {
     const target = await this.findMemberOr404(id);
     this.assertOwns(target, user);
     if (target.passwordHash != null) {
       throw new BadRequestException('Člen už má aktívny účet – pozvánku nie je možné znova poslať.');
     }
-    await this.sendInvite(target, target.organizerId!);
+    await this.sendInvite(target, target.organizerId!, locale);
     return { sent: true, email: target.email };
   }
 
