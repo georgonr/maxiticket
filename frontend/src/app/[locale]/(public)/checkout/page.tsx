@@ -9,6 +9,7 @@ import { getCart, clearCart, cartTotal, Cart } from '@/lib/cart';
 import { ordersApi } from '@/lib/api';
 import { couponsApi } from '@/lib/api/coupons';
 import { getValidToken } from '@/lib/auth';
+import { localizeApiError } from '@/lib/api-error';
 import { usePublicAuth } from '@/lib/public-auth';
 import { Button } from '@/components/ui/button';
 import { CouponInput, AppliedCoupon } from '@/components/checkout/CouponInput';
@@ -31,6 +32,7 @@ export default function CheckoutPage() {
 
 function CheckoutContent() {
   const t = useTranslations('checkout');
+  const tErrors = useTranslations('errors');
   const format = useFormatter();
   const locale = useLocale() as 'sk' | 'en' | 'cs';
   const fmtPrice = (amount: number, currency: string) => format.number(amount, { style: 'currency', currency });
@@ -123,7 +125,8 @@ function CheckoutContent() {
       clearCart();
       window.location.href = url;
     } catch (e: any) {
-      setError(e.message ?? t('genericError'));
+      // Krok 31e3: lokalizuj backend chybu cez messageCode (fallback na message/generic).
+      setError(localizeApiError(tErrors, e, t('genericError')));
       setSubmitting(false);
     }
   }

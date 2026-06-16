@@ -1389,7 +1389,20 @@
         "server": "Chyba servera. Skúste neskôr.",
         "generic": "Niečo sa pokazilo.",
         "network": "Nemôžeme sa pripojiť k serveru."
-      }
+      },
+      "inviteModalTitle": "Pozvať člena tímu",
+      "close": "Zavrieť",
+      "emailLabelReq": "E-mail *",
+      "nameField": "Meno",
+      "emailPlaceholder": "kolega@example.sk",
+      "namePlaceholder": "napr. Jana Nováková",
+      "inviteHint": "Na e-mail pošleme pozvánku s odkazom na nastavenie hesla (platnosť 7 dní). Člen môže spravovať podujatia, pokladňu a skenovanie.",
+      "invalidEmail": "Zadajte platný e-mail.",
+      "loginRequired": "Vyžaduje sa prihlásenie.",
+      "inviteSentTo": "Pozvánka odoslaná na {email}.",
+      "inviteFailed": "Pozvánka zlyhala.",
+      "cancel": "Zrušiť",
+      "sendInvite": "Odoslať pozvánku"
     },
     "scanners": {
       "title": "Skeneri",
@@ -1739,5 +1752,32 @@
     "legendSelected": "vybrané",
     "legendTaken": "obsadené",
     "legendAccessible": "bezbariérové"
+  },
+  "errors": {
+    "TERMIN_NOT_FOUND": "Termín sa nenašiel.",
+    "EVENT_NOT_AVAILABLE": "Toto podujatie nie je momentálne v predaji.",
+    "SECTION_REQUIRED": "Pre tento termín musíte vybrať sekciu.",
+    "SECTION_NOT_FOUND": "Zvolená sekcia pre tento termín neexistuje.",
+    "SEAT_REQUIRED": "Sekcia „{section}“: vyberte aspoň jedno sedadlo.",
+    "SEATS_INVALID": "Niektoré zvolené sedadlá pre tento termín neexistujú.",
+    "SEAT_WRONG_SECTION": "Sedadlo „{seat}“ nepatrí do sekcie „{section}“.",
+    "SECTION_QTY_REQUIRED": "Sekcia „{section}“: zadajte počet.",
+    "SECTION_INSUFFICIENT": "Sekcia „{section}“: zostáva už len {remaining} ks.",
+    "TICKET_TYPE_NOT_FOUND": "Zvolený typ lístka sa nenašiel.",
+    "TICKET_TYPE_INACTIVE": "Typ lístka „{name}“ nie je aktívny.",
+    "TICKET_QTY_REQUIRED": "Zadajte počet pre „{name}“.",
+    "MAX_PER_ORDER": "Maximálne {max} ks typu „{name}“ na objednávku.",
+    "SALE_NOT_STARTED": "Predaj „{name}“ sa ešte nezačal.",
+    "SALE_ENDED": "Predaj „{name}“ už skončil.",
+    "TICKET_INSUFFICIENT": "Typu „{name}“ zostáva už len {remaining} ks.",
+    "ORDER_EMPTY": "Objednávka neobsahuje žiadne položky.",
+    "BUYER_EMAIL_REQUIRED": "E-mail kupujúceho je povinný.",
+    "BUYER_NAME_REQUIRED": "Meno kupujúceho je povinné.",
+    "SEAT_TAKEN": "Niektoré sedadlo medzitým obsadil iný zákazník – vyberte iné.",
+    "EVENT_NOT_FOUND": "Podujatie sa nenašlo.",
+    "TERMIN_NOT_AVAILABLE": "Termín nie je dostupný.",
+    "RECEIPT_PAID_ONLY": "Doklad je dostupný len pre zaplatené objednávky.",
+    "ORDER_NOT_FOUND": "Objednávka neexistuje.",
+    "ORDER_NOT_YOURS": "Táto objednávka nepatrí vášmu účtu."
   }
 }

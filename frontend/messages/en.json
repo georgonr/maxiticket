@@ -1389,7 +1389,20 @@
         "server": "Server error. Please try again later.",
         "generic": "Something went wrong.",
         "network": "We cannot connect to the server."
-      }
+      },
+      "inviteModalTitle": "Invite a team member",
+      "close": "Close",
+      "emailLabelReq": "E-mail *",
+      "nameField": "Name",
+      "emailPlaceholder": "colleague@example.com",
+      "namePlaceholder": "e.g. Jane Doe",
+      "inviteHint": "We'll send an invitation e-mail with a link to set a password (valid for 7 days). The member can manage events, the point of sale and scanning.",
+      "invalidEmail": "Enter a valid e-mail.",
+      "loginRequired": "Sign-in is required.",
+      "inviteSentTo": "Invitation sent to {email}.",
+      "inviteFailed": "The invitation failed.",
+      "cancel": "Cancel",
+      "sendInvite": "Send invitation"
     },
     "scanners": {
       "title": "Scanners",
@@ -1739,5 +1752,32 @@
     "legendSelected": "selected",
     "legendTaken": "taken",
     "legendAccessible": "accessible"
+  },
+  "errors": {
+    "TERMIN_NOT_FOUND": "The date was not found.",
+    "EVENT_NOT_AVAILABLE": "This event is not currently on sale.",
+    "SECTION_REQUIRED": "You must select a section for this date.",
+    "SECTION_NOT_FOUND": "The selected section does not exist for this date.",
+    "SEAT_REQUIRED": "Section “{section}”: select at least one seat.",
+    "SEATS_INVALID": "Some of the selected seats do not exist for this date.",
+    "SEAT_WRONG_SECTION": "Seat “{seat}” does not belong to section “{section}”.",
+    "SECTION_QTY_REQUIRED": "Section “{section}”: enter a quantity.",
+    "SECTION_INSUFFICIENT": "Section “{section}”: only {remaining} left.",
+    "TICKET_TYPE_NOT_FOUND": "The selected ticket type was not found.",
+    "TICKET_TYPE_INACTIVE": "Ticket type “{name}” is not active.",
+    "TICKET_QTY_REQUIRED": "Enter a quantity for “{name}”.",
+    "MAX_PER_ORDER": "Maximum {max} of type “{name}” per order.",
+    "SALE_NOT_STARTED": "Sale of “{name}” has not started yet.",
+    "SALE_ENDED": "Sale of “{name}” has ended.",
+    "TICKET_INSUFFICIENT": "Only {remaining} of type “{name}” left.",
+    "ORDER_EMPTY": "The order contains no items.",
+    "BUYER_EMAIL_REQUIRED": "Buyer e-mail is required.",
+    "BUYER_NAME_REQUIRED": "Buyer name is required.",
+    "SEAT_TAKEN": "One of the seats was just taken by another customer – please choose another.",
+    "EVENT_NOT_FOUND": "Event not found.",
+    "TERMIN_NOT_AVAILABLE": "The date is not available.",
+    "RECEIPT_PAID_ONLY": "The receipt is available only for paid orders.",
+    "ORDER_NOT_FOUND": "The order does not exist.",
+    "ORDER_NOT_YOURS": "This order does not belong to your account."
   }
 }

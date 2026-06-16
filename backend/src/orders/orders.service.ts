@@ -14,6 +14,7 @@ import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { PaymentGatewayService } from '../payment/payment-gateways.service';
 import { sendTicketsForOrder } from './orders-mail.helper';
+import { codedBadRequest, codedNotFound, codedConflict } from '../common/errors/coded-exception';
 import { CouponsService } from '../coupons/coupons.service';
 import { generatePosClosurePdf, PosClosureByTermin } from './pos-closure-pdf.helper';
 
@@ -40,9 +41,9 @@ export class OrdersService {
         terminSections: { include: { section: true } },
       },
     });
-    if (!termin) throw new NotFoundException('Termin not found');
+    if (!termin) throw codedNotFound('TERMIN_NOT_FOUND', 'Termin not found');
     if (termin.status !== TerminStatus.ON_SALE) {
-      throw new BadRequestException('This event is not available for purchase');
+      throw codedBadRequest('EVENT_NOT_AVAILABLE', 'This event is not available for purchase');
     }
 
     let totalAmount = 0;
@@ -53,16 +54,16 @@ export class OrdersService {
     if (termin.mode === TerminMode.SEATMAP) {
       for (const item of dto.items) {
         if (!item.terminSectionId) {
-          throw new BadRequestException('Pre tento termín musíte vybrať sekciu (terminSectionId).');
+          throw codedBadRequest('SECTION_REQUIRED', 'Pre tento termín musíte vybrať sekciu (terminSectionId).');
         }
         const ts = termin.terminSections.find((t) => t.id === item.terminSectionId);
-        if (!ts) throw new NotFoundException(`Sekcia ${item.terminSectionId} pre tento termín neexistuje.`);
+        if (!ts) throw codedNotFound('SECTION_NOT_FOUND', `Sekcia ${item.terminSectionId} pre tento termín neexistuje.`, { section: item.terminSectionId });
 
         if (ts.section.mode === SectionMode.SEATED) {
           // Úloha 22/3b: SEATED predaj konkrétnych sedadiel. Claim sa vykoná atomicky pri zápise.
           const seatIds = [...new Set(item.seatIds ?? [])];
           if (seatIds.length === 0) {
-            throw new BadRequestException(`Sekcia "${ts.section.name}": vyberte aspoň jedno sedadlo.`);
+            throw codedBadRequest('SEAT_REQUIRED', `Sekcia "${ts.section.name}": vyberte aspoň jedno sedadlo.`, { section: ts.section.name });
           }
           // Over že sedadlá patria tejto sekcii termínu (existencia AVAILABLE sa overí pri claime).
           const terminSeats = await this.prisma.terminSeat.findMany({
@@ -70,11 +71,11 @@ export class OrdersService {
             include: { seat: { include: { row: true } } },
           });
           if (terminSeats.length !== seatIds.length) {
-            throw new BadRequestException('Niektoré zvolené sedadlá pre tento termín neexistujú.');
+            throw codedBadRequest('SEATS_INVALID', 'Niektoré zvolené sedadlá pre tento termín neexistujú.');
           }
           for (const tseat of terminSeats) {
             if (tseat.seat.row.sectionId !== ts.sectionId) {
-              throw new BadRequestException(`Sedadlo "${tseat.seat.label}" nepatrí sekcii "${ts.section.name}".`);
+              throw codedBadRequest('SEAT_WRONG_SECTION', `Sedadlo "${tseat.seat.label}" nepatrí sekcii "${ts.section.name}".`, { seat: tseat.seat.label, section: ts.section.name });
             }
           }
 
@@ -107,7 +108,7 @@ export class OrdersService {
 
         // SECTIONED (úloha 22/3a) – množstvo vs kapacita, PENDING aj PAID rezervujú (ako GENERAL).
         if (!item.quantity || item.quantity < 1) {
-          throw new BadRequestException(`Sekcia "${ts.section.name}": zadajte počet.`);
+          throw codedBadRequest('SECTION_QTY_REQUIRED', `Sekcia "${ts.section.name}": zadajte počet.`, { section: ts.section.name });
         }
         if (ts.section.capacity != null) {
           const sold = await this.prisma.orderItem.aggregate({
@@ -119,7 +120,7 @@ export class OrdersService {
           });
           const remaining = ts.section.capacity - (sold._sum.quantity ?? 0);
           if (remaining < item.quantity) {
-            throw new BadRequestException(`Sekcia "${ts.section.name}": zostáva len ${remaining} ks.`);
+            throw codedBadRequest('SECTION_INSUFFICIENT', `Sekcia "${ts.section.name}": zostáva len ${remaining} ks.`, { section: ts.section.name, remaining });
           }
         }
 
@@ -147,21 +148,21 @@ export class OrdersService {
     } else {
       for (const item of dto.items) {
         const tt = termin.ticketTypes.find((t) => t.id === item.ticketTypeId);
-        if (!tt) throw new NotFoundException(`TicketType ${item.ticketTypeId} not found`);
-        if (!tt.isActive) throw new BadRequestException(`Ticket type ${tt.name} is not active`);
+        if (!tt) throw codedNotFound('TICKET_TYPE_NOT_FOUND', `TicketType ${item.ticketTypeId} not found`, { ticketType: item.ticketTypeId ?? '' });
+        if (!tt.isActive) throw codedBadRequest('TICKET_TYPE_INACTIVE', `Ticket type ${tt.name} is not active`, { name: tt.name });
         if (!item.quantity || item.quantity < 1) {
-          throw new BadRequestException(`Zadajte počet pre "${tt.name}".`);
+          throw codedBadRequest('TICKET_QTY_REQUIRED', `Zadajte počet pre "${tt.name}".`, { name: tt.name });
         }
         if (item.quantity > tt.maxPerOrder) {
-          throw new BadRequestException(`Max ${tt.maxPerOrder} tickets of type "${tt.name}" per order`);
+          throw codedBadRequest('MAX_PER_ORDER', `Max ${tt.maxPerOrder} tickets of type "${tt.name}" per order`, { max: tt.maxPerOrder, name: tt.name });
         }
 
         const now = new Date();
         if (tt.saleStartsAt && now < tt.saleStartsAt) {
-          throw new BadRequestException(`Sale for "${tt.name}" has not started yet`);
+          throw codedBadRequest('SALE_NOT_STARTED', `Sale for "${tt.name}" has not started yet`, { name: tt.name });
         }
         if (tt.saleEndsAt && now > tt.saleEndsAt) {
-          throw new BadRequestException(`Sale for "${tt.name}" has ended`);
+          throw codedBadRequest('SALE_ENDED', `Sale for "${tt.name}" has ended`, { name: tt.name });
         }
 
         // Availability check – PENDING orders also reserve capacity
@@ -175,7 +176,7 @@ export class OrdersService {
           });
           const remaining = tt.totalQuantity - (sold._sum.quantity ?? 0);
           if (remaining < item.quantity) {
-            throw new BadRequestException(`Only ${remaining} ticket(s) of type "${tt.name}" remaining`);
+            throw codedBadRequest('TICKET_INSUFFICIENT', `Only ${remaining} ticket(s) of type "${tt.name}" remaining`, { remaining, name: tt.name });
           }
         }
 
@@ -202,17 +203,17 @@ export class OrdersService {
     }
 
     if (preparedItems.length === 0) {
-      throw new BadRequestException('Objednávka neobsahuje žiadne položky.');
+      throw codedBadRequest('ORDER_EMPTY', 'Objednávka neobsahuje žiadne položky.');
     }
 
     // Guest checkout: bez prihlásenia musí DTO obsahovať buyerEmail + buyerName.
     const dbUser = user ? await this.prisma.user.findUnique({ where: { id: user.sub } }) : null;
     const buyerEmail = dto.buyerEmail ?? user?.email;
-    if (!buyerEmail) throw new BadRequestException('E-mail kupujúceho je povinný');
+    if (!buyerEmail) throw codedBadRequest('BUYER_EMAIL_REQUIRED', 'E-mail kupujúceho je povinný');
     const buyerName =
       dto.buyerName?.trim() ||
       (dbUser ? `${dbUser.firstName ?? ''} ${dbUser.lastName ?? ''}`.trim() : '');
-    if (!buyerName) throw new BadRequestException('Meno kupujúceho je povinné');
+    if (!buyerName) throw codedBadRequest('BUYER_NAME_REQUIRED', 'Meno kupujúceho je povinné');
 
     const expiryMinutes = this.config.get<number>('ORDER_EXPIRY_MINUTES', 30);
     const expiresAt = new Date(Date.now() + Number(expiryMinutes) * 60 * 1000);
@@ -259,7 +260,7 @@ export class OrdersService {
                 data: { status: SeatStatus.HELD, orderId: o.id, orderItemId: oi.id, heldAt: new Date() },
               });
               if (claimed.count === 0) {
-                throw new ConflictException('Niektoré sedadlo medzitým obsadil iný zákazník – vyberte iné.');
+                throw codedConflict('SEAT_TAKEN', 'Niektoré sedadlo medzitým obsadil iný zákazník – vyberte iné.');
               }
             }
           }

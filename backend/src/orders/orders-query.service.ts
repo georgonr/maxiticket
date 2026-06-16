@@ -1,6 +1,7 @@
 import {
   Injectable, NotFoundException, ForbiddenException, BadRequestException,
 } from '@nestjs/common';
+import { codedNotFound, codedForbidden, codedBadRequest } from '../common/errors/coded-exception';
 import { Prisma, OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { generateReceiptPdf } from './account-receipt-pdf.helper';
@@ -331,8 +332,8 @@ export class OrdersQueryService {
         },
       },
     });
-    if (!o) throw new NotFoundException('Objednávka neexistuje.');
-    if (o.userId !== userId) throw new ForbiddenException('Objednávka nepatrí vášmu účtu.');
+    if (!o) throw codedNotFound('ORDER_NOT_FOUND', 'Objednávka neexistuje.');
+    if (o.userId !== userId) throw codedForbidden('ORDER_NOT_YOURS', 'Objednávka nepatrí vášmu účtu.');
     return o;
   }
 
@@ -390,7 +391,7 @@ export class OrdersQueryService {
   async accountReceiptPdf(orderId: string, userId: string) {
     const o = await this.loadOwnOrder(orderId, userId);
     if (o.status !== OrderStatus.PAID) {
-      throw new BadRequestException('Doklad je dostupný len pre zaplatené objednávky.');
+      throw codedBadRequest('RECEIPT_PAID_ONLY', 'Doklad je dostupný len pre zaplatené objednávky.');
     }
     const platform = await this.prisma.platformInfo.findFirst();
     const subtotal = Number(o.totalAmount) + Number(o.discountAmount);

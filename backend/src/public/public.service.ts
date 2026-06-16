@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { codedNotFound } from '../common/errors/coded-exception';
 import { ContactDto } from './contact.dto';
 import { EventStatus, TerminStatus, SectionMode } from '@prisma/client';
 
@@ -270,7 +271,7 @@ export class PublicService {
         },
       },
     });
-    if (!show) throw new NotFoundException('Event not found');
+    if (!show) throw codedNotFound('EVENT_NOT_FOUND', 'Event not found');
 
     // Compute sold counts for availability display (GENERAL: per ticketType)
     const terminIds = show.termins.map((t) => t.id);
@@ -354,7 +355,7 @@ export class PublicService {
         },
       },
     });
-    if (!termin) throw new NotFoundException('Termín nie je dostupný.');
+    if (!termin) throw codedNotFound('TERMIN_NOT_AVAILABLE', 'Termín nie je dostupný.');
 
     const seatStatuses = await this.prisma.terminSeat.findMany({
       where: { terminId },

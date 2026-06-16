@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import { clsx } from 'clsx';
 import { ArrowLeft, Loader2, FileDown, Calendar, MapPin, Ticket as TicketIcon, RotateCcw, X } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
+import { localizeApiError } from '@/lib/api-error';
 import { usePublicAuth } from '@/lib/public-auth';
 import { accountApi, AccountOrderDetail } from '@/lib/api/account';
 import { QrCanvas } from '@/components/pos/QrCanvas';
@@ -38,6 +39,7 @@ const TICKET_STATUS_CLS: Record<string, string> = {
 
 export default function AccountOrderDetailPage() {
   const t = useTranslations('account');
+  const tErrors = useTranslations('errors');
   const format = useFormatter();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -85,7 +87,7 @@ export default function AccountOrderDetailPage() {
       try {
         setOrder(await accountApi.order(id, token));
       } catch (e) {
-        setError(e instanceof Error ? e.message : t('orderLoadFailed'));
+        setError(localizeApiError(tErrors, e, t('orderLoadFailed')));
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,7 +108,7 @@ export default function AccountOrderDetailPage() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('receiptDownloadFailed'));
+      setError(localizeApiError(tErrors, e, t('receiptDownloadFailed')));
     } finally {
       setDownloading(false);
     }
