@@ -774,12 +774,12 @@ export class OrdersService {
       where: { id: dto.terminId },
       include: { show: true, ticketTypes: true },
     });
-    if (!termin) throw new NotFoundException('Termín neexistuje.');
+    if (!termin) throw codedNotFound('TERMIN_NOT_FOUND', 'Termín neexistuje.');
     if (!this.isSuperOrStaff(user) && termin.show.organizerId !== user.organizerId) {
       throw new ForbiddenException('Termín nepatrí vašej organizácii.');
     }
     if (termin.status !== TerminStatus.ON_SALE && termin.status !== TerminStatus.SOLD_OUT) {
-      throw new BadRequestException('Termín nie je v predaji.');
+      throw codedBadRequest('EVENT_NOT_AVAILABLE', 'Termín nie je v predaji.');
     }
 
     // Validácia položiek + dostupnosti (zhodné s web createOrder)
@@ -788,16 +788,16 @@ export class OrdersService {
     const now = new Date();
     for (const item of dto.items) {
       const tt = termin.ticketTypes.find((t) => t.id === item.ticketTypeId);
-      if (!tt) throw new NotFoundException(`Typ lístka ${item.ticketTypeId} neexistuje.`);
-      if (!tt.isActive) throw new BadRequestException(`Typ lístka "${tt.name}" nie je aktívny.`);
+      if (!tt) throw codedNotFound('TICKET_TYPE_NOT_FOUND', `Typ lístka ${item.ticketTypeId} neexistuje.`, { ticketType: item.ticketTypeId ?? '' });
+      if (!tt.isActive) throw codedBadRequest('TICKET_TYPE_INACTIVE', `Typ lístka "${tt.name}" nie je aktívny.`, { name: tt.name });
       if (item.quantity > tt.maxPerOrder) {
-        throw new BadRequestException(`Max ${tt.maxPerOrder} ks typu "${tt.name}" na objednávku.`);
+        throw codedBadRequest('MAX_PER_ORDER', `Max ${tt.maxPerOrder} ks typu "${tt.name}" na objednávku.`, { max: tt.maxPerOrder, name: tt.name });
       }
       if (tt.saleStartsAt && now < tt.saleStartsAt) {
-        throw new BadRequestException(`Predaj "${tt.name}" sa ešte nezačal.`);
+        throw codedBadRequest('SALE_NOT_STARTED', `Predaj "${tt.name}" sa ešte nezačal.`, { name: tt.name });
       }
       if (tt.saleEndsAt && now > tt.saleEndsAt) {
-        throw new BadRequestException(`Predaj "${tt.name}" už skončil.`);
+        throw codedBadRequest('SALE_ENDED', `Predaj "${tt.name}" už skončil.`, { name: tt.name });
       }
       if (tt.totalQuantity != null) {
         const sold = await this.prisma.orderItem.aggregate({
@@ -809,13 +809,13 @@ export class OrdersService {
         });
         const remaining = tt.totalQuantity - (sold._sum.quantity ?? 0);
         if (remaining < item.quantity) {
-          throw new BadRequestException(`Zostáva len ${remaining} ks typu "${tt.name}".`);
+          throw codedBadRequest('TICKET_INSUFFICIENT', `Zostáva len ${remaining} ks typu "${tt.name}".`, { remaining, name: tt.name });
         }
       }
       subtotal += Number(tt.price) * item.quantity;
       validated.push({ tt, quantity: item.quantity });
     }
-    if (validated.length === 0) throw new BadRequestException('Objednávka neobsahuje žiadne lístky.');
+    if (validated.length === 0) throw codedBadRequest('ORDER_EMPTY', 'Objednávka neobsahuje žiadne lístky.');
 
     // Kupón (voliteľný)
     let discountAmount = 0;

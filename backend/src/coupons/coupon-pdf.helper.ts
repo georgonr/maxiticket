@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { MailLocale, mailMessages } from '../mail/mail-i18n';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
 
@@ -6,6 +7,7 @@ export interface CouponPdfData {
   count: number;
   batchId: string;
   generatedAt: Date;
+  locale?: MailLocale;  // Krok 31e4: jazyk PDF chrome (default sk)
   typeLabel: string;
   valueLabel: string;
   scopeLabel: string;
@@ -22,19 +24,27 @@ const BLACK = '#111827';
 const GRAY = '#6B7280';
 const LGRAY = '#9CA3AF';
 
-function fmtDate(d: Date): string {
-  return new Intl.DateTimeFormat('sk-SK', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Bratislava',
-  }).format(d);
+const PDF_INTL: Record<MailLocale, string> = { sk: 'sk-SK', en: 'en-GB', cs: 'cs-CZ' };
+
+function fmtDate(d: Date, locale: MailLocale): string {
+  try {
+    return new Intl.DateTimeFormat(PDF_INTL[locale], {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Bratislava',
+    }).format(d);
+  } catch {
+    return d.toISOString();
+  }
 }
 
 /** Vygeneruje PDF so zoznamom kupónov pre bulk batch (príloha emailu organizátorovi). */
 export async function generateCouponBatchPdf(data: CouponPdfData): Promise<Buffer> {
+  const locale: MailLocale = data.locale ?? 'sk';
+  const m = mailMessages[locale].couponPdf;
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 48 });
     const chunks: Buffer[] = [];
@@ -56,19 +66,19 @@ export async function generateCouponBatchPdf(data: CouponPdfData): Promise<Buffe
       .fillColor(BLACK)
       .font('Bebas')
       .fontSize(30)
-      .text(`Zľavové kupóny – ${data.count} kódov`, left, 64);
+      .text(`${m.titlePrefix} – ${data.count} ${m.titleSuffix}`, left, 64);
 
     doc.moveTo(left, 104).lineTo(left + contentW, 104).strokeColor('#E5E7EB').lineWidth(1).stroke();
 
     // ── Parametre ──────────────────────────────────────────────────────────
     let y = 120;
     const rows: [string, string][] = [
-      ['Batch ID', data.batchId],
-      ['Vygenerované', fmtDate(data.generatedAt)],
-      ['Typ zľavy', data.typeLabel],
-      ['Hodnota', data.valueLabel],
-      ['Rozsah', data.scopeLabel],
-      ['Platnosť', data.validityLabel],
+      [m.rowBatchId, data.batchId],
+      [m.rowGenerated, fmtDate(data.generatedAt, locale)],
+      [m.rowType, data.typeLabel],
+      [m.rowValue, data.valueLabel],
+      [m.rowScope, data.scopeLabel],
+      [m.rowValidity, data.validityLabel],
     ];
     for (const [label, value] of rows) {
       doc.fillColor(GRAY).font('Geist').fontSize(9).text(label, left, y, { width: 110 });
@@ -77,7 +87,7 @@ export async function generateCouponBatchPdf(data: CouponPdfData): Promise<Buffe
     }
 
     y += 8;
-    doc.fillColor(BLACK).font('GeistBold').fontSize(11).text('Kódy kupónov', left, y);
+    doc.fillColor(BLACK).font('GeistBold').fontSize(11).text(m.codesHeading, left, y);
     y += 20;
 
     // ── Tabuľka kódov (2 stĺpce) ───────────────────────────────────────────
@@ -115,7 +125,7 @@ export async function generateCouponBatchPdf(data: CouponPdfData): Promise<Buffe
       .font('Geist')
       .fontSize(8)
       .text(
-        `${data.platformName} · ticketall.eu · Kupóny nie sú prenosné na tretie strany bez súhlasu organizátora.`,
+        `${data.platformName} · ticketall.eu · ${m.footerSuffix}`,
         left,
         footerY,
         { width: contentW, align: 'center' },

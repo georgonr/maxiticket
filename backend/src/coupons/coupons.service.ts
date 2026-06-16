@@ -10,6 +10,7 @@ import { randomInt } from 'crypto';
 import { Prisma, CouponType, CouponScope, UserRole, Coupon } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { MailLocale, normalizeMailLocale, mailMessages, mailFormatDateShort } from '../mail/mail-i18n';
 import { JwtPayload } from '../casl/casl-ability.factory';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { BulkGenerateCouponsDto } from './dto/bulk-generate-coupons.dto';
@@ -227,16 +228,18 @@ export class CouponsService {
       })),
     });
 
-    // PDF + email organizátorovi (NIE zákazníkom)
+    // PDF + email organizátorovi (NIE zákazníkom). Krok 31e4: lokalizované podľa locale staff.
+    const locale = normalizeMailLocale(dto.locale);
     const platform = await this.prisma.platformInfo.findFirst();
     const pdfData: CouponPdfData = {
       count: dto.count,
       batchId: bulkBatchId,
       generatedAt: new Date(),
-      typeLabel: this.typeLabel(dto.type),
-      valueLabel: this.valueLabel(dto.type, value),
-      scopeLabel: this.scopeLabel(dto.scope),
-      validityLabel: this.validityLabel(dto.validFrom, dto.validUntil),
+      locale,
+      typeLabel: this.typeLabel(dto.type, locale),
+      valueLabel: this.valueLabel(dto.type, value, locale),
+      scopeLabel: this.scopeLabel(dto.scope, locale),
+      validityLabel: this.validityLabel(dto.validFrom, dto.validUntil, locale),
       codes,
       platformName: platform?.legalName ?? 'TicketAll s.r.o.',
     };
@@ -627,34 +630,25 @@ export class CouponsService {
     };
   }
 
-  // labely pre PDF
-  private typeLabel(t: CouponType): string {
-    return t === CouponType.PERCENTAGE
-      ? 'Percentuálna zľava'
-      : t === CouponType.FIXED_AMOUNT
-        ? 'Pevná suma'
-        : 'Lístok zdarma';
+  // labely pre PDF + e-mail (Krok 31e4: lokalizované podľa Order/staff locale).
+  private typeLabel(t: CouponType, locale: MailLocale): string {
+    return mailMessages[locale].couponMeta.type[t];
   }
-  private valueLabel(t: CouponType, value: number): string {
+  private valueLabel(t: CouponType, value: number, locale: MailLocale): string {
     if (t === CouponType.PERCENTAGE) return `${value} %`;
     if (t === CouponType.FIXED_AMOUNT) return `${value} €`;
-    return '100 % (zdarma)';
+    return mailMessages[locale].couponMeta.valueFree;
   }
-  private scopeLabel(s: CouponScope): string {
-    return s === CouponScope.GLOBAL
-      ? 'Celá platforma'
-      : s === CouponScope.ORGANIZER
-        ? 'Organizátor'
-        : s === CouponScope.SHOW
-          ? 'Podujatie'
-          : 'Typ vstupenky';
+  private scopeLabel(s: CouponScope, locale: MailLocale): string {
+    return mailMessages[locale].couponMeta.scope[s];
   }
-  private validityLabel(from?: string, until?: string): string {
-    const f = from ? new Date(from).toLocaleDateString('sk-SK') : null;
-    const u = until ? new Date(until).toLocaleDateString('sk-SK') : null;
-    if (f && u) return `od ${f} do ${u}`;
-    if (u) return `do ${u}`;
-    if (f) return `od ${f}`;
-    return 'bez časového obmedzenia';
+  private validityLabel(from: string | undefined, until: string | undefined, locale: MailLocale): string {
+    const v = mailMessages[locale].couponMeta.validity;
+    const f = from ? mailFormatDateShort(new Date(from), locale) : null;
+    const u = until ? mailFormatDateShort(new Date(until), locale) : null;
+    if (f && u) return v.range.replace('{from}', f).replace('{until}', u);
+    if (u) return v.until.replace('{until}', u);
+    if (f) return v.from.replace('{from}', f);
+    return v.unlimited;
   }
 }

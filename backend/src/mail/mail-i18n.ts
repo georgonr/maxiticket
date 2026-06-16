@@ -39,6 +39,20 @@ export function mailFormatPrice(amount: number, currency: string, locale: MailLo
   }
 }
 
+/** Locale-aware dátum bez času (Europe/Bratislava) – pre coupon platnosť/PDF. */
+export function mailFormatDateShort(date: Date, locale: MailLocale): string {
+  try {
+    return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Europe/Bratislava',
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
 interface MailStrings {
   tickets: { subjectPrefix: string; heading: string; orderLabel: string; qrAlt: string; footer: string };
   terminCancelled: {
@@ -79,6 +93,19 @@ interface MailStrings {
     generatedPrefix: string; generatedSuffix: string;
     batchIdLabel: string; typeLabel: string; scopeLabel: string; validityLabel: string;
     body: string; footer: string;
+  };
+  // Krok 31e4: coupon metadata HODNOTY (typ/rozsah/platnosť) – JEDEN zdroj pre e-mail aj PDF.
+  couponMeta: {
+    type: { PERCENTAGE: string; FIXED_AMOUNT: string; FREE_TICKET: string };
+    scope: { GLOBAL: string; ORGANIZER: string; SHOW: string; TICKET_TYPE: string };
+    valueFree: string;
+    validity: { range: string; until: string; from: string; unlimited: string };
+  };
+  // Krok 31e4: coupon-batch PDF chrome (organizátorovi).
+  couponPdf: {
+    titlePrefix: string; titleSuffix: string;
+    rowBatchId: string; rowGenerated: string; rowType: string; rowValue: string; rowScope: string; rowValidity: string;
+    codesHeading: string; footerSuffix: string;
   };
 }
 
@@ -186,6 +213,18 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       body: 'Kompletný zoznam kódov nájdete v priloženom PDF. Kódy distribuujte podľa vlastného uváženia.',
       footer: 'Tento e-mail je určený organizátorovi, nie koncovým zákazníkom.',
     },
+    couponMeta: {
+      type: { PERCENTAGE: 'Percentuálna zľava', FIXED_AMOUNT: 'Pevná suma', FREE_TICKET: 'Lístok zdarma' },
+      scope: { GLOBAL: 'Celá platforma', ORGANIZER: 'Organizátor', SHOW: 'Podujatie', TICKET_TYPE: 'Typ vstupenky' },
+      valueFree: '100 % (zdarma)',
+      validity: { range: 'od {from} do {until}', until: 'do {until}', from: 'od {from}', unlimited: 'bez časového obmedzenia' },
+    },
+    couponPdf: {
+      titlePrefix: 'Zľavové kupóny', titleSuffix: 'kódov',
+      rowBatchId: 'Batch ID', rowGenerated: 'Vygenerované', rowType: 'Typ zľavy', rowValue: 'Hodnota', rowScope: 'Rozsah', rowValidity: 'Platnosť',
+      codesHeading: 'Kódy kupónov',
+      footerSuffix: 'Kupóny nie sú prenosné na tretie strany bez súhlasu organizátora.',
+    },
   },
   en: {
     tickets: {
@@ -290,6 +329,18 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       body: 'The complete list of codes is in the attached PDF. Distribute the codes at your own discretion.',
       footer: 'This e-mail is intended for the organizer, not for end customers.',
     },
+    couponMeta: {
+      type: { PERCENTAGE: 'Percentage discount', FIXED_AMOUNT: 'Fixed amount', FREE_TICKET: 'Free ticket' },
+      scope: { GLOBAL: 'Entire platform', ORGANIZER: 'Organizer', SHOW: 'Event', TICKET_TYPE: 'Ticket type' },
+      valueFree: '100% (free)',
+      validity: { range: 'from {from} to {until}', until: 'until {until}', from: 'from {from}', unlimited: 'no time limit' },
+    },
+    couponPdf: {
+      titlePrefix: 'Discount coupons', titleSuffix: 'codes',
+      rowBatchId: 'Batch ID', rowGenerated: 'Generated', rowType: 'Discount type', rowValue: 'Value', rowScope: 'Scope', rowValidity: 'Validity',
+      codesHeading: 'Coupon codes',
+      footerSuffix: 'Coupons are not transferable to third parties without the organizer\'s consent.',
+    },
   },
   cs: {
     tickets: {
@@ -393,6 +444,18 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       validityLabel: 'Platnost:',
       body: 'Kompletní seznam kódů najdete v přiloženém PDF. Kódy distribuujte podle vlastního uvážení.',
       footer: 'Tento e-mail je určen pořadateli, nikoli koncovým zákazníkům.',
+    },
+    couponMeta: {
+      type: { PERCENTAGE: 'Procentuální sleva', FIXED_AMOUNT: 'Pevná částka', FREE_TICKET: 'Vstupenka zdarma' },
+      scope: { GLOBAL: 'Celá platforma', ORGANIZER: 'Pořadatel', SHOW: 'Akce', TICKET_TYPE: 'Typ vstupenky' },
+      valueFree: '100 % (zdarma)',
+      validity: { range: 'od {from} do {until}', until: 'do {until}', from: 'od {from}', unlimited: 'bez časového omezení' },
+    },
+    couponPdf: {
+      titlePrefix: 'Slevové kupóny', titleSuffix: 'kódů',
+      rowBatchId: 'Batch ID', rowGenerated: 'Vygenerováno', rowType: 'Typ slevy', rowValue: 'Hodnota', rowScope: 'Rozsah', rowValidity: 'Platnost',
+      codesHeading: 'Kódy kupónů',
+      footerSuffix: 'Kupóny nejsou přenosné na třetí strany bez souhlasu pořadatele.',
     },
   },
 };

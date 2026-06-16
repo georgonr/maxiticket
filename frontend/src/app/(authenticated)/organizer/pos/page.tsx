@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
+import { localizeApiError } from '@/lib/api-error';
 import { posApi, PosTermin, PosOrderResult, PosSummary } from '@/lib/api/pos';
 import { QrCanvas } from '@/components/pos/QrCanvas';
 
@@ -17,6 +18,7 @@ type Step = 'termin' | 'tickets' | 'payment' | 'done';
 
 export default function PosPage() {
   const t = useTranslations('organizer.pos');
+  const tErrors = useTranslations('errors');
   const format = useFormatter();
   const fmtPrice = (amount: number | string, currency = 'EUR') =>
     format.number(Number(amount), { style: 'currency', currency });
@@ -31,10 +33,11 @@ export default function PosPage() {
     if (e instanceof ApiError) {
       if (e.status === 403) return t('error.forbidden');
       if (e.status >= 500) return t('error.server');
-      return e.message || t('error.generic');
+      // Krok 31e4: 400/404 POS validačné chyby cez messageCode → errors.* (fallback generic).
+      return localizeApiError(tErrors, e, t('error.generic'));
     }
     return t('error.network');
-  }, [t]);
+  }, [t, tErrors]);
 
   const [termins, setTermins] = useState<PosTermin[]>([]);
   const [loading, setLoading] = useState(true);
