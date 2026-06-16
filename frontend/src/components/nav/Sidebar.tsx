@@ -43,7 +43,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo */}
       <div className="flex h-16 flex-shrink-0 items-center border-b border-gray-200 px-5 dark:border-gray-800">
         <Link href="/organizer/dashboard" onClick={onNavigate}>
-          <img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto dark:brightness-0 dark:invert" />
+          <img src="/logo-horizontal.svg" alt="TicketAll" className="h-9 w-auto dark:brightness-0 dark:invert" />
         </Link>
       </div>
 

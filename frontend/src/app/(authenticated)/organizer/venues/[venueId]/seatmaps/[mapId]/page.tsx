@@ -143,7 +143,7 @@ export default function SeatMapEditorPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
+      <div className="min-h-screen bg-cream dark:bg-gray-950 p-6">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="mt-4 h-[70vh]" />
       </div>
@@ -151,7 +151,7 @@ export default function SeatMapEditorPage() {
   }
   if (error || !map) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
+      <div className="min-h-screen bg-cream dark:bg-gray-950 p-6">
         <Link href={`/organizer/venues/${venueId}/seatmaps`} className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-brand">
           <ArrowLeft size={15} /> {t('editor.backToMaps')}
         </Link>

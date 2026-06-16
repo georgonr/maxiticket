@@ -108,7 +108,7 @@ export default function PosClosuresPage() {
   const hasSales = (summary?.orderCount ?? 0) > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-cream dark:bg-gray-950">
       <main className="mx-auto max-w-4xl space-y-6 p-6">
         <div>
           <Link href="/organizer/pos" className="inline-flex items-center gap-1 text-sm text-brand hover:underline"><ArrowLeft size={15} /> {t('closures.back')}</Link>

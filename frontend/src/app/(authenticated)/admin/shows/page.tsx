@@ -70,7 +70,7 @@ export default function AdminShowsPage() {
   }, [load]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-cream dark:bg-gray-950">
 
       <main className="mx-auto max-w-7xl space-y-6 p-6">
         <div>

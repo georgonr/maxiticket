@@ -10,7 +10,9 @@ const config: Config = {
         display: ['var(--font-fraunces)', 'Fraunces', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
-        brand: { DEFAULT: '#e63946', dark: '#c1121f' },
+        // Krok 32: brand zladený s coral (predtým #e63946 červená) → zabranduje
+        // staff sidebar/tlačidlá/scanner/focus rings naraz cez existujúci `brand` token.
+        brand: { DEFAULT: '#E8442E', dark: '#C9351F' },
         // Krok 29: marketingová paleta (homepage landing)
         cream: '#FBF6EE',
         coral: { DEFAULT: '#E8442E', dark: '#C9351F' },

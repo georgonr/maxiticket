@@ -159,7 +159,7 @@ export default function ShowDetailPage() {
   const cover = show.images?.find((i) => i.isCover);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-cream dark:bg-gray-900">
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
         <Link href="/organizer/shows" className="text-sm text-brand hover:underline">← {t('backToShows')}</Link>

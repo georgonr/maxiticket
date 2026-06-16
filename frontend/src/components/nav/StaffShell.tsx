@@ -9,7 +9,9 @@ import { MobileTopBar } from './MobileTopBar';
  */
 export function StaffShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="theme-scope">
+    // Krok 32: krémový brand base (zladenie s landingom/public). Stránky si nesú
+    // vlastný min-h-screen bg-cream; tu je base pre istotu (a za fixným sidebarom).
+    <div className="theme-scope min-h-screen bg-cream dark:bg-gray-950">
       <Sidebar />
       <div className="lg:pl-64">
         <MobileTopBar />

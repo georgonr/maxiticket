@@ -169,7 +169,7 @@ export default function PosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 print:bg-white">
+    <div className="min-h-screen bg-cream dark:bg-gray-950 print:bg-white">
       <main className="mx-auto max-w-3xl p-4 sm:p-6 print:hidden">
         <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
 

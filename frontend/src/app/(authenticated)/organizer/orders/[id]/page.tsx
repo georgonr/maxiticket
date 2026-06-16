@@ -7,7 +7,7 @@ import { organizerOrdersApi } from '@/lib/api/orders';
 export default function OrganizerOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-cream dark:bg-gray-950">
       <OrderDetailPanel id={id} fetchOrder={organizerOrdersApi.get} backHref="/organizer/orders" />
     </div>
   );

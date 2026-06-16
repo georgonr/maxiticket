@@ -22,7 +22,7 @@ function SuccessBanner() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-cream p-4">
       <Link href="/" className="mb-6" aria-label="Domov">
         <img src="/logo-horizontal.svg" alt="TicketAll" className="h-9 w-auto" />
       </Link>

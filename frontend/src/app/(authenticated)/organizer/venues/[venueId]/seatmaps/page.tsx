@@ -134,7 +134,7 @@ export default function VenueSeatMapsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-cream dark:bg-gray-950">
       <main className="mx-auto max-w-5xl space-y-6 p-6">
         <div>
           <Link href="/organizer/venues" className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-brand">

@@ -81,7 +81,7 @@ export default function PaymentGatewaysPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-cream dark:bg-gray-950">
       <main className="mx-auto max-w-3xl space-y-6 p-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('paymentGateways.title')}</h1>

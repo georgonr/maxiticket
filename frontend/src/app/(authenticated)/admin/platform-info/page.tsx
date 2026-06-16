@@ -132,7 +132,7 @@ export default function PlatformInfoPage() {
 
   if (allowed === false) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-8 text-center">
+      <div className="min-h-screen bg-cream dark:bg-gray-900 flex flex-col items-center justify-center p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('platformInfo.accessDenied')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6">{t('platformInfo.accessDeniedDesc')}</p>
         <Link href="/organizer/shows"><Button variant="outline">{t('platformInfo.backToShows')}</Button></Link>
@@ -141,7 +141,7 @@ export default function PlatformInfoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-cream dark:bg-gray-900">
       {toast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-lg transition-all ${toast.ok ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
           {toast.msg}

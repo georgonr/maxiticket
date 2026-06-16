@@ -24,7 +24,7 @@ export function MobileTopBar() {
           <Menu size={20} />
         </button>
         <Link href="/organizer/dashboard">
-          <img src="/logo-horizontal.svg" alt="TicketAll" className="h-7 w-auto dark:brightness-0 dark:invert" />
+          <img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto dark:brightness-0 dark:invert" />
         </Link>
         <ThemeToggle />
       </div>

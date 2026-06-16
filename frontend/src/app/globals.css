@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --brand: #e63946;
+  --brand: #E8442E;
   --mt-purple: #7C3AED;
   --mt-purple-dark: #5B21B6;
   --mt-rose: #F43F5E;
@@ -22,6 +22,16 @@
 
   html {
     scroll-behavior: smooth;
+  }
+
+  /*
+   * Krok 32 (staff redizajn): nadpisy stránok v staff oblasti (.theme-scope = StaffShell)
+   * dostanú Fraunces serif – zladenie s brandom/landingom. LEN h1 (názvy stránok),
+   * dáta/tabuľky/inputy/sekcie (h2/h3) ostávajú sans-serif a čitateľné.
+   */
+  .theme-scope h1 {
+    font-family: var(--font-fraunces), 'Fraunces', ui-serif, Georgia, serif;
+    letter-spacing: -0.01em;
   }
 
   /*
