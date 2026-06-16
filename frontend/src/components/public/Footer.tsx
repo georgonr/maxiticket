@@ -2,6 +2,7 @@ import NextLink from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { RegisterChoice } from './RegisterChoice';
 
 // Krok 31b1/3: i18n texty (namespace `footer`) + locale-aware linky. `flat` = nelokalizovaná staff cesta.
 // Krok 31b3: odstránené mŕtve odkazy (o-nas/blog/cennik/podmienky/vop = 404). Ponechané funkčné stránky.
@@ -10,7 +11,8 @@ const FOOTER_COLS = [
     titleKey: 'colOrganizers',
     links: [
       { href: '/pre-organizatorov', key: 'forOrganizers' },
-      { href: '/admin/register', key: 'register', flat: true },
+      // FIX: /admin/register bol 404 → otvorí dialóg s výberom typu registrácie.
+      { href: '#', key: 'register', dialog: true },
     ],
   },
   {
@@ -116,10 +118,13 @@ export function PublicFooter() {
               <ul className="space-y-3">
                 {col.links.map((link, i) => {
                   const cls = 'text-sm text-slate-400 hover:text-white transition-colors';
+                  const isDialog = 'dialog' in link && link.dialog;
                   const isFlat = 'flat' in link && link.flat;
                   return (
                     <li key={`${link.href}-${i}`}>
-                      {isFlat ? (
+                      {isDialog ? (
+                        <RegisterChoice className={`${cls} cursor-pointer`}>{t(link.key)}</RegisterChoice>
+                      ) : isFlat ? (
                         <NextLink href={link.href} className={cls}>{t(link.key)}</NextLink>
                       ) : (
                         <Link href={link.href} className={cls}>{t(link.key)}</Link>

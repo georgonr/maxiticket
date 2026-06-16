@@ -1779,5 +1779,16 @@
     "RECEIPT_PAID_ONLY": "Doklad je dostupný len pre zaplatené objednávky.",
     "ORDER_NOT_FOUND": "Objednávka neexistuje.",
     "ORDER_NOT_YOURS": "Táto objednávka nepatrí vášmu účtu."
+  },
+  "registerChoice": {
+    "title": "Ako sa chcete registrovať?",
+    "subtitle": "Vyberte typ účtu podľa toho, čo chcete robiť.",
+    "close": "Zavrieť",
+    "customerTitle": "Zákazník",
+    "customerDesc": "Chcem kupovať vstupenky na podujatia.",
+    "customerCta": "Registrovať ako zákazník",
+    "organizerTitle": "Usporiadateľ",
+    "organizerDesc": "Chcem predávať vstupenky a spravovať podujatia.",
+    "organizerCta": "Registrovať ako usporiadateľ"
   }
 }

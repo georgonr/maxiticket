@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import NextLink from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { RegisterChoice } from './RegisterChoice';
 import { usePublicAuth } from '@/lib/public-auth';
 import { Ticket, LogOut, LogIn, Menu, X, UserCircle2, ChevronDown, ShoppingBag } from 'lucide-react';
 
@@ -117,12 +117,9 @@ export function PublicHeader() {
                 <LogIn size={15} />
                 {t('signIn')}
               </Link>
-              <NextLink
-                href="/register"
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl shadow-sm hover:shadow transition-all"
-              >
+              <RegisterChoice className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-coral hover:bg-coral-dark rounded-xl shadow-sm hover:shadow transition-all">
                 {t('register')}
-              </NextLink>
+              </RegisterChoice>
             </>
           )}
         </div>
@@ -180,13 +177,9 @@ export function PublicHeader() {
                 >
                   <LogIn size={15} /> {t('signIn')}
                 </Link>
-                <NextLink
-                  href="/register"
-                  onClick={() => setMobileOpen(false)}
-                  className="block px-3 py-2.5 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl text-center transition-colors"
-                >
+                <RegisterChoice className="block w-full px-3 py-2.5 text-sm font-semibold text-white bg-coral hover:bg-coral-dark rounded-xl text-center transition-colors">
                   {t('register')}
-                </NextLink>
+                </RegisterChoice>
                 <a
                   href="https://admin.ticketall.eu"
                   onClick={() => setMobileOpen(false)}

@@ -1779,5 +1779,16 @@
     "RECEIPT_PAID_ONLY": "The receipt is available only for paid orders.",
     "ORDER_NOT_FOUND": "The order does not exist.",
     "ORDER_NOT_YOURS": "This order does not belong to your account."
+  },
+  "registerChoice": {
+    "title": "How would you like to register?",
+    "subtitle": "Choose an account type based on what you want to do.",
+    "close": "Close",
+    "customerTitle": "Customer",
+    "customerDesc": "I want to buy tickets to events.",
+    "customerCta": "Register as a customer",
+    "organizerTitle": "Organizer",
+    "organizerDesc": "I want to sell tickets and manage events.",
+    "organizerCta": "Register as an organizer"
   }
 }
