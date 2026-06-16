@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Prisma, UserRole, OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -138,8 +139,11 @@ export class MetricsService {
   }
 
   async adminOrganizers(limit: number, sort?: string) {
-    const lim = this.clamp(limit, 20, 1, 100);
+    return (await this.allOrganizerMetrics(sort)).slice(0, this.clamp(limit, 20, 1, 100));
+  }
 
+  /** Krok: metriky pre VŠETKÝCH organizátorov (zoznam admin/organizers + detail). */
+  private async allOrganizerMetrics(sort?: string) {
     const showCounts = await this.prisma.$queryRaw<
       {
         organizerId: string;
@@ -205,7 +209,51 @@ export class MetricsService {
       return b.totalRevenue - a.totalRevenue;
     });
 
-    return list.slice(0, lim);
+    return list;
+  }
+
+  /** Detail organizátora: profil (firma/IČO/kontakt) + metriky + zoznam jeho podujatí. */
+  async adminOrganizerDetail(id: string) {
+    const org = await this.prisma.organizer.findUnique({
+      where: { id },
+      select: {
+        id: true, name: true, slug: true, email: true, phone: true, websiteUrl: true,
+        companyName: true, ico: true, dic: true, icDph: true, vatPayer: true,
+        addressStreet: true, addressCity: true, addressZip: true, addressCountry: true,
+        bankAccount: true, iban: true, createdAt: true,
+      },
+    });
+    if (!org) throw new NotFoundException('Organizátor neexistuje.');
+
+    const all = await this.allOrganizerMetrics();
+    const metrics = all.find((o) => o.organizerId === id) ?? {
+      organizerId: id, name: org.name, slug: org.slug, companyName: org.companyName,
+      showsCount: 0, publishedShowsCount: 0, totalRevenue: 0, totalTicketsSold: 0, outstandingPayout: 0,
+    };
+
+    const shows = await this.prisma.show.findMany({
+      where: { organizerId: id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, name: true, slug: true, status: true, createdAt: true,
+        _count: { select: { termins: true } },
+      },
+    });
+
+    return {
+      organizer: org,
+      metrics: {
+        showsCount: metrics.showsCount,
+        publishedShowsCount: metrics.publishedShowsCount,
+        totalRevenue: metrics.totalRevenue,
+        totalTicketsSold: metrics.totalTicketsSold,
+        outstandingPayout: metrics.outstandingPayout,
+      },
+      shows: shows.map((s) => ({
+        id: s.id, name: s.name, slug: s.slug, status: s.status,
+        terminCount: s._count.termins, createdAt: s.createdAt,
+      })),
+    };
   }
 
   // ─────────────────────── ORGANIZER ───────────────────────

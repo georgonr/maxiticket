@@ -569,7 +569,8 @@
       "logout": "Odhlásit",
       "openMenu": "Otevřít menu",
       "closeMenu": "Zavřít menu",
-      "langLabel": "Jazyk"
+      "langLabel": "Jazyk",
+      "organizers": "Pořadatelé"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1741,6 +1742,45 @@
     "refunds": {
       "title": "Žádosti o vrácení (platforma)",
       "subtitle": "Všechny žádosti o vrácení napříč organizátory."
+    },
+    "organizers": {
+      "subtitle": "Všichni pořadatelé na platformě.",
+      "back": "Zpět na pořadatele",
+      "errLoad": "Nepodařilo se načíst pořadatele.",
+      "detailErr": "Nepodařilo se načíst detail pořadatele.",
+      "openDetail": "Detail",
+      "metrics": {
+        "shows": "Akce",
+        "published": "Publikováno",
+        "revenue": "Tržby",
+        "tickets": "Prodané vstupenky",
+        "payout": "Výplata (odhad)"
+      },
+      "profile": {
+        "title": "Údaje pořadatele",
+        "companyName": "Název firmy",
+        "ico": "IČO",
+        "dic": "DIČ",
+        "icDph": "DIČ (DPH)",
+        "vat": "Plátce DPH",
+        "vatYes": "Ano",
+        "vatNo": "Ne",
+        "address": "Adresa",
+        "email": "E-mail",
+        "phone": "Telefon",
+        "website": "Web",
+        "bankAccount": "Bankovní účet",
+        "created": "Registrován",
+        "dash": "—"
+      },
+      "shows": {
+        "title": "Akce pořadatele",
+        "empty": "Tento pořadatel zatím nemá žádné akce.",
+        "colName": "Název",
+        "colStatus": "Stav",
+        "colTermins": "Termíny",
+        "colCreated": "Vytvořeno"
+      }
     }
   },
   "seatPicker": {

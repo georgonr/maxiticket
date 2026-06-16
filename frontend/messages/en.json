@@ -569,7 +569,8 @@
       "logout": "Log out",
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
-      "langLabel": "Language"
+      "langLabel": "Language",
+      "organizers": "Organizers"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1741,6 +1742,45 @@
     "refunds": {
       "title": "Refund requests (platform)",
       "subtitle": "All refund requests across organizers."
+    },
+    "organizers": {
+      "subtitle": "All organizers on the platform.",
+      "back": "Back to organizers",
+      "errLoad": "Failed to load organizers.",
+      "detailErr": "Failed to load the organizer detail.",
+      "openDetail": "Detail",
+      "metrics": {
+        "shows": "Events",
+        "published": "Published",
+        "revenue": "Revenue",
+        "tickets": "Tickets sold",
+        "payout": "Payout (est.)"
+      },
+      "profile": {
+        "title": "Organizer details",
+        "companyName": "Company name",
+        "ico": "Company ID",
+        "dic": "Tax ID",
+        "icDph": "VAT ID",
+        "vat": "VAT payer",
+        "vatYes": "Yes",
+        "vatNo": "No",
+        "address": "Address",
+        "email": "E-mail",
+        "phone": "Phone",
+        "website": "Website",
+        "bankAccount": "Bank account",
+        "created": "Registered",
+        "dash": "—"
+      },
+      "shows": {
+        "title": "Organizer's events",
+        "empty": "This organizer has no events yet.",
+        "colName": "Name",
+        "colStatus": "Status",
+        "colTermins": "Dates",
+        "colCreated": "Created"
+      }
     }
   },
   "seatPicker": {

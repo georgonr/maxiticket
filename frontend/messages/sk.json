@@ -569,7 +569,8 @@
       "logout": "Odhlásiť",
       "openMenu": "Otvoriť menu",
       "closeMenu": "Zavrieť menu",
-      "langLabel": "Jazyk"
+      "langLabel": "Jazyk",
+      "organizers": "Organizátori"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1741,6 +1742,45 @@
     "refunds": {
       "title": "Žiadosti o vrátenie (platforma)",
       "subtitle": "Všetky žiadosti o vrátenie naprieč organizátormi."
+    },
+    "organizers": {
+      "subtitle": "Všetci organizátori na platforme.",
+      "back": "Späť na organizátorov",
+      "errLoad": "Nepodarilo sa načítať organizátorov.",
+      "detailErr": "Nepodarilo sa načítať detail organizátora.",
+      "openDetail": "Detail",
+      "metrics": {
+        "shows": "Podujatia",
+        "published": "Publikované",
+        "revenue": "Tržby",
+        "tickets": "Predané vstupenky",
+        "payout": "Výplata (odhad)"
+      },
+      "profile": {
+        "title": "Údaje organizátora",
+        "companyName": "Názov firmy",
+        "ico": "IČO",
+        "dic": "DIČ",
+        "icDph": "IČ DPH",
+        "vat": "Platca DPH",
+        "vatYes": "Áno",
+        "vatNo": "Nie",
+        "address": "Adresa",
+        "email": "E-mail",
+        "phone": "Telefón",
+        "website": "Web",
+        "bankAccount": "Bankový účet",
+        "created": "Registrovaný",
+        "dash": "—"
+      },
+      "shows": {
+        "title": "Podujatia organizátora",
+        "empty": "Tento organizátor zatiaľ nemá žiadne podujatia.",
+        "colName": "Názov",
+        "colStatus": "Stav",
+        "colTermins": "Termíny",
+        "colCreated": "Vytvorené"
+      }
     }
   },
   "seatPicker": {
