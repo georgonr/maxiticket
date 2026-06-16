@@ -142,6 +142,13 @@ model Organizer {
   payoutEmail      String?
   payoutNotes      String?
 
+  // Per-organizátor fakturačná konfigurácia (LEN super-admin/staff – organizátor NEVIDÍ).
+  // Krok 1/2: ukladáme; customerFeePercent sa aplikuje v checkoute až v kroku 2.
+  commissionPercent  Decimal       @default(6.00)  @db.Decimal(5, 2)  // provízia % (náš podiel, bez DPH)
+  vatPercent         Decimal       @default(23.00) @db.Decimal(5, 2)  // DPH % pre fakturáciu provízie (0 pri prenes. dani)
+  feesIncluded       Boolean       @default(false)                    // s poplatkami / bez poplatkov
+  customerFeePercent Decimal       @default(1.00)  @db.Decimal(5, 2)  // zákaznícky poplatok % (checkout, krok 2)
+
   // Customisation
   ticketFooterText String?         // printed on every ticket
   logoUrl          String?

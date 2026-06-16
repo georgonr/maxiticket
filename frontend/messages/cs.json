@@ -1780,6 +1780,23 @@
         "colStatus": "Stav",
         "colTermins": "Termíny",
         "colCreated": "Vytvořeno"
+      },
+      "billing": {
+        "title": "Fakturační nastavení",
+        "note": "Vidí a edituje pouze super-admin. Pořadatel tato pole nevidí.",
+        "commission": "Provize (%)",
+        "commissionHint": "Náš podíl od pořadatele, bez DPH.",
+        "vat": "DPH (%)",
+        "vatHint": "DPH pro fakturaci provize (0 při přenesené daňové povinnosti).",
+        "feesIncluded": "S poplatky",
+        "feesIncludedHint": "Zda jsou poplatky zahrnuty.",
+        "customerFee": "Zákaznický poplatek (%)",
+        "customerFeeHint": "Připočte se zákazníkovi v checkoutu (aktivace v dalším kroku).",
+        "save": "Uložit fakturaci",
+        "saved": "Fakturační nastavení uloženo.",
+        "saveErr": "Uložení selhalo.",
+        "yes": "Ano",
+        "no": "Ne"
       }
     }
   },

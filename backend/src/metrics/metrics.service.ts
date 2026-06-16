@@ -256,6 +256,40 @@ export class MetricsService {
     };
   }
 
+  /** Fakturačná konfigurácia organizátora – LEN super-admin/staff (organizátor NEVIDÍ). */
+  async organizerBilling(id: string) {
+    const org = await this.prisma.organizer.findUnique({
+      where: { id },
+      select: { commissionPercent: true, vatPercent: true, feesIncluded: true, customerFeePercent: true },
+    });
+    if (!org) throw new NotFoundException('Organizátor neexistuje.');
+    return {
+      commissionPercent: Number(org.commissionPercent),
+      vatPercent: Number(org.vatPercent),
+      feesIncluded: org.feesIncluded,
+      customerFeePercent: Number(org.customerFeePercent),
+    };
+  }
+
+  /** Update fakturačnej konfigurácie (super-admin/staff). Len zadané polia. */
+  async updateOrganizerBilling(
+    id: string,
+    dto: { commissionPercent?: number; vatPercent?: number; feesIncluded?: boolean; customerFeePercent?: number },
+  ) {
+    const exists = await this.prisma.organizer.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) throw new NotFoundException('Organizátor neexistuje.');
+    await this.prisma.organizer.update({
+      where: { id },
+      data: {
+        ...(dto.commissionPercent !== undefined ? { commissionPercent: dto.commissionPercent } : {}),
+        ...(dto.vatPercent !== undefined ? { vatPercent: dto.vatPercent } : {}),
+        ...(dto.feesIncluded !== undefined ? { feesIncluded: dto.feesIncluded } : {}),
+        ...(dto.customerFeePercent !== undefined ? { customerFeePercent: dto.customerFeePercent } : {}),
+      },
+    });
+    return this.organizerBilling(id);
+  }
+
   // ─────────────────────── ORGANIZER ───────────────────────
 
   async organizerOverview(user: JwtPayload, queryOrganizerId?: string) {

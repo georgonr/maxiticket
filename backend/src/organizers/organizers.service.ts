@@ -9,26 +9,41 @@ import { JwtPayload } from '../casl/casl-ability.factory';
 export class OrganizersService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * BEZPEČNOSŤ (per-org fakturácia): organizer-facing endpointy vracajú celý
+   * Organizer objekt → fakturačné polia by organizátor videl. Tu ich VŽDY
+   * odstránime. Čítať/upraviť ich smie LEN dedikovaný admin/organizers/:id/billing.
+   */
+  private stripBilling<T extends Record<string, unknown>>(org: T): T {
+    if (!org) return org;
+    const rest = { ...org };
+    delete (rest as Record<string, unknown>).commissionPercent;
+    delete (rest as Record<string, unknown>).vatPercent;
+    delete (rest as Record<string, unknown>).feesIncluded;
+    delete (rest as Record<string, unknown>).customerFeePercent;
+    return rest;
+  }
+
   async findAll(user: JwtPayload) {
     // SUPERADMIN and STAFF see all; others see only their own
     if (user.role === UserRole.SUPERADMIN || user.role === UserRole.STAFF) {
-      return this.prisma.organizer.findMany({ orderBy: { createdAt: 'desc' } });
+      return (await this.prisma.organizer.findMany({ orderBy: { createdAt: 'desc' } })).map((o) => this.stripBilling(o));
     }
     if (!user.organizerId) return [];
-    return this.prisma.organizer.findMany({ where: { id: user.organizerId } });
+    return (await this.prisma.organizer.findMany({ where: { id: user.organizerId } })).map((o) => this.stripBilling(o));
   }
 
   async findOne(id: string, user: JwtPayload) {
     this.assertTenantAccess(id, user);
     const org = await this.prisma.organizer.findUnique({ where: { id } });
     if (!org) throw new NotFoundException('Organizer not found');
-    return org;
+    return this.stripBilling(org);
   }
 
   async update(id: string, dto: UpdateOrganizerDto, user: JwtPayload) {
     this.assertTenantAccess(id, user);
     await this.findOne(id, user); // ensures exists
-    return this.prisma.organizer.update({ where: { id }, data: dto as any });
+    return this.stripBilling(await this.prisma.organizer.update({ where: { id }, data: dto as any }));
   }
 
   async updateStatus(id: string, dto: UpdateOrganizerStatusDto, user: JwtPayload) {
@@ -53,7 +68,7 @@ export class OrganizersService {
     this.assertTenantAccess(targetId, user);
     const org = await this.prisma.organizer.findUnique({ where: { id: targetId } });
     if (!org) throw new NotFoundException('Organizer not found');
-    return this.prisma.organizer.update({ where: { id: targetId }, data: dto as any });
+    return this.stripBilling(await this.prisma.organizer.update({ where: { id: targetId }, data: dto as any }));
   }
 
   private assertTenantAccess(organizerId: string, user: JwtPayload) {

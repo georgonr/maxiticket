@@ -52,11 +52,29 @@ function qs(params: Record<string, string | number | undefined>): string {
   return s ? `?${s}` : '';
 }
 
-/** SUPERADMIN/STAFF – zoznam VŠETKÝCH organizátorov + detail. */
+/** Fakturačná konfigurácia (LEN super-admin/staff – organizátor NEVIDÍ). */
+export interface OrganizerBilling {
+  commissionPercent: number;
+  vatPercent: number;
+  feesIncluded: boolean;
+  customerFeePercent: number;
+}
+
+/** SUPERADMIN/STAFF – zoznam VŠETKÝCH organizátorov + detail + fakturácia. */
 export const organizersAdminApi = {
   list: (token: string, params: { sort?: OrganizerSort } = {}) =>
     apiFetch<OrganizerRow[]>(`/v1/admin/organizers${qs({ sort: params.sort })}`, { token }),
 
   get: (id: string, token: string) =>
     apiFetch<OrganizerDetail>(`/v1/admin/organizers/${id}`, { token }),
+
+  getBilling: (id: string, token: string) =>
+    apiFetch<OrganizerBilling>(`/v1/admin/organizers/${id}/billing`, { token }),
+
+  updateBilling: (id: string, billing: OrganizerBilling, token: string) =>
+    apiFetch<OrganizerBilling>(`/v1/admin/organizers/${id}/billing`, {
+      method: 'PATCH',
+      body: JSON.stringify(billing),
+      token,
+    }),
 };

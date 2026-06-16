@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { useTranslations, useFormatter } from 'next-intl';
 import { ArrowLeft, Calendar, TrendingUp, Ticket, Wallet, CheckCircle2 } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
-import { organizersAdminApi, OrganizerDetail } from '@/lib/api/organizers-admin';
+import { organizersAdminApi, OrganizerDetail, OrganizerBilling } from '@/lib/api/organizers-admin';
 import { KpiCard, SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const STATUS_CLS: Record<string, string> = {
   DRAFT: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
@@ -27,13 +29,23 @@ export default function AdminOrganizerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fakturačné nastavenia (super-admin only)
+  const [billing, setBilling] = useState<OrganizerBilling | null>(null);
+  const [savingBilling, setSavingBilling] = useState(false);
+  const [billingToast, setBillingToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const token = await getValidToken();
       if (!token) throw new Error('no token');
-      setData(await organizersAdminApi.get(id, token));
+      const [detail, bill] = await Promise.all([
+        organizersAdminApi.get(id, token),
+        organizersAdminApi.getBilling(id, token),
+      ]);
+      setData(detail);
+      setBilling(bill);
     } catch {
       setError(t('organizers.detailErr'));
     } finally {
@@ -42,6 +54,32 @@ export default function AdminOrganizerDetailPage() {
   }, [id, t]);
 
   useEffect(() => { load(); }, [load]);
+
+  function setBillingField<K extends keyof OrganizerBilling>(key: K, value: OrganizerBilling[K]) {
+    setBilling((b) => (b ? { ...b, [key]: value } : b));
+  }
+
+  async function saveBilling() {
+    if (!billing) return;
+    setSavingBilling(true);
+    setBillingToast(null);
+    try {
+      const token = await getValidToken();
+      if (!token) throw new Error('no token');
+      const saved = await organizersAdminApi.updateBilling(id, {
+        commissionPercent: Number(billing.commissionPercent),
+        vatPercent: Number(billing.vatPercent),
+        feesIncluded: billing.feesIncluded,
+        customerFeePercent: Number(billing.customerFeePercent),
+      }, token);
+      setBilling(saved);
+      setBillingToast({ msg: t('organizers.billing.saved'), ok: true });
+    } catch {
+      setBillingToast({ msg: t('organizers.billing.saveErr'), ok: false });
+    } finally {
+      setSavingBilling(false);
+    }
+  }
 
   const dash = t('organizers.profile.dash');
   const org = data?.organizer;
@@ -105,6 +143,52 @@ export default function AdminOrganizerDetailPage() {
                 ))}
               </dl>
             </SectionCard>
+
+            {/* Fakturačné nastavenia (super-admin only) */}
+            {billing && (
+              <SectionCard title={t('organizers.billing.title')}>
+                <p className="mb-4 text-xs text-coral">{t('organizers.billing.note')}</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('organizers.billing.commission')}</span>
+                    <Input type="number" step="0.01" min={0} max={100} value={String(billing.commissionPercent)}
+                      onChange={(e) => setBillingField('commissionPercent', e.target.value as unknown as number)} />
+                    <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{t('organizers.billing.commissionHint')}</span>
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('organizers.billing.vat')}</span>
+                    <Input type="number" step="0.01" min={0} max={100} value={String(billing.vatPercent)}
+                      onChange={(e) => setBillingField('vatPercent', e.target.value as unknown as number)} />
+                    <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{t('organizers.billing.vatHint')}</span>
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{t('organizers.billing.customerFee')}</span>
+                    <Input type="number" step="0.01" min={0} max={100} value={String(billing.customerFeePercent)}
+                      onChange={(e) => setBillingField('customerFeePercent', e.target.value as unknown as number)} />
+                    <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{t('organizers.billing.customerFeeHint')}</span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-2.5 pt-6">
+                    <input type="checkbox" checked={billing.feesIncluded}
+                      onChange={(e) => setBillingField('feesIncluded', e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-coral" />
+                    <span>
+                      <span className="block text-sm font-medium text-gray-700 dark:text-gray-200">{t('organizers.billing.feesIncluded')}</span>
+                      <span className="block text-xs text-gray-400 dark:text-gray-500">{t('organizers.billing.feesIncludedHint')}</span>
+                    </span>
+                  </label>
+                </div>
+                <div className="mt-5 flex items-center gap-3">
+                  <Button onClick={saveBilling} loading={savingBilling} disabled={savingBilling}>
+                    {t('organizers.billing.save')}
+                  </Button>
+                  {billingToast && (
+                    <span className={billingToast.ok ? 'text-sm text-emerald-600' : 'text-sm text-red-600'}>
+                      {billingToast.msg}
+                    </span>
+                  )}
+                </div>
+              </SectionCard>
+            )}
 
             {/* Podujatia organizátora */}
             <SectionCard title={t('organizers.shows.title')}>

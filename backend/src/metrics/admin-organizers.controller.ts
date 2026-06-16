@@ -1,9 +1,10 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { MetricsService } from './metrics.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { UpdateOrganizerBillingDto } from './dto/update-organizer-billing.dto';
 
 /**
  * Krok: super-admin „Organizátori" – zoznam VŠETKÝCH + detail.
@@ -24,5 +25,16 @@ export class AdminOrganizersController {
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.svc.adminOrganizerDetail(id);
+  }
+
+  // Fakturačná konfigurácia – LEN super-admin/staff (guard na controllери). Organizátor 403.
+  @Get(':id/billing')
+  billing(@Param('id') id: string) {
+    return this.svc.organizerBilling(id);
+  }
+
+  @Patch(':id/billing')
+  updateBilling(@Param('id') id: string, @Body() dto: UpdateOrganizerBillingDto) {
+    return this.svc.updateOrganizerBilling(id, dto);
   }
 }

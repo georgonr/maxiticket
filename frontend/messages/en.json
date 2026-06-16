@@ -1780,6 +1780,23 @@
         "colStatus": "Status",
         "colTermins": "Dates",
         "colCreated": "Created"
+      },
+      "billing": {
+        "title": "Billing settings",
+        "note": "Visible and editable by super-admin only. Organizers don't see these fields.",
+        "commission": "Commission (%)",
+        "commissionHint": "Our share from the organizer, excl. VAT.",
+        "vat": "VAT (%)",
+        "vatHint": "VAT for invoicing the commission (0 under reverse charge).",
+        "feesIncluded": "Fees included",
+        "feesIncludedHint": "Whether fees are included.",
+        "customerFee": "Customer fee (%)",
+        "customerFeeHint": "Added to the customer at checkout (enabled in the next step).",
+        "save": "Save billing",
+        "saved": "Billing settings saved.",
+        "saveErr": "Save failed.",
+        "yes": "Yes",
+        "no": "No"
       }
     }
   },
