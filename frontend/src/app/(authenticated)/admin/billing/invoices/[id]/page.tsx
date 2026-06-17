@@ -192,10 +192,10 @@ export default function AdminInvoiceDetailPage() {
                       {li.description}
                       <span className="ml-2 text-xs text-gray-400">{t(`type.${li.type}`)}</span>
                     </td>
-                    <td className="px-2 text-right tabular-nums">{li.quantity}</td>
-                    <td className="px-2 text-right tabular-nums">{eur(li.unitPriceCents)}</td>
-                    <td className="px-2 text-right tabular-nums">{li.vatPercent}%</td>
-                    <td className="px-2 text-right font-medium tabular-nums">{eur(li.lineTotalCents)}</td>
+                    <td className="px-2 text-right tabular-nums text-gray-700 dark:text-gray-200">{li.quantity}</td>
+                    <td className="px-2 text-right tabular-nums text-gray-700 dark:text-gray-200">{eur(li.unitPriceCents)}</td>
+                    <td className="px-2 text-right tabular-nums text-gray-700 dark:text-gray-200">{li.vatPercent}%</td>
+                    <td className="px-2 text-right font-medium tabular-nums text-gray-900 dark:text-gray-100">{eur(li.lineTotalCents)}</td>
                     {isDraft && (
                       <td className="text-right">
                         {li.type === 'CUSTOM' && (

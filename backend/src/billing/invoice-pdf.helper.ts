@@ -3,7 +3,10 @@ import * as path from 'path';
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
 
 const fontPath = path.join(__dirname, '..', 'assets', 'fonts');
+const brandPath = path.join(__dirname, '..', 'assets', 'brand');
+const logoIconPath = path.join(brandPath, 'logo-icon.png'); // rastrová ikona lístka (nest-cli kopíruje assets → dist)
 const TEAL = '#10B981';
+const SLATE = '#0F172A'; // farba wordmarku „ticketall" (zhodné s web logom)
 const BLACK = '#111827';
 const GRAY = '#6B7280';
 const LGRAY = '#9CA3AF';
@@ -71,8 +74,13 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
       doc.restore();
     }
 
-    // ── Hlavička ─────────────────────────────────────────────────────────────
-    doc.fillColor(TEAL).font('GeistBold').fontSize(13).text('TicketAll', left, 40);
+    // ── Hlavička: logo (ikona lístka PNG + wordmark Geist) ───────────────────
+    const logoH = 24;
+    try { doc.image(logoIconPath, left, 36, { height: logoH }); } catch { /* logo voliteľné */ }
+    const wordX = left + logoH * (240 / 216) + 8; // šírka ikony (pomer 240×216) + medzera
+    doc.font('GeistBold').fontSize(16)
+      .fillColor(SLATE).text('ticketall', wordX, 41, { continued: true })
+      .fillColor(TEAL).text('.eu');
     doc.fillColor(BLACK).font('Bebas').fontSize(26)
       .text(data.isDraft ? 'VYÚČTOVANIE' : 'FAKTÚRA', left, 40, { width, align: 'right' });
     doc.fillColor(GRAY).font('Geist').fontSize(10)
