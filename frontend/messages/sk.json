@@ -1899,7 +1899,9 @@
       "noNumber": "—",
       "status": {
         "DRAFT": "Návrh",
-        "FINALIZED": "Finalizovaná"
+        "FINALIZED": "Finalizovaná",
+        "SENT": "Odoslaná",
+        "PAID": "Zaplatená"
       },
       "type": {
         "COMMISSION": "Provízia",
@@ -1947,7 +1949,20 @@
       "toastCreated": "Návrh faktúry vytvorený.",
       "toastFinalized": "Faktúra finalizovaná.",
       "toastSaved": "Uložené.",
-      "toastErr": "Operácia zlyhala."
+      "toastErr": "Operácia zlyhala.",
+      "autoBadge": "Auto",
+      "paidOutBadge": "Vyplatené",
+      "send": "Odoslať organizátorovi",
+      "sendConfirm": "Naozaj odoslať faktúru organizátorovi e-mailom?",
+      "toastSent": "Faktúra odoslaná organizátorovi.",
+      "markPaid": "Označiť ako zaplatené",
+      "markPaidOut": "Označiť ako vyplatené",
+      "sentAt": "Odoslané",
+      "paidAt": "Zaplatené",
+      "paidOutAt": "Vyplatené",
+      "filterAll": "Všetky stavy",
+      "runAuto": "Spustiť auto-generovanie",
+      "autoRunResult": "Auto-generovanie: vytvorených {count} návrhov."
     }
   }
 }

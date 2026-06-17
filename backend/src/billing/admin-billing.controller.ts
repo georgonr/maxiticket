@@ -6,6 +6,7 @@ import { FastifyReply } from 'fastify';
 import { UserRole, InvoiceStatus } from '@prisma/client';
 import { BillingService } from './billing.service';
 import { InvoiceService } from './invoice.service';
+import { BillingSchedulerService, AutoGenMode } from './billing-scheduler.service';
 import { CreateInvoiceDto, AddLineItemDto, UpdateLineItemDto, UpdateInvoiceDto } from './dto/invoice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -24,7 +25,18 @@ export class AdminBillingController {
   constructor(
     private readonly svc: BillingService,
     private readonly invoices: InvoiceService,
+    private readonly scheduler: BillingSchedulerService,
   ) {}
+
+  // ─────────────────────── AUTOMATIZÁCIA (krok 13c) ───────────────────────
+
+  /** Manuálny spúšťač cron logiky (test + ops). LEN SUPERADMIN. */
+  @Post('run-auto-generation')
+  @Roles(UserRole.SUPERADMIN)
+  runAutoGeneration(@Query('mode') mode?: string) {
+    const m: AutoGenMode = mode === 'per_event' || mode === 'monthly' ? mode : 'all';
+    return this.scheduler.runAuto(m);
+  }
 
   // ─────────────────────── FAKTÚRY (krok 13b) ───────────────────────
 
@@ -43,7 +55,8 @@ export class AdminBillingController {
 
   @Get('invoices')
   listInvoices(@Query('organizerId') organizerId?: string, @Query('status') status?: string) {
-    const st = status === 'DRAFT' || status === 'FINALIZED' ? (status as InvoiceStatus) : undefined;
+    const valid = ['DRAFT', 'FINALIZED', 'SENT', 'PAID'];
+    const st = status && valid.includes(status) ? (status as InvoiceStatus) : undefined;
     return this.invoices.list({ organizerId, status: st });
   }
 
@@ -75,6 +88,21 @@ export class AdminBillingController {
   @Post('invoices/:invId/finalize')
   finalizeInvoice(@Param('invId') invId: string) {
     return this.invoices.finalize(invId);
+  }
+
+  @Post('invoices/:invId/send')
+  sendInvoice(@Param('invId') invId: string) {
+    return this.invoices.send(invId);
+  }
+
+  @Post('invoices/:invId/mark-paid')
+  markPaid(@Param('invId') invId: string) {
+    return this.invoices.markPaid(invId);
+  }
+
+  @Post('invoices/:invId/mark-paid-out')
+  markPaidOut(@Param('invId') invId: string) {
+    return this.invoices.markPaidOut(invId);
   }
 
   @Delete('invoices/:invId')

@@ -4,7 +4,7 @@ import * as nodemailer from 'nodemailer';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
 import {
-  MailLocale, normalizeMailLocale, mailMessages, mailFormatDate, mailFormatPrice,
+  MailLocale, normalizeMailLocale, mailMessages, mailFormatDate, mailFormatPrice, mailFormatDateShort,
 } from './mail-i18n';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
@@ -487,6 +487,48 @@ export class MailService {
       ],
     });
     this.logger.log(`Sent coupon batch ${data.batchId} (${data.count} codes) to ${data.to}`);
+  }
+
+  /** Krok 13c: faktúra organizátorovi ako PDF príloha (lokalizovaná podľa organizer.locale). */
+  async sendInvoice(data: {
+    to: string;
+    locale?: string;
+    invoiceNumber: string;
+    totalCents: number;
+    currency: string;
+    dueDate: Date;
+    pdf: Buffer;
+    filename: string;
+  }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].invoice;
+    const total = mailFormatPrice(data.totalCents / 100, data.currency, locale);
+    const due = mailFormatDateShort(data.dueDate, locale);
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+    <h1 style="font-size:22px;margin:12px 0 4px;">${m.heading}</h1>
+  </div>
+  <p style="color:#374151;">${m.intro}</p>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
+    <tr><td style="padding:6px 0;color:#6b7280;width:160px;">${m.numberLabel}</td><td style="padding:6px 0;color:#111827;font-weight:600;">${data.invoiceNumber}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">${m.totalLabel}</td><td style="padding:6px 0;color:#111827;font-weight:600;">${total}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;">${m.dueLabel}</td><td style="padding:6px 0;color:#111827;">${due}</td></tr>
+  </table>
+  <p style="color:#374151;font-size:14px;">${m.body}</p>
+  <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;border-top:1px solid #e5e7eb;padding-top:12px;">${m.footer}</p>
+</body></html>`;
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `${m.subjectPrefix} – ${data.invoiceNumber}`,
+      html,
+      attachments: [{ filename: data.filename, content: data.pdf, contentType: 'application/pdf' }],
+    });
+    this.logger.log(`Sent invoice ${data.invoiceNumber} to ${data.to}`);
   }
 
   private computeVatRate(org?: OrganizerPdfInfo | null): number {

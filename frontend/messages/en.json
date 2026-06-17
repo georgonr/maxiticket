@@ -1899,7 +1899,9 @@
       "noNumber": "—",
       "status": {
         "DRAFT": "Draft",
-        "FINALIZED": "Finalized"
+        "FINALIZED": "Finalized",
+        "SENT": "Sent",
+        "PAID": "Paid"
       },
       "type": {
         "COMMISSION": "Commission",
@@ -1947,7 +1949,20 @@
       "toastCreated": "Draft invoice created.",
       "toastFinalized": "Invoice finalized.",
       "toastSaved": "Saved.",
-      "toastErr": "The operation failed."
+      "toastErr": "The operation failed.",
+      "autoBadge": "Auto",
+      "paidOutBadge": "Paid out",
+      "send": "Send to organizer",
+      "sendConfirm": "Really send the invoice to the organizer by e-mail?",
+      "toastSent": "Invoice sent to organizer.",
+      "markPaid": "Mark as paid",
+      "markPaidOut": "Mark as paid out",
+      "sentAt": "Sent",
+      "paidAt": "Paid",
+      "paidOutAt": "Paid out",
+      "filterAll": "All statuses",
+      "runAuto": "Run auto-generation",
+      "autoRunResult": "Auto-generation: {count} drafts created."
     }
   }
 }

@@ -110,6 +110,12 @@ interface MailStrings {
     rowBatchId: string; rowGenerated: string; rowType: string; rowValue: string; rowScope: string; rowValidity: string;
     codesHeading: string; footerSuffix: string;
   };
+  // Krok 13c: fakturačný e-mail organizátorovi (PDF príloha).
+  invoice: {
+    subjectPrefix: string; heading: string;
+    intro: string; numberLabel: string; totalLabel: string; dueLabel: string;
+    body: string; footer: string;
+  };
 }
 
 export const mailMessages: Record<MailLocale, MailStrings> = {
@@ -229,6 +235,16 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       codesHeading: 'Kódy kupónov',
       footerSuffix: 'Kupóny nie sú prenosné na tretie strany bez súhlasu organizátora.',
     },
+    invoice: {
+      subjectPrefix: 'Faktúra od TicketAll',
+      heading: 'Faktúra od TicketAll',
+      intro: 'V prílohe vám zasielame faktúru za služby platformy TicketAll.',
+      numberLabel: 'Číslo faktúry:',
+      totalLabel: 'Suma k úhrade:',
+      dueLabel: 'Splatnosť:',
+      body: 'Faktúru nájdete ako PDF prílohu tohto e-mailu. Pri úhrade uveďte číslo faktúry ako variabilný symbol.',
+      footer: 'Tento e-mail je určený organizátorovi. V prípade otázok nás kontaktujte.',
+    },
   },
   en: {
     tickets: {
@@ -346,6 +362,16 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       codesHeading: 'Coupon codes',
       footerSuffix: 'Coupons are not transferable to third parties without the organizer\'s consent.',
     },
+    invoice: {
+      subjectPrefix: 'Invoice from TicketAll',
+      heading: 'Invoice from TicketAll',
+      intro: 'Please find attached your invoice for TicketAll platform services.',
+      numberLabel: 'Invoice number:',
+      totalLabel: 'Amount due:',
+      dueLabel: 'Due date:',
+      body: 'The invoice is attached as a PDF. When paying, please use the invoice number as the payment reference.',
+      footer: 'This e-mail is intended for the organizer. Contact us if you have any questions.',
+    },
   },
   cs: {
     tickets: {
@@ -462,6 +488,16 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       rowBatchId: 'Batch ID', rowGenerated: 'Vygenerováno', rowType: 'Typ slevy', rowValue: 'Hodnota', rowScope: 'Rozsah', rowValidity: 'Platnost',
       codesHeading: 'Kódy kupónů',
       footerSuffix: 'Kupóny nejsou přenosné na třetí strany bez souhlasu pořadatele.',
+    },
+    invoice: {
+      subjectPrefix: 'Faktura od TicketAll',
+      heading: 'Faktura od TicketAll',
+      intro: 'V příloze vám zasíláme fakturu za služby platformy TicketAll.',
+      numberLabel: 'Číslo faktury:',
+      totalLabel: 'Částka k úhradě:',
+      dueLabel: 'Splatnost:',
+      body: 'Fakturu najdete jako PDF přílohu tohoto e-mailu. Při úhradě uveďte číslo faktury jako variabilní symbol.',
+      footer: 'Tento e-mail je určen pořadateli. V případě dotazů nás kontaktujte.',
     },
   },
 };

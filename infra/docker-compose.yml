@@ -68,6 +68,8 @@ services:
       PLATFORM_IC_DPH: ${PLATFORM_IC_DPH:-}
       PLATFORM_ADDRESS: ${PLATFORM_ADDRESS:-}
       PLATFORM_IBAN: ${PLATFORM_IBAN:-}
+      # Krok 13c: true → cron po vytvorení draftu aj finalizuje + odošle. Default false (manuálne).
+      BILLING_AUTO_SEND: ${BILLING_AUTO_SEND:-false}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
