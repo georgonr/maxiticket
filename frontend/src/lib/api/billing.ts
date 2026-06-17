@@ -1,5 +1,58 @@
-import { apiFetch } from '@/lib/api';
+import { apiFetch, API_BASE } from '@/lib/api';
 import { BillingMode } from '@/lib/api/organizers-admin';
+
+export type InvoiceStatus = 'DRAFT' | 'FINALIZED';
+export type InvoiceLineType = 'COMMISSION' | 'REFUND_FEE' | 'CUSTOM';
+
+export interface InvoiceLine {
+  id: string;
+  type: InvoiceLineType;
+  description: string;
+  quantity: number;
+  unitPriceCents: number;
+  vatPercent: number;
+  lineNetCents: number;
+  lineVatCents: number;
+  lineTotalCents: number;
+  sortOrder: number;
+}
+
+export interface Invoice {
+  id: string;
+  organizerId: string;
+  status: InvoiceStatus;
+  invoiceNumber: string | null;
+  billingMode: BillingMode;
+  terminId: string | null;
+  periodFrom: string | null;
+  periodTo: string | null;
+  issueDate: string;
+  taxDate: string;
+  dueDate: string;
+  currency: string;
+  buyerName: string | null;
+  buyerCompany: string | null;
+  buyerIco: string | null;
+  buyerDic: string | null;
+  buyerIcDph: string | null;
+  buyerAddress: string | null;
+  buyerIban: string | null;
+  subtotalCents: number;
+  vatTotalCents: number;
+  totalCents: number;
+  snapTicketsSold: number;
+  snapRevenueCents: number;
+  snapRefundedTickets: number;
+  snapNetPayoutCents: number;
+  note: string | null;
+  createdAt: string;
+  lineItems: InvoiceLine[];
+  organizer?: { name: string };
+}
+
+export interface InvoiceListRow extends Omit<Invoice, 'lineItems'> {
+  organizer: { name: string };
+}
 
 export interface BillingOrganizerRow {
   organizerId: string;
@@ -44,4 +97,43 @@ export const billingApi = {
 
   statementByRange: (id: string, from: string, to: string, token: string) =>
     apiFetch<BillingStatement>(`/v1/admin/billing/organizers/${id}/statement?from=${from}&to=${to}`, { token }),
+
+  // ── Faktúry (krok 13b) ──
+  createInvoice: (orgId: string, body: { occurrenceId?: string; from?: string; to?: string }, token: string) =>
+    apiFetch<Invoice>(`/v1/admin/billing/organizers/${orgId}/invoices`, { method: 'POST', body: JSON.stringify(body), token }),
+
+  listInvoices: (token: string, params: { organizerId?: string; status?: InvoiceStatus } = {}) => {
+    const qp = new URLSearchParams();
+    if (params.organizerId) qp.set('organizerId', params.organizerId);
+    if (params.status) qp.set('status', params.status);
+    const s = qp.toString();
+    return apiFetch<InvoiceListRow[]>(`/v1/admin/billing/invoices${s ? `?${s}` : ''}`, { token });
+  },
+
+  getInvoice: (id: string, token: string) =>
+    apiFetch<Invoice>(`/v1/admin/billing/invoices/${id}`, { token }),
+
+  addLineItem: (id: string, body: { description: string; quantity: number; unitPriceCents: number; vatPercent: number }, token: string) =>
+    apiFetch<Invoice>(`/v1/admin/billing/invoices/${id}/line-items`, { method: 'POST', body: JSON.stringify(body), token }),
+
+  updateLineItem: (id: string, lineId: string, body: Partial<{ description: string; quantity: number; unitPriceCents: number; vatPercent: number }>, token: string) =>
+    apiFetch<Invoice>(`/v1/admin/billing/invoices/${id}/line-items/${lineId}`, { method: 'PATCH', body: JSON.stringify(body), token }),
+
+  deleteLineItem: (id: string, lineId: string, token: string) =>
+    apiFetch<Invoice>(`/v1/admin/billing/invoices/${id}/line-items/${lineId}`, { method: 'DELETE', token }),
+
+  updateInvoice: (id: string, body: { taxDate?: string; dueDate?: string; note?: string }, token: string) =>
+    apiFetch<Invoice>(`/v1/admin/billing/invoices/${id}`, { method: 'PATCH', body: JSON.stringify(body), token }),
+
+  finalize: (id: string, token: string) =>
+    apiFetch<Invoice>(`/v1/admin/billing/invoices/${id}/finalize`, { method: 'POST', token }),
+
+  deleteInvoice: (id: string, token: string) =>
+    apiFetch<{ deleted: boolean }>(`/v1/admin/billing/invoices/${id}`, { method: 'DELETE', token }),
+
+  invoicePdf: async (id: string, token: string): Promise<Blob> => {
+    const res = await fetch(`${API_BASE}/v1/admin/billing/invoices/${id}/pdf`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(`PDF ${res.status}`);
+    return res.blob();
+  },
 };

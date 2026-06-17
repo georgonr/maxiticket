@@ -1890,6 +1890,64 @@
     "netPayout": "NETTO VÝPLATA",
     "customerFees": "Zákaznícke poplatky",
     "customerFeesNote": "Náš príjem – nevstupuje do výplaty.",
-    "perTicketSuffix": "/ lístok"
+    "perTicketSuffix": "/ lístok",
+    "invoice": {
+      "create": "Vytvoriť faktúru (návrh)",
+      "invoicesLink": "Faktúry",
+      "listTitle": "Faktúry",
+      "listEmpty": "Žiadne faktúry.",
+      "noNumber": "—",
+      "status": {
+        "DRAFT": "Návrh",
+        "FINALIZED": "Finalizovaná"
+      },
+      "type": {
+        "COMMISSION": "Provízia",
+        "REFUND_FEE": "Refund poplatok",
+        "CUSTOM": "Vlastná"
+      },
+      "col": {
+        "number": "Číslo",
+        "organizer": "Organizátor",
+        "period": "Obdobie",
+        "status": "Stav",
+        "total": "Suma",
+        "issued": "Vystavená",
+        "due": "Splatnosť"
+      },
+      "detailTitle": "Faktúra",
+      "supplier": "Dodávateľ",
+      "buyer": "Odberateľ",
+      "items": "Položky",
+      "addItem": "Pridať položku",
+      "desc": "Popis",
+      "qty": "Ks",
+      "unitPrice": "J. cena (€)",
+      "vat": "DPH %",
+      "lineTotal": "Spolu",
+      "add": "Pridať",
+      "save": "Uložiť",
+      "cancel": "Zrušiť",
+      "del": "Zmazať",
+      "subtotal": "Základ DPH",
+      "vatTotal": "DPH",
+      "total": "Celkom s DPH",
+      "issueDate": "Dátum vystavenia",
+      "taxDate": "Dátum dodania (DUZP)",
+      "dueDate": "Splatnosť",
+      "note": "Poznámka",
+      "saveHeader": "Uložiť údaje",
+      "finalize": "Finalizovať",
+      "finalizeConfirm": "Finalizovať faktúru? Pridelí sa číslo a faktúra sa zamkne (nezvratné).",
+      "downloadPdf": "Stiahnuť PDF",
+      "deleteInvoice": "Zmazať návrh",
+      "deleteConfirm": "Zmazať tento návrh faktúry?",
+      "lockedNote": "Finalizovaná faktúra je zamknutá – položky a údaje sa nedajú meniť.",
+      "stmtSection": "Výpis k vyúčtovaniu",
+      "toastCreated": "Návrh faktúry vytvorený.",
+      "toastFinalized": "Faktúra finalizovaná.",
+      "toastSaved": "Uložené.",
+      "toastErr": "Operácia zlyhala."
+    }
   }
 }

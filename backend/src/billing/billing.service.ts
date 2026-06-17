@@ -70,9 +70,16 @@ export class BillingService {
           where: { terminId: { in: terminIds }, status: { in: ['VALID', 'USED'] }, order: { status: 'PAID' } },
         })
       : 0;
+    // Refund poplatok LEN za lístky kde reálne bola PLATBA aj vrátenie:
+    // status REFUNDED|CANCELLED + objednávka reálne zaplatená (paidAt) + NON_COMP
+    // (comp/manual = bez reálnej platby → neúčtovať refund poplatok).
     const refundedTickets = terminIds.length
       ? await this.prisma.ticket.count({
-          where: { terminId: { in: terminIds }, status: { in: ['REFUNDED', 'CANCELLED'] } },
+          where: {
+            terminId: { in: terminIds },
+            status: { in: ['REFUNDED', 'CANCELLED'] },
+            order: { paidAt: { not: null }, AND: [NON_COMP] },
+          },
         })
       : 0;
 

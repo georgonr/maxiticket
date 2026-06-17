@@ -1890,6 +1890,64 @@
     "netPayout": "NETTO VÝPLATA",
     "customerFees": "Zákaznické poplatky",
     "customerFeesNote": "Náš příjem – nevstupuje do výplaty.",
-    "perTicketSuffix": "/ vstupenka"
+    "perTicketSuffix": "/ vstupenka",
+    "invoice": {
+      "create": "Vytvořit fakturu (návrh)",
+      "invoicesLink": "Faktury",
+      "listTitle": "Faktury",
+      "listEmpty": "Žádné faktury.",
+      "noNumber": "—",
+      "status": {
+        "DRAFT": "Návrh",
+        "FINALIZED": "Finalizovaná"
+      },
+      "type": {
+        "COMMISSION": "Provize",
+        "REFUND_FEE": "Refund poplatek",
+        "CUSTOM": "Vlastní"
+      },
+      "col": {
+        "number": "Číslo",
+        "organizer": "Pořadatel",
+        "period": "Období",
+        "status": "Stav",
+        "total": "Částka",
+        "issued": "Vystaveno",
+        "due": "Splatnost"
+      },
+      "detailTitle": "Faktura",
+      "supplier": "Dodavatel",
+      "buyer": "Odběratel",
+      "items": "Položky",
+      "addItem": "Přidat položku",
+      "desc": "Popis",
+      "qty": "Ks",
+      "unitPrice": "J. cena (€)",
+      "vat": "DPH %",
+      "lineTotal": "Celkem",
+      "add": "Přidat",
+      "save": "Uložit",
+      "cancel": "Zrušit",
+      "del": "Smazat",
+      "subtotal": "Základ DPH",
+      "vatTotal": "DPH",
+      "total": "Celkem s DPH",
+      "issueDate": "Datum vystavení",
+      "taxDate": "Datum dodání (DUZP)",
+      "dueDate": "Splatnost",
+      "note": "Poznámka",
+      "saveHeader": "Uložit údaje",
+      "finalize": "Finalizovat",
+      "finalizeConfirm": "Finalizovat fakturu? Přidělí se číslo a faktura se uzamkne (nevratné).",
+      "downloadPdf": "Stáhnout PDF",
+      "deleteInvoice": "Smazat návrh",
+      "deleteConfirm": "Smazat tento návrh faktury?",
+      "lockedNote": "Finalizovaná faktura je uzamčena – položky a údaje nelze měnit.",
+      "stmtSection": "Rozpis vyúčtování",
+      "toastCreated": "Návrh faktury vytvořen.",
+      "toastFinalized": "Faktura finalizována.",
+      "toastSaved": "Uloženo.",
+      "toastErr": "Operace selhala."
+    }
   }
 }

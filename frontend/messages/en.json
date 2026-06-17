@@ -1890,6 +1890,64 @@
     "netPayout": "NET PAYOUT",
     "customerFees": "Customer fees",
     "customerFeesNote": "Our income – not part of payout.",
-    "perTicketSuffix": "/ ticket"
+    "perTicketSuffix": "/ ticket",
+    "invoice": {
+      "create": "Create invoice (draft)",
+      "invoicesLink": "Invoices",
+      "listTitle": "Invoices",
+      "listEmpty": "No invoices.",
+      "noNumber": "—",
+      "status": {
+        "DRAFT": "Draft",
+        "FINALIZED": "Finalized"
+      },
+      "type": {
+        "COMMISSION": "Commission",
+        "REFUND_FEE": "Refund fee",
+        "CUSTOM": "Custom"
+      },
+      "col": {
+        "number": "Number",
+        "organizer": "Organizer",
+        "period": "Period",
+        "status": "Status",
+        "total": "Amount",
+        "issued": "Issued",
+        "due": "Due"
+      },
+      "detailTitle": "Invoice",
+      "supplier": "Supplier",
+      "buyer": "Customer",
+      "items": "Items",
+      "addItem": "Add item",
+      "desc": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price (€)",
+      "vat": "VAT %",
+      "lineTotal": "Total",
+      "add": "Add",
+      "save": "Save",
+      "cancel": "Cancel",
+      "del": "Delete",
+      "subtotal": "Net",
+      "vatTotal": "VAT",
+      "total": "Total incl. VAT",
+      "issueDate": "Issue date",
+      "taxDate": "Tax date (supply)",
+      "dueDate": "Due date",
+      "note": "Note",
+      "saveHeader": "Save details",
+      "finalize": "Finalize",
+      "finalizeConfirm": "Finalize the invoice? A number is assigned and the invoice is locked (irreversible).",
+      "downloadPdf": "Download PDF",
+      "deleteInvoice": "Delete draft",
+      "deleteConfirm": "Delete this draft invoice?",
+      "lockedNote": "A finalized invoice is locked – items and details cannot be changed.",
+      "stmtSection": "Statement",
+      "toastCreated": "Draft invoice created.",
+      "toastFinalized": "Invoice finalized.",
+      "toastSaved": "Saved.",
+      "toastErr": "The operation failed."
+    }
   }
 }

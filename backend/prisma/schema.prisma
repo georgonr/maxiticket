@@ -37,6 +37,18 @@ enum BillingMode {
   MONTHLY    // mesačné vyúčtovanie agregátom termínov
 }
 
+// Fakturačný systém (krok 13b): faktúra organizátorovi (provízia + refund + custom).
+enum InvoiceStatus {
+  DRAFT       // editovateľná, bez čísla
+  FINALIZED   // zamknutá, pridelené invoiceNumber
+}
+
+enum InvoiceLineType {
+  COMMISSION   // provízia z predaja
+  REFUND_FEE   // poplatok za refundáciu
+  CUSTOM       // ručne pridaná položka
+}
+
 enum VatStatus {
   NON_PAYER
   PAYER
@@ -181,6 +193,7 @@ model Organizer {
   coupons          Coupon[]
   posClosures      PosClosure[]
   venueAccesses    VenueAccess[]
+  invoices         Invoice[]
 
   @@index([status])
 }
@@ -969,4 +982,73 @@ model TerminSeat {
   @@unique([terminId, seatId])   // 1 riadok na sedadlo/termín – základ atomického claimu
   @@index([orderId])
   @@index([terminId, status])
+}
+
+// ─────────────────────── FAKTURAČNÝ SYSTÉM (krok 13b) ───────────────────────
+
+model Invoice {
+  id            String        @id @default(cuid())
+  organizerId   String
+  organizer     Organizer     @relation(fields: [organizerId], references: [id])
+
+  status        InvoiceStatus @default(DRAFT)
+  invoiceNumber String?       @unique  // NULL kým DRAFT; {YYYY}{NNNN} pri finalizácii
+
+  billingMode   BillingMode               // snapshot režimu
+  terminId      String?                   // PER_EVENT scope
+  periodFrom    DateTime?                 // MONTHLY scope
+  periodTo      DateTime?
+
+  issueDate     DateTime      @default(now())  // dátum vystavenia
+  taxDate       DateTime      @default(now())  // DUZP (dátum dodania)
+  dueDate       DateTime                       // splatnosť (default issue +14)
+  currency      String        @default("EUR")
+
+  // Snapshot ODBERATEĽA (organizátor) – zmrazený pri finalizácii
+  buyerName       String?
+  buyerCompany    String?
+  buyerIco        String?
+  buyerDic        String?
+  buyerIcDph      String?
+  buyerAddress    String?
+  buyerIban       String?
+
+  // Súčty (cents)
+  subtotalCents Int           @default(0)
+  vatTotalCents Int           @default(0)
+  totalCents    Int           @default(0)
+
+  // Snapshot VÝPISU (informačné na PDF) – zmrazený pri finalizácii
+  snapTicketsSold     Int     @default(0)
+  snapRevenueCents    Int     @default(0)
+  snapRefundedTickets Int     @default(0)
+  snapNetPayoutCents  Int     @default(0)
+
+  note          String?
+  createdById   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  lineItems     InvoiceLineItem[]
+
+  @@index([organizerId])
+  @@index([status])
+}
+
+model InvoiceLineItem {
+  id            String          @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  type          InvoiceLineType
+  description   String
+  quantity      Int             @default(1)
+  unitPriceCents Int
+  vatPercent    Decimal         @db.Decimal(5, 2)
+  lineNetCents  Int
+  lineVatCents  Int
+  lineTotalCents Int
+  sortOrder     Int             @default(0)
+
+  @@index([invoiceId])
 }

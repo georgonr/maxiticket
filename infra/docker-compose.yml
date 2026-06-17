@@ -61,6 +61,13 @@ services:
       ORDER_EXPIRY_MINUTES: ${ORDER_EXPIRY_MINUTES:-30}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      # Fakturačný systém (krok 13b) – DODÁVATEĽ na faktúre. Placeholdery – účtovník vyplní.
+      PLATFORM_LEGAL_NAME: ${PLATFORM_LEGAL_NAME:-}
+      PLATFORM_ICO: ${PLATFORM_ICO:-}
+      PLATFORM_DIC: ${PLATFORM_DIC:-}
+      PLATFORM_IC_DPH: ${PLATFORM_IC_DPH:-}
+      PLATFORM_ADDRESS: ${PLATFORM_ADDRESS:-}
+      PLATFORM_IBAN: ${PLATFORM_IBAN:-}
     volumes:
       - uploads_data:/app/uploads
     depends_on:

@@ -1,20 +1,24 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations, useFormatter } from 'next-intl';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { billingApi, BillingStatement, BillingPastTermin } from '@/lib/api/billing';
 import { SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
+import { Button } from '@/components/ui/button';
 
 type Mode = 'termin' | 'month';
 
 export default function AdminBillingDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const t = useTranslations('billing');
+  const ti = useTranslations('billing.invoice');
   const format = useFormatter();
+  const [creating, setCreating] = useState(false);
   const eur = (cents: number) => format.number(cents / 100, { style: 'currency', currency: 'EUR' });
   const fmtTerminDate = (iso: string) => format.dateTime(new Date(iso), { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -73,6 +77,27 @@ export default function AdminBillingDetailPage() {
     }
   }
 
+  async function createInvoice() {
+    let body: { occurrenceId?: string; from?: string; to?: string } | null = null;
+    if (mode === 'termin' && terminId) {
+      body = { occurrenceId: terminId };
+    } else if (mode === 'month' && month) {
+      const [y, m] = month.split('-').map(Number);
+      body = { from: new Date(Date.UTC(y, m - 1, 1)).toISOString(), to: new Date(Date.UTC(y, m, 0, 23, 59, 59)).toISOString() };
+    }
+    if (!body) return;
+    setCreating(true);
+    try {
+      const token = await getValidToken();
+      if (!token) throw new Error('no token');
+      const inv = await billingApi.createInvoice(id, body, token);
+      router.push(`/admin/billing/invoices/${inv.id}`);
+    } catch {
+      setError(t('errLoad'));
+      setCreating(false);
+    }
+  }
+
   const row = (label: string, value: string, opts?: { bold?: boolean; muted?: boolean; sub?: string }) => (
     <div className={`flex items-center justify-between gap-3 py-2 ${opts?.bold ? 'border-t border-gray-200 dark:border-gray-700 mt-1 pt-3' : 'border-b border-gray-50 dark:border-gray-800'}`}>
       <span className={opts?.bold ? 'text-sm font-semibold text-gray-900 dark:text-gray-100' : 'text-sm text-gray-500 dark:text-gray-400'}>
@@ -85,9 +110,14 @@ export default function AdminBillingDetailPage() {
   return (
     <div className="min-h-screen bg-cream dark:bg-gray-950">
       <main className="mx-auto max-w-3xl space-y-6 p-6">
-        <Link href="/admin/billing" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-coral dark:text-gray-400">
-          <ArrowLeft size={15} /> {t('back')}
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/admin/billing" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-coral dark:text-gray-400">
+            <ArrowLeft size={15} /> {t('back')}
+          </Link>
+          <Link href="/admin/billing/invoices" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-coral dark:text-gray-400">
+            <FileText size={15} /> {ti('invoicesLink')}
+          </Link>
+        </div>
 
         {error && !termins.length ? (
           <ErrorState message={error} />
@@ -151,6 +181,11 @@ export default function AdminBillingDetailPage() {
                 <div className="mt-3 rounded-lg bg-cream dark:bg-gray-800 p-3">
                   {row(t('customerFees'), eur(stmt.customerFeesCents), { muted: true })}
                   <p className="text-xs text-gray-400 dark:text-gray-500">{t('customerFeesNote')}</p>
+                </div>
+                <div className="mt-5">
+                  <Button onClick={createInvoice} loading={creating} disabled={creating}>
+                    <FileText size={16} className="mr-2" /> {ti('create')}
+                  </Button>
                 </div>
               </SectionCard>
             ) : (

@@ -1,0 +1,286 @@
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Prisma, InvoiceStatus, InvoiceLineType } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { BillingService, BillingScope } from './billing.service';
+import { generateInvoicePdf } from './invoice-pdf.helper';
+
+const DUE_DAYS = 14;
+
+@Injectable()
+export class InvoiceService {
+  constructor(
+    private prisma: PrismaService,
+    private billing: BillingService,
+    private config: ConfigService,
+  ) {}
+
+  /** DODÁVATEĽ (platforma) z ENV – placeholdery pred ostrým použitím vyplní účtovník. */
+  private platformSupplier() {
+    return {
+      name: this.config.get<string>('PLATFORM_LEGAL_NAME') || 'MaceT s.r.o.',
+      ico: this.config.get<string>('PLATFORM_ICO') || null,
+      dic: this.config.get<string>('PLATFORM_DIC') || null,
+      icDph: this.config.get<string>('PLATFORM_IC_DPH') || null,
+      address: this.config.get<string>('PLATFORM_ADDRESS') || null,
+      iban: this.config.get<string>('PLATFORM_IBAN') || null,
+    };
+  }
+
+  /** PDF faktúry (faktúra + výpis); DRAFT s vodoznakom „NÁVRH". */
+  async invoicePdf(id: string) {
+    const inv = await this.get(id);
+    const pdf = await generateInvoicePdf({
+      isDraft: inv.status === InvoiceStatus.DRAFT,
+      invoiceNumber: inv.invoiceNumber,
+      issueDate: inv.issueDate,
+      taxDate: inv.taxDate,
+      dueDate: inv.dueDate,
+      currency: inv.currency,
+      supplier: this.platformSupplier(),
+      buyer: {
+        name: inv.buyerCompany || inv.buyerName || '—',
+        ico: inv.buyerIco, dic: inv.buyerDic, icDph: inv.buyerIcDph,
+        address: inv.buyerAddress, iban: inv.buyerIban,
+      },
+      lines: inv.lineItems.map((li) => ({
+        description: li.description, quantity: li.quantity, unitPriceCents: li.unitPriceCents,
+        vatPercent: Number(li.vatPercent), lineNetCents: li.lineNetCents, lineVatCents: li.lineVatCents, lineTotalCents: li.lineTotalCents,
+      })),
+      subtotalCents: inv.subtotalCents,
+      vatTotalCents: inv.vatTotalCents,
+      totalCents: inv.totalCents,
+      note: inv.note,
+      statement: {
+        ticketsSold: inv.snapTicketsSold,
+        revenueCents: inv.snapRevenueCents,
+        commissionCents: inv.lineItems.filter((l) => l.type === 'COMMISSION').reduce((s, l) => s + l.lineNetCents, 0),
+        vatCents: inv.lineItems.filter((l) => l.type === 'COMMISSION').reduce((s, l) => s + l.lineVatCents, 0),
+        refundedTickets: inv.snapRefundedTickets,
+        refundFeesCents: inv.lineItems.filter((l) => l.type === 'REFUND_FEE').reduce((s, l) => s + l.lineNetCents, 0),
+        netPayoutCents: inv.snapNetPayoutCents,
+      },
+    });
+    return { pdf, filename: `faktura-${inv.invoiceNumber ?? 'navrh'}.pdf` };
+  }
+
+  // ─── snapshot odberateľa z organizátora ───
+  private buyerSnapshot(org: {
+    name: string; companyName: string | null; ico: string | null; dic: string | null;
+    icDph: string | null; addressStreet: string | null; addressCity: string | null;
+    addressZip: string | null; addressCountry: string | null; bankAccount: string | null; iban: string | null;
+  }) {
+    const addr = [
+      org.addressStreet,
+      [org.addressZip, org.addressCity].filter(Boolean).join(' '),
+      org.addressCountry,
+    ].filter(Boolean).join(', ');
+    return {
+      buyerName: org.name,
+      buyerCompany: org.companyName,
+      buyerIco: org.ico,
+      buyerDic: org.dic,
+      buyerIcDph: org.icDph,
+      buyerAddress: addr || null,
+      buyerIban: org.bankAccount ?? org.iban ?? null,
+    };
+  }
+
+  /** Vytvorí DRAFT faktúru z computeStatement + auto položky (provízia, refund poplatok). */
+  async createDraft(organizerId: string, scope: BillingScope, createdById?: string) {
+    const org = await this.prisma.organizer.findUnique({ where: { id: organizerId } });
+    if (!org) throw new NotFoundException('Organizátor neexistuje.');
+
+    const st = await this.billing.computeStatement(organizerId, scope);
+    const vatPercent = Number(org.vatPercent);
+
+    const issueDate = new Date();
+    const dueDate = new Date(issueDate.getTime() + DUE_DAYS * 24 * 60 * 60 * 1000);
+
+    const items: Prisma.InvoiceLineItemCreateWithoutInvoiceInput[] = [];
+    // 1) Provízia (vždy)
+    {
+      const net = st.commissionCents;
+      const vat = Math.round((net * vatPercent) / 100);
+      items.push({
+        type: InvoiceLineType.COMMISSION,
+        description: `Provízia z predaja vstupeniek (${st.commissionPercent} %)`,
+        quantity: 1, unitPriceCents: net, vatPercent,
+        lineNetCents: net, lineVatCents: vat, lineTotalCents: net + vat, sortOrder: 0,
+      });
+    }
+    // 2) Refund poplatok (len ak > 0)
+    if (st.refundFeesCents > 0) {
+      const net = st.refundFeesCents;
+      const vat = Math.round((net * vatPercent) / 100);
+      const perEur = (st.refundFeePerTicketCents / 100).toFixed(2).replace('.', ',');
+      items.push({
+        type: InvoiceLineType.REFUND_FEE,
+        description: `Poplatok za refundáciu (${st.refundedTickets} × ${perEur} €)`,
+        quantity: st.refundedTickets, unitPriceCents: st.refundFeePerTicketCents, vatPercent,
+        lineNetCents: net, lineVatCents: vat, lineTotalCents: net + vat, sortOrder: 1,
+      });
+    }
+
+    const subtotalCents = items.reduce((s, i) => s + i.lineNetCents, 0);
+    const vatTotalCents = items.reduce((s, i) => s + i.lineVatCents, 0);
+    const totalCents = subtotalCents + vatTotalCents;
+
+    const inv = await this.prisma.invoice.create({
+      data: {
+        organizerId,
+        status: InvoiceStatus.DRAFT,
+        billingMode: org.billingMode,
+        terminId: 'occurrenceId' in scope ? scope.occurrenceId : null,
+        periodFrom: 'from' in scope ? scope.from : null,
+        periodTo: 'to' in scope ? scope.to : null,
+        issueDate, taxDate: issueDate, dueDate,
+        ...this.buyerSnapshot(org),
+        subtotalCents, vatTotalCents, totalCents,
+        snapTicketsSold: st.ticketsSold,
+        snapRevenueCents: st.revenueCents,
+        snapRefundedTickets: st.refundedTickets,
+        snapNetPayoutCents: st.netPayoutCents,
+        createdById,
+        lineItems: { create: items },
+      },
+      include: { lineItems: { orderBy: { sortOrder: 'asc' } } },
+    });
+    return inv;
+  }
+
+  async list(filter: { organizerId?: string; status?: InvoiceStatus }) {
+    return this.prisma.invoice.findMany({
+      where: {
+        ...(filter.organizerId ? { organizerId: filter.organizerId } : {}),
+        ...(filter.status ? { status: filter.status } : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }],
+      include: { organizer: { select: { name: true } } },
+    });
+  }
+
+  async get(id: string) {
+    const inv = await this.prisma.invoice.findUnique({
+      where: { id },
+      include: { lineItems: { orderBy: { sortOrder: 'asc' } }, organizer: { select: { name: true } } },
+    });
+    if (!inv) throw new NotFoundException('Faktúra neexistuje.');
+    return inv;
+  }
+
+  private async assertDraft(id: string) {
+    const inv = await this.prisma.invoice.findUnique({ where: { id }, select: { status: true } });
+    if (!inv) throw new NotFoundException('Faktúra neexistuje.');
+    if (inv.status !== InvoiceStatus.DRAFT) throw new ForbiddenException('Finalizovaná faktúra je zamknutá.');
+  }
+
+  private async recomputeTotals(invoiceId: string) {
+    const items = await this.prisma.invoiceLineItem.findMany({ where: { invoiceId } });
+    const subtotalCents = items.reduce((s, i) => s + i.lineNetCents, 0);
+    const vatTotalCents = items.reduce((s, i) => s + i.lineVatCents, 0);
+    await this.prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { subtotalCents, vatTotalCents, totalCents: subtotalCents + vatTotalCents },
+    });
+  }
+
+  /** CUSTOM položka (len DRAFT). */
+  async addLineItem(invoiceId: string, dto: { description: string; quantity: number; unitPriceCents: number; vatPercent: number }) {
+    await this.assertDraft(invoiceId);
+    const net = dto.quantity * dto.unitPriceCents;
+    const vat = Math.round((net * dto.vatPercent) / 100);
+    const maxSort = await this.prisma.invoiceLineItem.aggregate({ where: { invoiceId }, _max: { sortOrder: true } });
+    await this.prisma.invoiceLineItem.create({
+      data: {
+        invoiceId, type: InvoiceLineType.CUSTOM,
+        description: dto.description, quantity: dto.quantity, unitPriceCents: dto.unitPriceCents,
+        vatPercent: dto.vatPercent, lineNetCents: net, lineVatCents: vat, lineTotalCents: net + vat,
+        sortOrder: (maxSort._max.sortOrder ?? 0) + 1,
+      },
+    });
+    await this.recomputeTotals(invoiceId);
+    return this.get(invoiceId);
+  }
+
+  async updateLineItem(invoiceId: string, lineId: string, dto: { description?: string; quantity?: number; unitPriceCents?: number; vatPercent?: number }) {
+    await this.assertDraft(invoiceId);
+    const li = await this.prisma.invoiceLineItem.findUnique({ where: { id: lineId } });
+    if (!li || li.invoiceId !== invoiceId) throw new NotFoundException('Položka neexistuje.');
+    const quantity = dto.quantity ?? li.quantity;
+    const unitPriceCents = dto.unitPriceCents ?? li.unitPriceCents;
+    const vatPercent = dto.vatPercent ?? Number(li.vatPercent);
+    const net = quantity * unitPriceCents;
+    const vat = Math.round((net * vatPercent) / 100);
+    await this.prisma.invoiceLineItem.update({
+      where: { id: lineId },
+      data: {
+        ...(dto.description !== undefined ? { description: dto.description } : {}),
+        quantity, unitPriceCents, vatPercent, lineNetCents: net, lineVatCents: vat, lineTotalCents: net + vat,
+      },
+    });
+    await this.recomputeTotals(invoiceId);
+    return this.get(invoiceId);
+  }
+
+  async deleteLineItem(invoiceId: string, lineId: string) {
+    await this.assertDraft(invoiceId);
+    const li = await this.prisma.invoiceLineItem.findUnique({ where: { id: lineId } });
+    if (!li || li.invoiceId !== invoiceId) throw new NotFoundException('Položka neexistuje.');
+    await this.prisma.invoiceLineItem.delete({ where: { id: lineId } });
+    await this.recomputeTotals(invoiceId);
+    return this.get(invoiceId);
+  }
+
+  /** Edit hlavičky DRAFT (DUZP, splatnosť, poznámka). */
+  async updateInvoice(id: string, dto: { taxDate?: string; dueDate?: string; note?: string }) {
+    await this.assertDraft(id);
+    await this.prisma.invoice.update({
+      where: { id },
+      data: {
+        ...(dto.taxDate ? { taxDate: new Date(dto.taxDate) } : {}),
+        ...(dto.dueDate ? { dueDate: new Date(dto.dueDate) } : {}),
+        ...(dto.note !== undefined ? { note: dto.note } : {}),
+      },
+    });
+    return this.get(id);
+  }
+
+  async deleteInvoice(id: string) {
+    await this.assertDraft(id);
+    await this.prisma.invoice.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  /** Finalizácia: pridelí invoiceNumber {YYYY}{NNNN}, zmrazí snapshot odberateľa, zamkne. Race-safe. */
+  async finalize(id: string) {
+    const inv = await this.prisma.invoice.findUnique({ where: { id }, include: { organizer: true } });
+    if (!inv) throw new NotFoundException('Faktúra neexistuje.');
+    if (inv.status !== InvoiceStatus.DRAFT) throw new BadRequestException('Faktúra je už finalizovaná.');
+
+    const year = inv.issueDate.getFullYear();
+    const buyer = this.buyerSnapshot(inv.organizer);
+
+    // Race-safe: max+1 v roku, retry pri kolízii unique invoiceNumber.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const last = await this.prisma.invoice.findFirst({
+        where: { invoiceNumber: { startsWith: String(year) } },
+        orderBy: { invoiceNumber: 'desc' },
+        select: { invoiceNumber: true },
+      });
+      const nextSeq = last?.invoiceNumber ? parseInt(last.invoiceNumber.slice(4), 10) + 1 : 1;
+      const invoiceNumber = `${year}${String(nextSeq).padStart(4, '0')}`;
+      try {
+        await this.prisma.invoice.update({
+          where: { id },
+          data: { status: InvoiceStatus.FINALIZED, invoiceNumber, ...buyer },
+        });
+        return this.get(id);
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue; // kolízia čísla → retry
+        throw e;
+      }
+    }
+    throw new BadRequestException('Nepodarilo sa prideliť číslo faktúry (kolízia). Skúste znova.');
+  }
+}
