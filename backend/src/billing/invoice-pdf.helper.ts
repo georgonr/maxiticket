@@ -74,9 +74,9 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     // ── Hlavička ─────────────────────────────────────────────────────────────
     doc.fillColor(TEAL).font('GeistBold').fontSize(13).text('TicketAll', left, 40);
     doc.fillColor(BLACK).font('Bebas').fontSize(26)
-      .text(data.isDraft ? 'FAKTÚRA (NÁVRH)' : 'FAKTÚRA', left, 40, { width, align: 'right' });
+      .text(data.isDraft ? 'VYÚČTOVANIE' : 'FAKTÚRA', left, 40, { width, align: 'right' });
     doc.fillColor(GRAY).font('Geist').fontSize(10)
-      .text(data.isDraft ? 'Neplatný daňový doklad' : `Č. ${data.invoiceNumber}`, left, 70, { width, align: 'right' });
+      .text(data.isDraft ? 'Návrh – neplatný daňový doklad' : `Č. ${data.invoiceNumber}`, left, 70, { width, align: 'right' });
     doc.moveTo(left, 92).lineTo(right, 92).strokeColor('#E5E7EB').lineWidth(1).stroke();
 
     // ── Strany ───────────────────────────────────────────────────────────────

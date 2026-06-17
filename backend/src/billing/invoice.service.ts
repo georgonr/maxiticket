@@ -106,7 +106,7 @@ export class InvoiceService {
       const vat = Math.round((net * vatPercent) / 100);
       items.push({
         type: InvoiceLineType.COMMISSION,
-        description: `Provízia z predaja vstupeniek (${st.commissionPercent} %)`,
+        description: 'Provízia z predaja vstupeniek',
         quantity: 1, unitPriceCents: net, vatPercent,
         lineNetCents: net, lineVatCents: vat, lineTotalCents: net + vat, sortOrder: 0,
       });

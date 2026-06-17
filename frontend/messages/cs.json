@@ -1892,9 +1892,9 @@
     "customerFeesNote": "Náš příjem – nevstupuje do výplaty.",
     "perTicketSuffix": "/ vstupenka",
     "invoice": {
-      "create": "Vytvořit fakturu (návrh)",
+      "create": "Vytvořit vyúčtování",
       "invoicesLink": "Faktury",
-      "listTitle": "Faktury",
+      "listTitle": "Vyúčtování a faktury",
       "listEmpty": "Žádné faktury.",
       "noNumber": "—",
       "status": {
@@ -1942,17 +1942,17 @@
       "finalize": "Finalizovat",
       "finalizeConfirm": "Finalizovat fakturu? Přidělí se číslo a faktura se uzamkne (nevratné).",
       "downloadPdf": "Stáhnout PDF",
-      "deleteInvoice": "Smazat návrh",
-      "deleteConfirm": "Smazat tento návrh faktury?",
+      "deleteInvoice": "Smazat vyúčtování",
+      "deleteConfirm": "Smazat toto vyúčtování (návrh)?",
       "lockedNote": "Finalizovaná faktura je uzamčena – položky a údaje nelze měnit.",
       "stmtSection": "Rozpis vyúčtování",
-      "toastCreated": "Návrh faktury vytvořen.",
+      "toastCreated": "Vyúčtování (návrh) vytvořeno.",
       "toastFinalized": "Faktura finalizována.",
       "toastSaved": "Uloženo.",
       "toastErr": "Operace selhala.",
       "autoBadge": "Auto",
       "paidOutBadge": "Vyplaceno",
-      "send": "Odeslat pořadateli",
+      "send": "Odeslat fakturu",
       "sendConfirm": "Opravdu odeslat fakturu pořadateli e-mailem?",
       "toastSent": "Faktura odeslána pořadateli.",
       "markPaid": "Označit jako zaplacené",
@@ -1962,7 +1962,11 @@
       "paidOutAt": "Vyplaceno",
       "filterAll": "Všechny stavy",
       "runAuto": "Spustit auto-generování",
-      "autoRunResult": "Auto-generování: vytvořeno {count} návrhů."
+      "autoRunResult": "Auto-generování: vytvořeno {count} návrhů.",
+      "docDraft": "Vyúčtování",
+      "docFinal": "Faktura",
+      "downloadDraft": "Stáhnout vyúčtování",
+      "downloadInvoice": "Stáhnout fakturu"
     }
   }
 }

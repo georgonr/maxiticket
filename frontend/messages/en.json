@@ -1892,9 +1892,9 @@
     "customerFeesNote": "Our income – not part of payout.",
     "perTicketSuffix": "/ ticket",
     "invoice": {
-      "create": "Create invoice (draft)",
+      "create": "Create statement",
       "invoicesLink": "Invoices",
-      "listTitle": "Invoices",
+      "listTitle": "Statements & invoices",
       "listEmpty": "No invoices.",
       "noNumber": "—",
       "status": {
@@ -1942,17 +1942,17 @@
       "finalize": "Finalize",
       "finalizeConfirm": "Finalize the invoice? A number is assigned and the invoice is locked (irreversible).",
       "downloadPdf": "Download PDF",
-      "deleteInvoice": "Delete draft",
-      "deleteConfirm": "Delete this draft invoice?",
+      "deleteInvoice": "Delete statement",
+      "deleteConfirm": "Delete this statement (draft)?",
       "lockedNote": "A finalized invoice is locked – items and details cannot be changed.",
       "stmtSection": "Statement",
-      "toastCreated": "Draft invoice created.",
+      "toastCreated": "Statement (draft) created.",
       "toastFinalized": "Invoice finalized.",
       "toastSaved": "Saved.",
       "toastErr": "The operation failed.",
       "autoBadge": "Auto",
       "paidOutBadge": "Paid out",
-      "send": "Send to organizer",
+      "send": "Send invoice",
       "sendConfirm": "Really send the invoice to the organizer by e-mail?",
       "toastSent": "Invoice sent to organizer.",
       "markPaid": "Mark as paid",
@@ -1962,7 +1962,11 @@
       "paidOutAt": "Paid out",
       "filterAll": "All statuses",
       "runAuto": "Run auto-generation",
-      "autoRunResult": "Auto-generation: {count} drafts created."
+      "autoRunResult": "Auto-generation: {count} drafts created.",
+      "docDraft": "Statement",
+      "docFinal": "Invoice",
+      "downloadDraft": "Download statement",
+      "downloadInvoice": "Download invoice"
     }
   }
 }
