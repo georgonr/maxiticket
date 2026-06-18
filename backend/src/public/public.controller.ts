@@ -1,11 +1,16 @@
-import { Controller, Get, Post, Param, Query, Body, HttpCode, Ip } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, HttpCode, Ip, Headers } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { PublicService } from './public.service';
 import { ContactDto } from './contact.dto';
+import { QrCheckoutDto } from './qr-checkout.dto';
+import { OrdersService } from '../orders/orders.service';
 
 @Controller('public')
 export class PublicController {
-  constructor(private readonly svc: PublicService) {}
+  constructor(
+    private readonly svc: PublicService,
+    private readonly orders: OrdersService,
+  ) {}
 
   @Get('hero')
   getHero() {
@@ -58,5 +63,17 @@ export class PublicController {
   @Get('checkout/fee-quote')
   feeQuote(@Query('terminId') terminId: string, @Query('amount') amount?: string) {
     return this.svc.checkoutFeeQuote(terminId, Number(amount));
+  }
+
+  // ── QR rýchly nákup (scan-to-buy) ──
+  @Get('qr/:ticketTypeId')
+  qrInfo(@Param('ticketTypeId') ticketTypeId: string) {
+    return this.svc.qrTicketInfo(ticketTypeId);
+  }
+
+  @Post('qr-checkout')
+  @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
+  qrCheckout(@Body() dto: QrCheckoutDto, @Headers('origin') origin?: string) {
+    return this.orders.qrCheckout(dto, origin);
   }
 }

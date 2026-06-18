@@ -461,7 +461,28 @@ export const publicApi = {
   // Krok 2/2: zákaznícky poplatok za spracovanie pre danú sumu (display v checkoute; vracia LEN sumu).
   feeQuote: (terminId: string, amount: number) =>
     apiFetch<{ feeAmount: number }>(`/v1/public/checkout/fee-quote?terminId=${terminId}&amount=${amount}`),
+
+  // QR rýchly nákup (scan-to-buy)
+  qrInfo: (ticketTypeId: string) => apiFetch<QrTicketInfo>(`/v1/public/qr/${ticketTypeId}`),
+  qrCheckout: (body: { ticketTypeId: string; quantity: number; email: string; locale?: string }) =>
+    apiFetch<{ url: string }>('/v1/public/qr-checkout', { method: 'POST', body: JSON.stringify(body) }),
 };
+
+export type QrReason = 'OK' | 'NOT_GA' | 'INACTIVE' | 'NOT_ON_SALE' | 'PAST' | 'SOLD_OUT' | 'SALE_WINDOW';
+
+export interface QrTicketInfo {
+  ticketTypeId: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  available: number | null;
+  maxQuantity: number;
+  purchasable: boolean;
+  reason: QrReason;
+  show: { name: string; slug: string; imageUrl: string | null; organizerName: string | null };
+  termin: { startsAt: string; endsAt: string | null; venueName: string | null; venueCity: string | null };
+}
 
 // ── Public seat picker (úloha 22/3b) ───────────────────────────────────────────
 export interface PublicSeat {

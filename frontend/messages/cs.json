@@ -2001,5 +2001,32 @@
       "OFFLINE": "Offline (OKP)",
       "FAILED": "Selhalo"
     }
+  },
+  "qrCheckout": {
+    "notFound": "Vstupenka nenalezena nebo není dostupná.",
+    "quantity": "Počet vstupenek",
+    "email": "E-mail",
+    "emailPlaceholder": "vas@email.cz",
+    "emailHint": "Na tuto adresu pošleme vstupenky po zaplacení.",
+    "emailInvalid": "Zadejte platný e-mail.",
+    "total": "Celkem",
+    "feeNote": "Cena včetně poplatku za zpracování se zobrazí při platbě.",
+    "payCard": "Zaplatit kartou",
+    "afterPay": "Po zaplacení vám vstupenky přijdou e-mailem.",
+    "reason": {
+      "OK": "",
+      "NOT_GA": "Tato vstupenka není dostupná pro rychlý nákup (akce se sedadly).",
+      "INACTIVE": "Tato vstupenka momentálně není v prodeji.",
+      "NOT_ON_SALE": "Akce momentálně není v prodeji.",
+      "PAST": "Tato akce už proběhla.",
+      "SOLD_OUT": "Vyprodáno.",
+      "SALE_WINDOW": "Prodej této vstupenky momentálně neprobíhá."
+    },
+    "qrButton": "QR platby",
+    "modalTitle": "QR pro rychlý nákup",
+    "modalHint": "Zákazník naskenuje QR a koupí „{name}\" přímo u vstupu.",
+    "download": "Stáhnout",
+    "print": "Tisk",
+    "payErr": "Platbu se nepodařilo spustit. Zkuste to znovu."
   }
 }

@@ -552,6 +552,7 @@ model Order {
   coupon        Coupon?     @relation(fields: [couponId], references: [id])
 
   notes         String?
+  source        String?     // pôvod objednávky: null=web, 'QR'=rýchly nákup cez QR pri vstupe, 'POS'=pokladňa
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

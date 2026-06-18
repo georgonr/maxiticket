@@ -427,4 +427,71 @@ export class PublicService {
     const feeAmount = safeAmount > 0 ? Math.round(safeAmount * pct) / 100 : 0;
     return { feeAmount };
   }
+
+  /**
+   * QR rýchly nákup – verejné info o type lístka pre stránku /q/[ticketTypeId].
+   * LEN GENERAL (voľné sedenie). Vracia purchasable + reason aj keď sa nedá kúpiť (UI zobrazí hlášku).
+   */
+  async qrTicketInfo(ticketTypeId: string) {
+    const tt = await this.prisma.ticketType.findUnique({
+      where: { id: ticketTypeId },
+      include: {
+        termin: {
+          include: {
+            venue: true,
+            show: { include: { images: { orderBy: [{ isCover: 'desc' }, { sortOrder: 'asc' }] }, organizer: { select: { name: true } } } },
+          },
+        },
+      },
+    });
+    if (!tt) throw codedNotFound('TICKET_TYPE_NOT_FOUND', 'Typ lístka neexistuje.');
+
+    const termin = tt.termin;
+    const show = termin.show;
+    const now = new Date();
+
+    // dostupnosť (PENDING+PAID rezervujú)
+    const sold = await this.prisma.orderItem.aggregate({
+      where: { ticketTypeId: tt.id, order: { status: { in: ['PENDING', 'PAID'] } } },
+      _sum: { quantity: true },
+    });
+    const available = tt.totalQuantity != null ? Math.max(0, tt.totalQuantity - (sold._sum.quantity ?? 0)) : null;
+
+    // purchasable + dôvod
+    let reason: 'OK' | 'NOT_GA' | 'INACTIVE' | 'NOT_ON_SALE' | 'PAST' | 'SOLD_OUT' | 'SALE_WINDOW' = 'OK';
+    if (termin.mode !== 'GENERAL') reason = 'NOT_GA';
+    else if (show.status !== EventStatus.PUBLISHED || !tt.isActive) reason = 'INACTIVE';
+    else if (termin.status !== TerminStatus.ON_SALE) reason = 'NOT_ON_SALE';
+    else if (termin.startsAt < now) reason = 'PAST';
+    else if (tt.saleStartsAt && now < tt.saleStartsAt) reason = 'SALE_WINDOW';
+    else if (tt.saleEndsAt && now > tt.saleEndsAt) reason = 'SALE_WINDOW';
+    else if (available != null && available <= 0) reason = 'SOLD_OUT';
+
+    const cap = Math.min(10, tt.maxPerOrder, available ?? 10);
+    const maxQuantity = Math.max(0, cap);
+
+    return {
+      ticketTypeId: tt.id,
+      name: tt.name,
+      description: tt.description,
+      price: Number(tt.price),
+      currency: tt.currency,
+      available,
+      maxQuantity,
+      purchasable: reason === 'OK' && maxQuantity > 0,
+      reason: reason === 'OK' && maxQuantity <= 0 ? 'SOLD_OUT' : reason,
+      show: {
+        name: show.name,
+        slug: show.slug,
+        imageUrl: (show.images[0] as any)?.squareUrl ?? null,
+        organizerName: show.organizer?.name ?? null,
+      },
+      termin: {
+        startsAt: termin.startsAt,
+        endsAt: termin.endsAt,
+        venueName: termin.venue?.name ?? null,
+        venueCity: termin.venue?.city ?? null,
+      },
+    };
+  }
 }

@@ -4,12 +4,14 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations, useFormatter } from 'next-intl';
+import { QrCode } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ticketTypesApi, terminsApi, TicketType, CreateTicketTypeBody, TerminSectionRow } from '@/lib/api';
 import { seatmapsApi, SeatMapSummary } from '@/lib/api/seatmaps';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { QrPaymentModal } from '@/components/qr/QrPaymentModal';
 
 const EMPTY_FORM: CreateTicketTypeBody = {
   name: '', price: 0, currency: 'EUR',
@@ -34,9 +36,11 @@ function getSaleBadge(tt: TicketType) {
 
 export default function TicketTypesPage() {
   const t = useTranslations('organizer.termin');
+  const tq = useTranslations('qrCheckout');
   const format = useFormatter();
   const router = useRouter();
   const { id, terminId } = useParams<{ id: string; terminId: string }>();
+  const [qrModal, setQrModal] = useState<{ id: string; name: string } | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -301,6 +305,11 @@ export default function TicketTypesPage() {
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
                       {t(badge.key)}
                     </span>
+                    {mode === 'GENERAL' && (
+                      <Button variant="outline" size="sm" onClick={() => setQrModal({ id: tt.id, name: tt.name })}>
+                        <QrCode size={14} className="mr-1.5" /> {tq('qrButton')}
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => handleDelete(tt.id)}>
                       {t('delete')}
                     </Button>
@@ -394,6 +403,9 @@ export default function TicketTypesPage() {
         </div>
         </>)}
       </main>
+      {qrModal && (
+        <QrPaymentModal ticketTypeId={qrModal.id} ticketTypeName={qrModal.name} onClose={() => setQrModal(null)} />
+      )}
     </div>
   );
 }

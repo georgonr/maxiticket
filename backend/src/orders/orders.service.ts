@@ -443,6 +443,92 @@ export class OrdersService {
   }
 
   /**
+   * QR rýchly nákup (scan-to-buy): guest objednávka pre 1 GA typ lístka × quantity → Stripe Checkout.
+   * Reuse: rovnaká objednávka + initiateCheckout ako bežný online predaj (fee, provízia, webhook, e-mail).
+   * Žiadna eKasa (bežný online predaj). source='QR' pre štatistiku.
+   */
+  async qrCheckout(
+    dto: { ticketTypeId: string; quantity: number; email: string; locale?: string },
+    origin?: string,
+  ): Promise<{ url: string }> {
+    const tt = await this.prisma.ticketType.findUnique({
+      where: { id: dto.ticketTypeId },
+      include: { termin: { include: { show: true } } },
+    });
+    if (!tt) throw codedNotFound('TICKET_TYPE_NOT_FOUND', 'Typ lístka neexistuje.');
+    const termin = tt.termin;
+
+    if (termin.mode !== TerminMode.GENERAL) {
+      throw codedBadRequest('NOT_GA', 'QR nákup je dostupný len pre podujatia s voľným sedením.');
+    }
+    if (!tt.isActive) throw codedBadRequest('TICKET_TYPE_INACTIVE', 'Typ lístka nie je aktívny.');
+    if (termin.status !== TerminStatus.ON_SALE) throw codedBadRequest('EVENT_NOT_AVAILABLE', 'Podujatie nie je v predaji.');
+    if (termin.startsAt < new Date()) throw codedBadRequest('EVENT_PAST', 'Podujatie už prebehlo.');
+
+    const now = new Date();
+    if (tt.saleStartsAt && now < tt.saleStartsAt) throw codedBadRequest('SALE_NOT_STARTED', 'Predaj sa ešte nezačal.');
+    if (tt.saleEndsAt && now > tt.saleEndsAt) throw codedBadRequest('SALE_ENDED', 'Predaj už skončil.');
+
+    const qty = Math.floor(Number(dto.quantity));
+    if (!qty || qty < 1) throw codedBadRequest('TICKET_QTY_REQUIRED', 'Zadajte počet lístkov.');
+    const cap = Math.min(10, tt.maxPerOrder);
+    if (qty > cap) throw codedBadRequest('MAX_PER_ORDER', `Maximálne ${cap} ks na objednávku.`, { max: cap });
+
+    if (tt.totalQuantity != null) {
+      const sold = await this.prisma.orderItem.aggregate({
+        where: { ticketTypeId: tt.id, order: { status: { in: [OrderStatus.PENDING, OrderStatus.PAID] } } },
+        _sum: { quantity: true },
+      });
+      const remaining = tt.totalQuantity - (sold._sum.quantity ?? 0);
+      if (remaining < qty) throw codedBadRequest('TICKET_INSUFFICIENT', `Zostáva len ${remaining} ks.`, { remaining });
+    }
+
+    const buyerEmail = dto.email?.trim();
+    if (!buyerEmail) throw codedBadRequest('BUYER_EMAIL_REQUIRED', 'E-mail je povinný.');
+
+    const expiryMinutes = this.config.get<number>('ORDER_EXPIRY_MINUTES', 30);
+    const expiresAt = new Date(Date.now() + Number(expiryMinutes) * 60 * 1000);
+
+    const order = await this.withOrderNumberRetry((orderNumber) =>
+      this.prisma.order.create({
+        data: {
+          orderNumber,
+          organizerId: termin.show.organizerId,
+          userId: null,
+          buyerEmail,
+          buyerName: 'QR nákup',
+          currency: tt.currency,
+          locale: dto.locale ?? 'sk',
+          totalAmount: Number(tt.price) * qty,
+          status: OrderStatus.PENDING,
+          source: 'QR',
+          expiresAt,
+          items: {
+            create: [{
+              ticketType: { connect: { id: tt.id } },
+              termin: { connect: { id: termin.id } },
+              quantity: qty,
+              unitPrice: tt.price,
+              currency: tt.currency,
+              priceSnapshot: {
+                name: tt.name,
+                price: Number(tt.price),
+                currency: tt.currency,
+                showName: termin.show.name,
+                terminId: termin.id,
+                startsAt: termin.startsAt,
+              },
+            }],
+          },
+        },
+        include: { items: true },
+      }),
+    );
+
+    return this.initiateCheckout(order.id, undefined, origin);
+  }
+
+  /**
    * Marks an order PAID, generates tickets and sends the confirmation e-mail.
    * Idempotent via optimistic-lock: if status is no longer PENDING, throws BadRequest.
    */

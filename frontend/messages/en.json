@@ -2001,5 +2001,32 @@
       "OFFLINE": "Offline (OKP)",
       "FAILED": "Failed"
     }
+  },
+  "qrCheckout": {
+    "notFound": "Ticket not found or unavailable.",
+    "quantity": "Number of tickets",
+    "email": "E-mail",
+    "emailPlaceholder": "you@email.com",
+    "emailHint": "We will send the tickets to this address after payment.",
+    "emailInvalid": "Enter a valid e-mail.",
+    "total": "Total",
+    "feeNote": "The price including the processing fee is shown at payment.",
+    "payCard": "Pay by card",
+    "afterPay": "After payment your tickets arrive by e-mail.",
+    "reason": {
+      "OK": "",
+      "NOT_GA": "This ticket is not available for quick purchase (seated event).",
+      "INACTIVE": "This ticket is not on sale at the moment.",
+      "NOT_ON_SALE": "The event is not on sale at the moment.",
+      "PAST": "This event has already taken place.",
+      "SOLD_OUT": "Sold out.",
+      "SALE_WINDOW": "Sale of this ticket is not currently open."
+    },
+    "qrButton": "QR payments",
+    "modalTitle": "QR for quick purchase",
+    "modalHint": "Customer scans the QR and buys “{name}” right at the entrance.",
+    "download": "Download",
+    "print": "Print",
+    "payErr": "Could not start payment. Please try again."
   }
 }
