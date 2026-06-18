@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useTranslations, useFormatter, useLocale } from 'next-intl';
 import { Calendar, MapPin, Loader2, Lock, Minus, Plus, Ticket } from 'lucide-react';
 import { publicApi, QrTicketInfo } from '@/lib/api';
@@ -9,7 +9,17 @@ import { localizeApiError } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
 
 export default function QrBuyPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="animate-spin text-emerald-600" size={32} /></div>}>
+      <QrBuyContent />
+    </Suspense>
+  );
+}
+
+function QrBuyContent() {
   const { ticketTypeId } = useParams<{ ticketTypeId: string }>();
+  const searchParams = useSearchParams();
+  const qtyParam = Number(searchParams.get('qty'));
   const t = useTranslations('qrCheckout');
   const tErrors = useTranslations('errors');
   const format = useFormatter();
@@ -28,13 +38,18 @@ export default function QrBuyPage() {
   const load = useCallback(async () => {
     setLoading(true); setLoadErr(false);
     try {
-      setInfo(await publicApi.qrInfo(ticketTypeId));
+      const data = await publicApi.qrInfo(ticketTypeId);
+      setInfo(data);
+      // ?qty=N predvyplní počet (orežaný na zostatok/max; zostáva upraviteľný)
+      if (Number.isFinite(qtyParam) && qtyParam >= 1 && data.maxQuantity > 0) {
+        setQty(Math.min(Math.floor(qtyParam), data.maxQuantity));
+      }
     } catch {
       setLoadErr(true);
     } finally {
       setLoading(false);
     }
-  }, [ticketTypeId]);
+  }, [ticketTypeId, qtyParam]);
 
   useEffect(() => { load(); }, [load]);
 

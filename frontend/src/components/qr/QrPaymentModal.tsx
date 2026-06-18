@@ -3,21 +3,30 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import QRCode from 'qrcode';
-import { X, Download, Printer, Copy, Check } from 'lucide-react';
+import { X, Download, Printer, Copy, Check, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const QR_BASE = 'https://ticketall.eu/q';
+const MAX_QTY = 10;
 
-/** Modal s QR kódom pre rýchly nákup (scan-to-buy) daného GA typu lístka. */
-export function QrPaymentModal({ ticketTypeId, ticketTypeName, onClose }: {
+/**
+ * Modal s QR kódom pre rýchly nákup (scan-to-buy) daného GA typu lístka.
+ * Voliteľný počet (initialQty z POS kontextu) → kóduje sa do URL ako ?qty=N (>1).
+ */
+export function QrPaymentModal({ ticketTypeId, ticketTypeName, initialQty, showQtyPicker = true, instruction, onClose }: {
   ticketTypeId: string;
   ticketTypeName: string;
+  initialQty?: number;
+  showQtyPicker?: boolean;
+  instruction?: string;
   onClose: () => void;
 }) {
   const t = useTranslations('qrCheckout');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
-  const url = `${QR_BASE}/${ticketTypeId}`;
+  const [qty, setQty] = useState(Math.min(MAX_QTY, Math.max(1, initialQty ?? 1)));
+
+  const url = `${QR_BASE}/${ticketTypeId}${qty > 1 ? `?qty=${qty}` : ''}`;
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -29,7 +38,7 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, onClose }: {
     const dataUrl = await QRCode.toDataURL(url, { width: 1024, margin: 2 });
     const a = document.createElement('a');
     a.href = dataUrl;
-    a.download = `qr-${ticketTypeName.replace(/\s+/g, '-').toLowerCase()}.png`;
+    a.download = `qr-${ticketTypeName.replace(/\s+/g, '-').toLowerCase()}${qty > 1 ? `-${qty}x` : ''}.png`;
     document.body.appendChild(a); a.click(); a.remove();
   }
 
@@ -39,7 +48,7 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, onClose }: {
     if (!w) return;
     w.document.write(`<html><head><title>QR – ${ticketTypeName}</title></head>
       <body style="font-family:sans-serif;text-align:center;padding:40px;">
-        <h2>${ticketTypeName}</h2>
+        <h2>${ticketTypeName}${qty > 1 ? ` × ${qty}` : ''}</h2>
         <img src="${dataUrl}" style="width:320px;height:320px;" />
         <p style="color:#555;font-size:13px;">${url}</p>
         <script>window.onload=function(){window.print();}</script>
@@ -59,7 +68,20 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, onClose }: {
           <button onClick={onClose} className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
         </div>
 
-        <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">{t('modalHint', { name: ticketTypeName })}</p>
+        <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">{instruction ?? t('modalHint', { name: ticketTypeName })}</p>
+
+        {showQtyPicker && (
+          <div className="mb-3 flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t('quantity')}</span>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 disabled:opacity-40"><Minus size={15} /></button>
+              <span className="w-6 text-center text-base font-bold tabular-nums">{qty}</span>
+              <button onClick={() => setQty((q) => Math.min(MAX_QTY, q + 1))} disabled={qty >= MAX_QTY}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 disabled:opacity-40"><Plus size={15} /></button>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-center">
           <canvas ref={canvasRef} className="rounded-lg border border-gray-200 dark:border-gray-700" />

@@ -6,20 +6,23 @@ import { clsx } from 'clsx';
 import { useTranslations, useFormatter } from 'next-intl';
 import {
   Loader2, Calendar, MapPin, Minus, Plus, ArrowLeft, Banknote,
-  CreditCard, CheckCircle2, Mail, RotateCcw, RefreshCw, Printer, Lock,
+  CreditCard, CheckCircle2, Mail, RotateCcw, RefreshCw, Printer, Lock, QrCode,
 } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
 import { localizeApiError } from '@/lib/api-error';
 import { posApi, PosTermin, PosOrderResult, PosSummary } from '@/lib/api/pos';
 import { QrCanvas } from '@/components/pos/QrCanvas';
+import { QrPaymentModal } from '@/components/qr/QrPaymentModal';
 
 type Step = 'termin' | 'tickets' | 'payment' | 'done';
 
 export default function PosPage() {
   const t = useTranslations('organizer.pos');
   const te = useTranslations('ekasa');
+  const tq = useTranslations('qrCheckout');
   const tErrors = useTranslations('errors');
+  const [qrModal, setQrModal] = useState<{ id: string; name: string; qty: number } | null>(null);
   const format = useFormatter();
   const fmtPrice = (amount: number | string, currency = 'EUR') =>
     format.number(Number(amount), { style: 'currency', currency });
@@ -234,22 +237,33 @@ export default function PosPage() {
                 const n = qty[tt.ticketTypeId] ?? 0;
                 const soldOut = tt.remaining != null && tt.remaining <= 0;
                 return (
-                  <div key={tt.ticketTypeId} className={clsx('flex items-center justify-between gap-3 rounded-xl border bg-white dark:bg-gray-900 p-4', soldOut ? 'border-gray-100 dark:border-gray-800 opacity-60' : 'border-gray-200 dark:border-gray-800')}>
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-gray-100">{tt.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {fmtPrice(tt.price, tt.currency)}
-                        {tt.remaining != null && <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{t('tickets.remaining', { count: tt.remaining })}</span>}
+                  <div key={tt.ticketTypeId} className={clsx('rounded-xl border bg-white dark:bg-gray-900', soldOut ? 'border-gray-100 dark:border-gray-800 opacity-60' : 'border-gray-200 dark:border-gray-800')}>
+                    <div className="flex items-center justify-between gap-3 p-4">
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">{tt.name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {fmtPrice(tt.price, tt.currency)}
+                          {tt.remaining != null && <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{t('tickets.remaining', { count: tt.remaining })}</span>}
+                        </div>
                       </div>
+                      {soldOut ? (
+                        <span className="rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-400 dark:text-gray-500">{t('tickets.soldOut')}</span>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => setQuantity(tt.ticketTypeId, -1, tt.remaining, tt.maxPerOrder)} disabled={n === 0} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-30 active:bg-gray-100"><Minus size={18} /></button>
+                          <span className="w-8 text-center text-lg font-semibold tabular-nums">{n}</span>
+                          <button onClick={() => setQuantity(tt.ticketTypeId, 1, tt.remaining, tt.maxPerOrder)} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 active:bg-gray-100"><Plus size={18} /></button>
+                        </div>
+                      )}
                     </div>
-                    {soldOut ? (
-                      <span className="rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-400 dark:text-gray-500">{t('tickets.soldOut')}</span>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => setQuantity(tt.ticketTypeId, -1, tt.remaining, tt.maxPerOrder)} disabled={n === 0} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-30 active:bg-gray-100"><Minus size={18} /></button>
-                        <span className="w-8 text-center text-lg font-semibold tabular-nums">{n}</span>
-                        <button onClick={() => setQuantity(tt.ticketTypeId, 1, tt.remaining, tt.maxPerOrder)} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 active:bg-gray-100"><Plus size={18} /></button>
-                      </div>
+                    {/* QR platba kartou – len GA (GENERAL) typy; nezávislá online objednávka */}
+                    {selected.mode === 'GENERAL' && !soldOut && (
+                      <button
+                        onClick={() => setQrModal({ id: tt.ticketTypeId, name: tt.name, qty: n > 0 ? n : 1 })}
+                        className="flex w-full items-center justify-center gap-1.5 border-t border-gray-100 dark:border-gray-800 px-4 py-2.5 text-sm font-medium text-brand active:bg-gray-50 dark:active:bg-gray-800"
+                      >
+                        <QrCode size={16} /> {tq('posPayButton')}
+                      </button>
                     )}
                   </div>
                 );
@@ -381,6 +395,16 @@ export default function PosPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {qrModal && (
+        <QrPaymentModal
+          ticketTypeId={qrModal.id}
+          ticketTypeName={qrModal.name}
+          initialQty={qrModal.qty}
+          instruction={tq('posInstruction')}
+          onClose={() => setQrModal(null)}
+        />
       )}
     </div>
   );

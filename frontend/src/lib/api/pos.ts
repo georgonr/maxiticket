@@ -15,6 +15,7 @@ export interface PosTermin {
   startsAt: string;
   venueName: string | null;
   venueCity: string | null;
+  mode: 'GENERAL' | 'SEATMAP'; // GA = QR platba dostupná
   ticketTypes: PosTicketType[];
 }
 

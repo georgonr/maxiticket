@@ -2027,6 +2027,8 @@
     "modalHint": "Customer scans the QR and buys “{name}” right at the entrance.",
     "download": "Download",
     "print": "Print",
-    "payErr": "Could not start payment. Please try again."
+    "payErr": "Could not start payment. Please try again.",
+    "posPayButton": "QR card payment",
+    "posInstruction": "The customer scans and pays by card; tickets arrive by e-mail."
   }
 }

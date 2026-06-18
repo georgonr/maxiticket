@@ -877,6 +877,7 @@ export class OrdersService {
       startsAt: t.startsAt,
       venueName: t.venue?.name ?? null,
       venueCity: t.venue?.city ?? null,
+      mode: t.mode, // GENERAL = GA (QR platba dostupná), SEATMAP = sedadlové
       ticketTypes: t.ticketTypes.map((tt) => ({
         ticketTypeId: tt.id,
         name: tt.name,

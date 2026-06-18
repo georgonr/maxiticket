@@ -2027,6 +2027,8 @@
     "modalHint": "Zákazník naskenuje QR a kúpi „{name}\" priamo pri vstupe.",
     "download": "Stiahnuť",
     "print": "Tlačiť",
-    "payErr": "Platbu sa nepodarilo spustiť. Skúste znova."
+    "payErr": "Platbu sa nepodarilo spustiť. Skúste znova.",
+    "posPayButton": "QR platba kartou",
+    "posInstruction": "Zákazník naskenuje a zaplatí kartou; lístky mu prídu e-mailom."
   }
 }
