@@ -262,7 +262,7 @@ export class MetricsService {
       where: { id },
       select: {
         commissionPercent: true, vatPercent: true, feesIncluded: true, customerFeePercent: true,
-        billingMode: true, refundFeePerTicketCents: true,
+        billingMode: true, refundFeePerTicketCents: true, ticketVatPercent: true,
       },
     });
     if (!org) throw new NotFoundException('Organizátor neexistuje.');
@@ -273,6 +273,7 @@ export class MetricsService {
       customerFeePercent: Number(org.customerFeePercent),
       billingMode: org.billingMode,
       refundFeePerTicketCents: org.refundFeePerTicketCents,
+      ticketVatPercent: org.ticketVatPercent,
     };
   }
 
@@ -281,7 +282,7 @@ export class MetricsService {
     id: string,
     dto: {
       commissionPercent?: number; vatPercent?: number; feesIncluded?: boolean; customerFeePercent?: number;
-      billingMode?: BillingMode; refundFeePerTicketCents?: number | null;
+      billingMode?: BillingMode; refundFeePerTicketCents?: number | null; ticketVatPercent?: number;
     },
   ) {
     const exists = await this.prisma.organizer.findUnique({ where: { id }, select: { id: true } });
@@ -295,6 +296,7 @@ export class MetricsService {
         ...(dto.customerFeePercent !== undefined ? { customerFeePercent: dto.customerFeePercent } : {}),
         ...(dto.billingMode !== undefined ? { billingMode: dto.billingMode } : {}),
         ...(dto.refundFeePerTicketCents !== undefined ? { refundFeePerTicketCents: dto.refundFeePerTicketCents } : {}),
+        ...(dto.ticketVatPercent !== undefined ? { ticketVatPercent: dto.ticketVatPercent } : {}),
       },
     });
     return this.organizerBilling(id);

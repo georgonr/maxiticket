@@ -38,6 +38,13 @@ export interface PosOrderTicket {
   qrToken: string;
 }
 
+export interface PosEkasaResult {
+  status: 'REGISTERED' | 'OFFLINE' | 'FAILED';
+  receiptNumber: string | null;
+  okp: string | null;
+  error: string | null;
+}
+
 export interface PosOrderResult {
   orderId: string;
   orderNumber: string;
@@ -46,6 +53,7 @@ export interface PosOrderResult {
   currency: string;
   emailSent: boolean;
   tickets: PosOrderTicket[];
+  ekasa: PosEkasaResult | null; // null = fiškalizácia vypnutá / bez zariadenia
 }
 
 export interface PosSummaryByTermin {

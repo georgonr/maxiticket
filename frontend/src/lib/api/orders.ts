@@ -67,6 +67,11 @@ export interface OrderDetail {
   paymentRef: string | null;
   paidAt: string | null;
   refundedAt: string | null;
+  ekasaStatus: 'NONE' | 'PENDING' | 'REGISTERED' | 'OFFLINE' | 'FAILED';
+  ekasaReceiptNumber: string | null;
+  ekasaReceiptId: string | null;
+  ekasaOkp: string | null;
+  ekasaError: string | null;
   createdAt: string;
   organizerName: string | null;
   couponCode: string | null;

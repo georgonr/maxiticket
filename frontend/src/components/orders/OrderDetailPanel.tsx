@@ -52,6 +52,7 @@ export function OrderDetailPanel({
   backHref: string;
 }) {
   const t = useTranslations('organizer.orders');
+  const te = useTranslations('ekasa');
   const format = useFormatter();
   const fmtDate = (iso: string) =>
     format.dateTime(new Date(iso), {
@@ -240,6 +241,23 @@ export function OrderDetailPanel({
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">{t('refundedAt')}</span>
                   <span className="text-gray-700 dark:text-gray-200">{fmtDate(order.refundedAt)}</span>
+                </div>
+              )}
+              {order.ekasaStatus && order.ekasaStatus !== 'NONE' && (
+                <div className="flex items-start justify-between gap-2 border-t border-gray-100 dark:border-gray-800 pt-1.5">
+                  <span className="text-gray-500 dark:text-gray-400">{te('label')}</span>
+                  <span className="text-right">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                      order.ekasaStatus === 'REGISTERED' ? 'bg-emerald-50 text-emerald-700'
+                        : order.ekasaStatus === 'OFFLINE' ? 'bg-amber-50 text-amber-700'
+                        : order.ekasaStatus === 'FAILED' ? 'bg-red-50 text-red-700'
+                        : 'bg-gray-100 text-gray-600'}`}>
+                      {te(`status.${order.ekasaStatus}`)}
+                    </span>
+                    {order.ekasaReceiptNumber && <span className="block text-xs text-gray-500 dark:text-gray-400">{te('receiptNo')}: {order.ekasaReceiptNumber}</span>}
+                    {order.ekasaReceiptId && <span className="block font-mono text-[10px] text-gray-400 dark:text-gray-500">{order.ekasaReceiptId}</span>}
+                    {order.ekasaStatus === 'FAILED' && order.ekasaError && <span className="block text-xs text-red-600">{order.ekasaError}</span>}
+                  </span>
                 </div>
               )}
             </div>

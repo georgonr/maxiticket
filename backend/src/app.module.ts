@@ -33,6 +33,7 @@ import { MembersModule } from './members/members.module';
 import { AccountModule } from './account/account.module';
 import { RefundsModule } from './refunds/refunds.module';
 import { SeatmapsModule } from './seatmaps/seatmaps.module';
+import { EkasaModule } from './ekasa/ekasa.module';
 import { HealthController } from './health/health.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -69,6 +70,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     RefundsModule,
     SeatmapsModule,
     AssistantModule,
+    EkasaModule,
   ],
   controllers: [HealthController],
   providers: [

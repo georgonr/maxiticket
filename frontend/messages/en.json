@@ -1968,5 +1968,38 @@
       "downloadDraft": "Download statement",
       "downloadInvoice": "Download invoice"
     }
+  },
+  "ekasa": {
+    "label": "eKasa",
+    "title": "eKasa registers (ORP)",
+    "note": "Fiscal device configuration – SUPER-ADMIN only. Access token is secret.",
+    "empty": "No devices.",
+    "addDevice": "Add device",
+    "deviceLabel": "Name",
+    "orp": "ORP code",
+    "exposeUrl": "Expose URL",
+    "accessToken": "Access token",
+    "printMode": "Print mode",
+    "print": "print",
+    "add": "Add",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noToken": "No token",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "saved": "Saved.",
+    "saveErr": "Operation failed.",
+    "fillAll": "Fill in all fields.",
+    "deleteConfirm": "Delete this device?",
+    "receiptNo": "Receipt no.",
+    "ticketVat": "Ticket VAT (%) – eKasa",
+    "ticketVatHint": "Ticket VAT rate on the eKasa receipt (0 if non-payer / reduced per accountant).",
+    "status": {
+      "NONE": "Not fiscalized",
+      "PENDING": "Pending",
+      "REGISTERED": "Registered",
+      "OFFLINE": "Offline (OKP)",
+      "FAILED": "Failed"
+    }
   }
 }

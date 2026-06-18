@@ -18,6 +18,7 @@ type Step = 'termin' | 'tickets' | 'payment' | 'done';
 
 export default function PosPage() {
   const t = useTranslations('organizer.pos');
+  const te = useTranslations('ekasa');
   const tErrors = useTranslations('errors');
   const format = useFormatter();
   const fmtPrice = (amount: number | string, currency = 'EUR') =>
@@ -315,6 +316,16 @@ export default function PosPage() {
               <div className="font-mono text-sm text-emerald-700">{result.orderNumber}</div>
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{fmtPrice(result.totalAmount, result.currency)}</div>
               {result.discountAmount > 0 && <div className="text-sm text-emerald-600">{t('done.discount', { amount: fmtPrice(result.discountAmount, result.currency) })}</div>}
+              {result.ekasa && (
+                <div className={`mt-1 rounded-lg px-3 py-1.5 text-xs font-medium ${
+                  result.ekasa.status === 'REGISTERED' ? 'bg-emerald-50 text-emerald-700'
+                    : result.ekasa.status === 'OFFLINE' ? 'bg-amber-50 text-amber-700'
+                    : 'bg-red-50 text-red-700'}`}>
+                  {te(`status.${result.ekasa.status}`)}
+                  {result.ekasa.receiptNumber ? ` · ${te('receiptNo')}: ${result.ekasa.receiptNumber}` : ''}
+                  {result.ekasa.status === 'FAILED' && result.ekasa.error ? ` · ${result.ekasa.error}` : ''}
+                </div>
+              )}
             </div>
 
             <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">

@@ -52,6 +52,15 @@ enum InvoiceLineType {
   CUSTOM       // ručne pridaná položka
 }
 
+// eKasa fiškalizácia POS (krok eKasa-F1): stav registrácie dokladu na eKase (Nine Digit/PORTOS).
+enum EkasaStatus {
+  NONE        // nefiškalizované (flag off / bez zariadenia)
+  PENDING     // odoslané, čaká na výsledok
+  REGISTERED  // online zaregistrované na eKase (isSuccessful=true)
+  OFFLINE     // offline režim – papierový doklad + OKP (isSuccessful=null), platné
+  FAILED      // eKasa odmietla (isSuccessful=false) – predaj prešiel, doklad treba doriešiť
+}
+
 enum VatStatus {
   NON_PAYER
   PAYER
@@ -173,6 +182,9 @@ model Organizer {
   billingMode             BillingMode @default(PER_EVENT)  // režim vyúčtovania
   refundFeePerTicketCents Int?                             // override poplatku za refund/lístok (cents); null = platformová konštanta (40)
   locale                  String      @default("sk")       // jazyk fakturačných e-mailov organizátorovi (sk/en/cs)
+  // eKasa (krok eKasa-F1): DPH sadzba LÍSTKA na eKasa doklade (zákaznícka DPH, NIE provízna vatPercent).
+  // POZN: kultúra môže mať zníženú sadzbu; neplatca DPH = 0. Overiť s účtovníkom.
+  ticketVatPercent        Int         @default(23)
 
   // Customisation
   ticketFooterText String?         // printed on every ticket
@@ -198,6 +210,7 @@ model Organizer {
   posClosures      PosClosure[]
   venueAccesses    VenueAccess[]
   invoices         Invoice[]
+  ekasaDevices     EkasaDevice[]
 
   @@index([status])
 }
@@ -524,6 +537,15 @@ model Order {
   paidAt           DateTime?
   refundedAt       DateTime?
   expiresAt        DateTime? // PENDING orders expire at this time
+
+  // eKasa fiškalizácia POS (krok eKasa-F1) – výsledok registrácie dokladu na eKase.
+  ekasaStatus        EkasaStatus @default(NONE)
+  ekasaReceiptId     String?     // response.data.id (online) – referencia pre dobropis/storno
+  ekasaOkp           String?     // OKP (offline referencia)
+  ekasaPkp           String?     // PKP podpis
+  ekasaReceiptNumber String?     // poradové číslo dokladu z eKasy
+  ekasaRegisteredAt  DateTime?
+  ekasaError         String?     // chybová správa pri FAILED
 
   // Aplikovaný kupón (oddelená relácia od CouponRedemption – pre rýchly join + Stripe sumu)
   couponId      String?
@@ -1061,4 +1083,25 @@ model InvoiceLineItem {
   sortOrder     Int             @default(0)
 
   @@index([invoiceId])
+}
+
+// ─────────────────────── eKASA FIŠKALIZÁCIA POS (krok eKasa-F1) ───────────────────────
+
+// Konfigurácia eKasa zariadenia (ORP) per organizátor – LEN super-admin (accessToken = secret).
+model EkasaDevice {
+  id               String   @id @default(cuid())
+  organizerId      String
+  organizer        Organizer @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  label            String              // ľudský názov (napr. „Pokladňa vstup")
+  cashRegisterCode String              // ORP kód pokladnice (eKasa)
+  exposeUrl        String              // base URL Nine Digit Expose (napr. http://host:port)
+  accessToken      String              // prístupový token Expose (secret – nikdy neposielať ne-super-adminovi)
+  printMode        String   @default("pos")  // pos | pdf | email
+  active           Boolean  @default(true)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([organizerId])
 }

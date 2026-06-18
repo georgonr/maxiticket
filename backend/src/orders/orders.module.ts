@@ -11,9 +11,10 @@ import { EventCancelService } from './event-cancel.service';
 import { MailModule } from '../mail/mail.module';
 import { PaymentModule } from '../payment/payment.module';
 import { CouponsModule } from '../coupons/coupons.module';
+import { EkasaModule } from '../ekasa/ekasa.module';
 
 @Module({
-  imports: [MailModule, PaymentModule, CouponsModule],
+  imports: [MailModule, PaymentModule, CouponsModule, EkasaModule],
   controllers: [OrdersController, AdminOrdersController, OrganizerOrdersController, PosController, RefundExportController],
   providers: [OrdersService, OrdersQueryService, RefundExportService, EventCancelService],
   exports: [OrdersService, OrdersQueryService],

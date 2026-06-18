@@ -10,6 +10,7 @@ import { organizersAdminApi, OrganizerDetail, OrganizerBilling } from '@/lib/api
 import { KpiCard, SectionCard, Skeleton, EmptyState, ErrorState } from '@/components/dashboard/parts';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { EkasaDevicesSection } from '@/components/ekasa/EkasaDevicesSection';
 
 const STATUS_CLS: Record<string, string> = {
   DRAFT: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
@@ -21,6 +22,7 @@ const STATUS_CLS: Record<string, string> = {
 export default function AdminOrganizerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const t = useTranslations('admin');
+  const te = useTranslations('ekasa');
   const format = useFormatter();
   const fmtPrice = (a: number) => format.number(Number(a), { style: 'currency', currency: 'EUR' });
   const fmtDate = (iso: string) => format.dateTime(new Date(iso), { day: 'numeric', month: 'numeric', year: 'numeric' });
@@ -73,6 +75,7 @@ export default function AdminOrganizerDetailPage() {
         customerFeePercent: Number(billing.customerFeePercent),
         billingMode: billing.billingMode,
         refundFeePerTicketCents: billing.refundFeePerTicketCents,
+        ticketVatPercent: Number(billing.ticketVatPercent),
       }, token);
       setBilling(saved);
       setBillingToast({ msg: t('organizers.billing.saved'), ok: true });
@@ -201,6 +204,12 @@ export default function AdminOrganizerDetailPage() {
                     />
                     <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{t('organizers.billing.refundFeeHint')}</span>
                   </label>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{te('ticketVat')}</span>
+                    <Input type="number" step="1" min={0} max={100} value={String(billing.ticketVatPercent)}
+                      onChange={(e) => setBillingField('ticketVatPercent', e.target.value as unknown as number)} />
+                    <span className="mt-1 block text-xs text-gray-400 dark:text-gray-500">{te('ticketVatHint')}</span>
+                  </label>
                 </div>
                 <div className="mt-5 flex items-center gap-3">
                   <Button onClick={saveBilling} loading={savingBilling} disabled={savingBilling}>
@@ -214,6 +223,9 @@ export default function AdminOrganizerDetailPage() {
                 </div>
               </SectionCard>
             )}
+
+            {/* eKasa zariadenia (super-admin) */}
+            <EkasaDevicesSection organizerId={id} />
 
             {/* Podujatia organizátora */}
             <SectionCard title={t('organizers.shows.title')}>

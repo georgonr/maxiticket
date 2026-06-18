@@ -70,6 +70,8 @@ services:
       PLATFORM_IBAN: ${PLATFORM_IBAN:-}
       # Krok 13c: true → cron po vytvorení draftu aj finalizuje + odošle. Default false (manuálne).
       BILLING_AUTO_SEND: ${BILLING_AUTO_SEND:-false}
+      # eKasa fiškalizácia POS (krok eKasa-F1): true → POS predaj registruje doklad na eKase. Default false.
+      EKASA_ENABLED: ${EKASA_ENABLED:-false}
     volumes:
       - uploads_data:/app/uploads
     depends_on:

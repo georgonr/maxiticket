@@ -1968,5 +1968,38 @@
       "downloadDraft": "Stáhnout vyúčtování",
       "downloadInvoice": "Stáhnout fakturu"
     }
+  },
+  "ekasa": {
+    "label": "eKasa",
+    "title": "eKasa pokladny (ORP)",
+    "note": "Konfigurace fiskálních zařízení – POUZE super-admin. Přístupový token je tajný.",
+    "empty": "Žádná zařízení.",
+    "addDevice": "Přidat zařízení",
+    "deviceLabel": "Název",
+    "orp": "ORP kód",
+    "exposeUrl": "Expose URL",
+    "accessToken": "Přístupový token",
+    "printMode": "Režim tisku",
+    "print": "tisk",
+    "add": "Přidat",
+    "active": "Aktivní",
+    "inactive": "Neaktivní",
+    "noToken": "Bez tokenu",
+    "activate": "Aktivovat",
+    "deactivate": "Deaktivovat",
+    "saved": "Uloženo.",
+    "saveErr": "Operace selhala.",
+    "fillAll": "Vyplňte všechna pole.",
+    "deleteConfirm": "Smazat toto zařízení?",
+    "receiptNo": "Číslo dokladu",
+    "ticketVat": "DPH vstupenky (%) – eKasa",
+    "ticketVatHint": "Sazba DPH vstupenky na eKasa dokladu (0 pokud neplátce / snížená dle účetní).",
+    "status": {
+      "NONE": "Nefiskalizováno",
+      "PENDING": "Čeká",
+      "REGISTERED": "Zaregistrováno",
+      "OFFLINE": "Offline (OKP)",
+      "FAILED": "Selhalo"
+    }
   }
 }

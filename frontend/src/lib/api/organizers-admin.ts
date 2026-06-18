@@ -62,6 +62,7 @@ export interface OrganizerBilling {
   customerFeePercent: number;
   billingMode: BillingMode;
   refundFeePerTicketCents: number | null;
+  ticketVatPercent: number; // eKasa: DPH sadzba lístka na eKasa doklade
 }
 
 /** SUPERADMIN/STAFF – zoznam VŠETKÝCH organizátorov + detail + fakturácia. */

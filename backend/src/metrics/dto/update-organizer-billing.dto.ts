@@ -12,4 +12,7 @@ export class UpdateOrganizerBillingDto {
   @IsOptional() @IsEnum(BillingMode) billingMode?: BillingMode;
   // null = platformová konštanta (40); inak 0..10000 cents
   @IsOptional() @ValidateIf((_, v) => v !== null) @IsInt() @Min(0) @Max(10000) refundFeePerTicketCents?: number | null;
+
+  // eKasa: DPH sadzba lístka na eKasa doklade (zákaznícka DPH; 0 ak neplatca / znížená sadzba podľa účtovníka).
+  @IsOptional() @IsInt() @Min(0) @Max(100) ticketVatPercent?: number;
 }

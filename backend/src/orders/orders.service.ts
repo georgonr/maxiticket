@@ -16,6 +16,7 @@ import { PaymentGatewayService } from '../payment/payment-gateways.service';
 import { sendTicketsForOrder } from './orders-mail.helper';
 import { codedBadRequest, codedNotFound, codedConflict } from '../common/errors/coded-exception';
 import { CouponsService } from '../coupons/coupons.service';
+import { EkasaService } from '../ekasa/ekasa.service';
 import { generatePosClosurePdf, PosClosureByTermin } from './pos-closure-pdf.helper';
 
 // Krok 2/2: názov riadku poplatku na Stripe (podľa jazyka objednávky). Sumu vidí
@@ -37,6 +38,7 @@ export class OrdersService {
     private coupons: CouponsService,
     @Inject(PAYMENT_PROVIDER) private paymentProvider: PaymentProvider,
     private gateways: PaymentGatewayService,
+    private ekasa: EkasaService,
   ) {}
 
   async createOrder(dto: CreateOrderDto, user?: JwtPayload) {
@@ -959,6 +961,10 @@ export class OrdersService {
         .catch((e) => this.logger.error(`POS email failed for ${result.order.id}: ${e.message}`));
     }
 
+    // eKasa fiškalizácia (za flagom EKASA_ENABLED). Nikdy nezhadzuje predaj:
+    // OFFLINE/FAILED sa uloží k objednávke a vráti v odpovedi (UI to zobrazí).
+    const ekasaResult = await this.ekasa.registerSaleForOrder(result.order.id);
+
     return {
       orderId: result.order.id,
       orderNumber: result.order.orderNumber,
@@ -967,6 +973,7 @@ export class OrdersService {
       currency,
       emailSent: hasEmail,
       tickets: result.tickets,
+      ekasa: ekasaResult, // null ak flag off / bez zariadenia
     };
   }
 

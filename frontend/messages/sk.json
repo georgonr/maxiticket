@@ -1968,5 +1968,38 @@
       "downloadDraft": "Stiahnuť vyúčtovanie",
       "downloadInvoice": "Stiahnuť faktúru"
     }
+  },
+  "ekasa": {
+    "label": "eKasa",
+    "title": "eKasa pokladnice (ORP)",
+    "note": "Konfigurácia fiškálnych zariadení – LEN super-admin. Prístupový token je tajný.",
+    "empty": "Žiadne zariadenia.",
+    "addDevice": "Pridať zariadenie",
+    "deviceLabel": "Názov",
+    "orp": "ORP kód",
+    "exposeUrl": "Expose URL",
+    "accessToken": "Prístupový token",
+    "printMode": "Režim tlače",
+    "print": "tlač",
+    "add": "Pridať",
+    "active": "Aktívne",
+    "inactive": "Neaktívne",
+    "noToken": "Bez tokenu",
+    "activate": "Aktivovať",
+    "deactivate": "Deaktivovať",
+    "saved": "Uložené.",
+    "saveErr": "Operácia zlyhala.",
+    "fillAll": "Vyplňte všetky polia.",
+    "deleteConfirm": "Zmazať toto zariadenie?",
+    "receiptNo": "Číslo dokladu",
+    "ticketVat": "DPH lístka (%) – eKasa",
+    "ticketVatHint": "DPH sadzba lístka na eKasa doklade (0 ak neplatca / znížená podľa účtovníka).",
+    "status": {
+      "NONE": "Nefiškalizované",
+      "PENDING": "Čaká",
+      "REGISTERED": "Zaregistrované",
+      "OFFLINE": "Offline (OKP)",
+      "FAILED": "Zlyhalo"
+    }
   }
 }
