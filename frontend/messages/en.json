@@ -1719,7 +1719,11 @@
       "footerNote": "Changing the live gateway affects all new orders. ComGate is in preparation (stub) – it will be activated once keys are added.",
       "errNoPermission": "You do not have permission to manage payment gateways.",
       "errGeneric": "Something went wrong.",
-      "errConnect": "We cannot connect to the server."
+      "errConnect": "We cannot connect to the server.",
+      "sideSandbox": "Sandbox",
+      "sideLive": "Live",
+      "sideTest": "Test",
+      "sandboxNeedsKey": "To enable Sandbox, set STRIPE_SECRET_KEY_TEST in .env."
     },
     "shows": {
       "title": "Events – all organizers",

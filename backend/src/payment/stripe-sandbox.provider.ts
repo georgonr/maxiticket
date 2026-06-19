@@ -12,10 +12,12 @@ import { PaymentProvider, CreateCheckoutParams, CheckoutResult } from './payment
 export class StripeSandboxPaymentProvider implements PaymentProvider {
   private readonly logger = new Logger(StripeSandboxPaymentProvider.name);
   readonly client: Stripe;
+  readonly webhookSecret: string; // STRIPE_WEBHOOK_SECRET_TEST – pre gateway-aware webhook
   private readonly secretKey: string;
 
   constructor(private config: ConfigService) {
     this.secretKey = config.get<string>('STRIPE_SECRET_KEY_TEST') ?? '';
+    this.webhookSecret = config.get<string>('STRIPE_WEBHOOK_SECRET_TEST') ?? '';
     this.client = new Stripe(this.secretKey || 'sk_test_placeholder', {
       apiVersion: '2024-06-20' as any,
     });

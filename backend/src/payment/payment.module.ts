@@ -25,6 +25,6 @@ import { PaymentGatewaysController } from './payment-gateways.controller';
     },
     PaymentGatewayService,
   ],
-  exports: [PAYMENT_PROVIDER, StripePaymentProvider, PaymentGatewayService],
+  exports: [PAYMENT_PROVIDER, StripePaymentProvider, StripeSandboxPaymentProvider, PaymentGatewayService],
 })
 export class PaymentModule {}

@@ -1719,7 +1719,11 @@
       "footerNote": "Zmena ostrej brány ovplyvní všetky nové objednávky. ComGate sa pripravuje (stub) – aktivuje sa po doplnení kľúčov.",
       "errNoPermission": "Nemáte oprávnenie spravovať platobné brány.",
       "errGeneric": "Niečo sa pokazilo.",
-      "errConnect": "Nemôžeme sa pripojiť k serveru."
+      "errConnect": "Nemôžeme sa pripojiť k serveru.",
+      "sideSandbox": "Sandbox",
+      "sideLive": "Live",
+      "sideTest": "Test",
+      "sandboxNeedsKey": "Pre aktiváciu Sandboxu doplňte STRIPE_SECRET_KEY_TEST do .env."
     },
     "shows": {
       "title": "Podujatia – všetci organizátori",

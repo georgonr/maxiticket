@@ -5,7 +5,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { FastifyRequest } from 'fastify';
 import Stripe from 'stripe';
+import { PaymentGateway } from '@prisma/client';
 import { StripePaymentProvider } from '../payment/stripe.provider';
+import { StripeSandboxPaymentProvider } from '../payment/stripe-sandbox.provider';
+import { PaymentGatewayService } from '../payment/payment-gateways.service';
 import { OrdersService } from '../orders/orders.service';
 
 @Controller('payments')
@@ -15,6 +18,8 @@ export class PaymentsController {
   constructor(
     private config: ConfigService,
     private stripeProvider: StripePaymentProvider,
+    private stripeSandbox: StripeSandboxPaymentProvider,
+    private gateways: PaymentGatewayService,
     private ordersService: OrdersService,
   ) {}
 
@@ -28,15 +33,20 @@ export class PaymentsController {
     if (!rawBody) throw new BadRequestException('Missing raw body');
     if (!signature) throw new BadRequestException('Missing stripe-signature header');
 
-    const webhookSecret = this.stripeProvider.webhookSecret;
+    // Gateway-aware: overuj podpis secretom podľa AKTÍVNEJ brány (live vs sandbox).
+    const gateway = await this.gateways.getActiveGateway();
+    const sandbox = gateway === PaymentGateway.STRIPE_SANDBOX;
+    const provider = sandbox ? this.stripeSandbox : this.stripeProvider;
+    const webhookSecret = provider.webhookSecret;
     if (!webhookSecret) {
-      this.logger.warn('STRIPE_WEBHOOK_SECRET not set – webhook ignored');
+      const envName = sandbox ? 'STRIPE_WEBHOOK_SECRET_TEST' : 'STRIPE_WEBHOOK_SECRET';
+      this.logger.error(`[STRIPE webhook] Aktívna brána ${gateway}, ale ${envName} nie je nastavený – podpis sa nedá overiť, objednávka sa NEfulfillne. Doplňte ${envName} do .env.`);
       return { received: true };
     }
 
     let event: Stripe.Event;
     try {
-      event = this.stripeProvider.client.webhooks.constructEvent(rawBody, signature, webhookSecret);
+      event = provider.client.webhooks.constructEvent(rawBody, signature, webhookSecret);
     } catch (err: any) {
       this.logger.warn(`Stripe signature verification failed: ${err.message}`);
       throw new BadRequestException(`Webhook signature invalid: ${err.message}`);
