@@ -26,6 +26,7 @@ type Fields = {
 
 function RegisterContent() {
   const t = useTranslations('accountSettings');
+  const tErr = useTranslations('errors');
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get('next') ?? '/account/tickets';
@@ -53,7 +54,9 @@ function RegisterContent() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setServerError(getReadableError({ endpoint: 'register-customer', status: res.status, code: json.message }));
+        // Rola-aware konflikt (EMAIL_EXISTS_CUSTOMER/STAFF) cez i18n; inak pôvodný fallback.
+        if (json.messageCode && tErr.has(json.messageCode)) setServerError(tErr(json.messageCode));
+        else setServerError(getReadableError({ endpoint: 'register-customer', status: res.status, code: json.message }));
         return;
       }
       setAccessToken(json.accessToken);

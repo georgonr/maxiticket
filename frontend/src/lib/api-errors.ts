@@ -24,6 +24,8 @@ export function getReadableError({
 
     case 'register-organizer':
       if (status === 409) {
+        if (msg === 'EMAIL_EXISTS_STAFF') return 'Tento e-mail je už registrovaný ako účet skenera/zamestnanca. Použite prosím iný e-mail.';
+        if (msg === 'EMAIL_EXISTS_CUSTOMER') return 'Účet s týmto e-mailom už existuje. Prihláste sa, prípadne obnovte heslo.';
         if (msgLow.includes('slug')) return 'Tento URL slug je už obsadený. Skúste iný.';
         return 'Tento e-mail je už zaregistrovaný. Skúste sa prihlásiť.';
       }

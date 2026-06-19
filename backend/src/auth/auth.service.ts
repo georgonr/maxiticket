@@ -14,6 +14,17 @@ import { UserRole, TermsType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomUUID, randomBytes, createHash } from 'crypto';
 import { MailService } from '../mail/mail.service';
+import { codedConflict } from '../common/errors/coded-exception';
+
+/**
+ * Rola-aware konflikt e-mailu pri registrácii (neodhaľuje žiadne ďalšie údaje).
+ * CUSTOMER → ponúkni prihlásenie/reset; ostatné role (skener/zamestnanec/organizátor) → iný e-mail.
+ */
+function emailExistsConflict(role: UserRole) {
+  return role === UserRole.CUSTOMER
+    ? codedConflict('EMAIL_EXISTS_CUSTOMER', 'Účet s týmto e-mailom už existuje. Prihláste sa, prípadne obnovte heslo.')
+    : codedConflict('EMAIL_EXISTS_STAFF', 'Tento e-mail je už registrovaný ako účet skenera/zamestnanca. Použite prosím iný e-mail.');
+}
 
 const BCRYPT_ROUNDS = 12;
 const ACCESS_TOKEN_TTL = '15m';
@@ -29,8 +40,8 @@ export class AuthService {
   ) {}
 
   async registerOrganizer(dto: RegisterOrganizerDto, ipAddress?: string, userAgent?: string) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email already registered');
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email }, select: { role: true } });
+    if (existing) throw emailExistsConflict(existing.role);
 
     const slugExists = await this.prisma.organizer.findUnique({ where: { slug: dto.organizerSlug } });
     if (slugExists) throw new ConflictException('Organizer slug already taken');
@@ -116,8 +127,8 @@ export class AuthService {
   }
 
   async registerCustomer(dto: RegisterCustomerDto, ipAddress?: string, userAgent?: string) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email already registered');
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email }, select: { role: true } });
+    if (existing) throw emailExistsConflict(existing.role);
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 

@@ -43,7 +43,8 @@ export function RegisterForm() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setServerError(getReadableError({ endpoint: 'register-organizer', status: res.status, code: json.message }));
+        // messageCode (rola-aware konflikt) má prednosť pred generickým message.
+        setServerError(getReadableError({ endpoint: 'register-organizer', status: res.status, code: json.messageCode ?? json.message }));
         return;
       }
       setAccessToken(json.accessToken);

@@ -6,6 +6,17 @@ import { ContactDto } from './contact.dto';
 import { EventStatus, TerminStatus, SectionMode } from '@prisma/client';
 
 const SALE_STATUSES: TerminStatus[] = [TerminStatus.ON_SALE, TerminStatus.COMING_SOON];
+
+// Verejný ZOZNAM skrýva termíny skončené pred VIAC ako 5 h (endsAt + 5h; fallback startsAt).
+// Detail (getShowBySlug) tento filter NEpoužíva – ostáva dostupný cez link/lístok.
+const PAST_GRACE_MS = 5 * 60 * 60 * 1000;
+function notEndedOr() {
+  const cutoff = new Date(Date.now() - PAST_GRACE_MS);
+  return [
+    { endsAt: { gte: cutoff } },
+    { endsAt: null, startsAt: { gte: cutoff } },
+  ];
+}
 const HERO_CAP = 8;
 const HERO_CACHE_TTL_MS = 60_000;
 
@@ -34,17 +45,18 @@ export class PublicService {
     });
 
     // Fetch promoted shows with nearest active termin
+    const heroTerminWhere = { status: { in: SALE_STATUSES }, visible: true, OR: notEndedOr() };
     const promotedShows = await this.prisma.show.findMany({
       where: {
         isPromoted: true,
         status: EventStatus.PUBLISHED,
-        termins: { some: { status: { in: SALE_STATUSES }, visible: true } },
+        termins: { some: heroTerminWhere },
       },
       include: {
         sliderImage: { select: { squareUrl: true } },
         images: { where: { isCover: true }, take: 1 },
         termins: {
-          where: { status: { in: SALE_STATUSES }, visible: true },
+          where: heroTerminWhere,
           orderBy: { startsAt: 'asc' },
           take: 1,
           include: { venue: { select: { name: true, city: true } } },
@@ -100,6 +112,7 @@ export class PublicService {
     const terminWhere: any = {
       status: { in: SALE_STATUSES },
       visible: true,
+      OR: notEndedOr(),
       ...(terminDateFilter ? { startsAt: terminDateFilter } : {}),
       ...(q.city ? { venue: { city: { contains: q.city, mode: 'insensitive' } } } : {}),
     };
@@ -157,7 +170,7 @@ export class PublicService {
    * + promované navrch. Rovnaký tvar ako listShows → frontend reuse karty.
    */
   async featuredShows() {
-    const terminWhere = { status: { in: SALE_STATUSES }, visible: true };
+    const terminWhere = { status: { in: SALE_STATUSES }, visible: true, OR: notEndedOr() };
     const candidates = await this.prisma.show.findMany({
       where: { status: EventStatus.PUBLISHED, termins: { some: terminWhere } },
       include: {
@@ -239,6 +252,7 @@ export class PublicService {
           some: {
             status: { in: SALE_STATUSES },
             visible: true,
+            OR: notEndedOr(),
             show: { status: EventStatus.PUBLISHED },
           },
         },

@@ -1843,7 +1843,9 @@
     "TERMIN_NOT_AVAILABLE": "Termín nie je dostupný.",
     "RECEIPT_PAID_ONLY": "Doklad je dostupný len pre zaplatené objednávky.",
     "ORDER_NOT_FOUND": "Objednávka neexistuje.",
-    "ORDER_NOT_YOURS": "Táto objednávka nepatrí vášmu účtu."
+    "ORDER_NOT_YOURS": "Táto objednávka nepatrí vášmu účtu.",
+    "EMAIL_EXISTS_CUSTOMER": "Účet s týmto e-mailom už existuje. Prihláste sa, prípadne obnovte heslo.",
+    "EMAIL_EXISTS_STAFF": "Tento e-mail je už registrovaný ako účet skenera/zamestnanca. Použite prosím iný e-mail."
   },
   "registerChoice": {
     "title": "Ako sa chcete registrovať?",

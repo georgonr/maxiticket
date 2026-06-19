@@ -16,6 +16,9 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err: any) {
-    return NextResponse.json({ message: err.message }, { status: err.status ?? 500 });
+    const inner = err?.body?.message;
+    const messageCode = inner && typeof inner === 'object' ? inner.messageCode : undefined;
+    const message = inner && typeof inner === 'object' ? inner.message : (err.message ?? 'Error');
+    return NextResponse.json({ message, messageCode }, { status: err.status ?? 500 });
   }
 }

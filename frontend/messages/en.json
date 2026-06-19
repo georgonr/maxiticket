@@ -1843,7 +1843,9 @@
     "TERMIN_NOT_AVAILABLE": "The date is not available.",
     "RECEIPT_PAID_ONLY": "The receipt is available only for paid orders.",
     "ORDER_NOT_FOUND": "The order does not exist.",
-    "ORDER_NOT_YOURS": "This order does not belong to your account."
+    "ORDER_NOT_YOURS": "This order does not belong to your account.",
+    "EMAIL_EXISTS_CUSTOMER": "An account with this e-mail already exists. Please log in or reset your password.",
+    "EMAIL_EXISTS_STAFF": "This e-mail is already registered as a scanner/staff account. Please use a different e-mail."
   },
   "registerChoice": {
     "title": "How would you like to register?",
