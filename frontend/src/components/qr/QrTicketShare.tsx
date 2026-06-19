@@ -67,21 +67,14 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
     <div ref={ref} className="group relative flex-shrink-0">
       <button
         onClick={() => setOpen((o) => !o)}
-        title={t('shareTitle')}
-        aria-label={t('shareTitle')}
+        title={`${t('shareTitle')} — ${t('clickToEnlarge')}`}
+        aria-label={`${t('shareTitle')} — ${t('clickToEnlarge')}`}
         className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-purple-700 hover:border-purple-300 hover:bg-purple-50 transition-colors"
       >
         <QrCode size={18} />
       </button>
 
-      {/* HOVER zväčšenie (desktop, keď nie je otvorený popover) */}
-      {dataUrl && !open && (
-        <div className="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden rounded-xl border border-slate-200 bg-white p-3 shadow-lg group-hover:block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={dataUrl} alt="QR" width={208} height={208} style={{ width: 208, height: 208, display: 'block', imageRendering: 'pixelated' }} className="aspect-square object-contain" />
-          <p className="mt-1.5 text-center text-[11px] text-slate-500">{t('shareScan')}</p>
-        </div>
-      )}
+      {/* HOVER: žiadny QR náhľad – iba natívny tooltip (title). Zväčšenie je na KLIK. */}
 
       {/* KLIK popover s akciami */}
       {open && (
@@ -89,7 +82,8 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
           <div className="flex flex-col items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {dataUrl && <img src={dataUrl} alt="QR" width={200} height={200} style={{ width: 200, height: 200, display: 'block', imageRendering: 'pixelated' }} className="aspect-square object-contain" />}
-            <p className="mt-1.5 mb-2 text-center text-xs font-medium text-slate-700">{shareText}</p>
+            <p className="mt-1.5 text-center text-xs font-medium text-slate-700">{shareText}</p>
+            <p className="mb-2 text-center text-[11px] text-slate-500">{t('shareScan')}</p>
           </div>
           <div className="space-y-0.5">
             <button onClick={emailShare} className={action}><Mail size={16} /> {t('shareEmail')}</button>

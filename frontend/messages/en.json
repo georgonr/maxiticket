@@ -2048,6 +2048,7 @@
     "shareEmail": "Send by e-mail",
     "shareCopyLink": "Copy link",
     "shareCopyImage": "Copy QR image",
-    "shareDownload": "Download QR"
+    "shareDownload": "Download QR",
+    "clickToEnlarge": "click to enlarge"
   }
 }
