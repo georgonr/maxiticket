@@ -11,6 +11,7 @@ import {
   Wallet,
   Users,
   RefreshCw,
+  RotateCcw,
   Plus,
   ArrowRight,
 } from 'lucide-react';
@@ -21,10 +22,10 @@ import {
   organizerMetricsApi,
   adminMetricsApi,
   OrganizerOverview,
+  AdminOverview,
   SalesTrendPoint,
   TopShow,
   RecentOrder,
-  OrganizerRow,
 } from '@/lib/api/metrics';
 import { SalesTrendChart } from '@/components/dashboard/SalesTrendChart';
 import { TopShowsChart } from '@/components/dashboard/TopShowsChart';
@@ -36,7 +37,6 @@ import {
   ErrorState,
   greetingKey,
 } from '@/components/dashboard/parts';
-import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
 // Krok 31c1: chybové hlášky cez i18n (t = organizer.dashboard.*); e.message (backend) ostáva raw.
@@ -53,14 +53,13 @@ function readableError(t: (k: string) => string, e: unknown): string {
 export default function OrganizerDashboardPage() {
   const { user, isSuperAdmin } = useAuth();
   const t = useTranslations('organizer.dashboard');
+  const ta = useTranslations('admin.dashboard'); // platform KPI labely pre SUPERADMIN agregát
   const format = useFormatter();
   const fmtPrice = (amount: number) => format.number(amount, { style: 'currency', currency: 'EUR' });
 
-  // SUPERADMIN cross-cutting: switcher organizátora
-  const [orgList, setOrgList] = useState<OrganizerRow[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<string | undefined>(undefined);
-
+  // SUPERADMIN: platformový agregát (všetci organizátori). Organizer: vlastný tenant.
   const [overview, setOverview] = useState<OrganizerOverview | null>(null);
+  const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
   const [trend, setTrend] = useState<SalesTrendPoint[]>([]);
   const [topShows, setTopShows] = useState<TopShow[]>([]);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
@@ -68,70 +67,54 @@ export default function OrganizerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /** organizerId pošleme len pre SUPERADMIN; organizer roly scopuje backend z tokenu. */
-  const load = useCallback(async (organizerId?: string) => {
+  /**
+   * SUPERADMIN → globálne admin metriky (súčty za VŠETKÝCH organizátorov; bez per-org filtra).
+   * Per-organizátor pohľad je v sekcii Organizátori. Organizer roly scopuje backend z tokenu.
+   */
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const token = await getValidToken();
       if (!token) throw new ApiError(401, 'No token');
-      const p = organizerId ? { organizerId } : {};
-      const [ov, tr, ts, ro] = await Promise.all([
-        organizerMetricsApi.getOverview(token, p),
-        organizerMetricsApi.getSalesTrend(token, { days: 7, ...p }),
-        organizerMetricsApi.getTopShows(token, { limit: 5, ...p }),
-        organizerMetricsApi.getRecentOrders(token, { limit: 10, ...p }),
-      ]);
-      setOverview(ov);
-      setTrend(tr);
-      setTopShows(ts);
-      setRecentOrders(ro);
+      if (isSuperAdmin) {
+        const [ov, tr, ts, ro] = await Promise.all([
+          adminMetricsApi.getOverview(token),
+          adminMetricsApi.getSalesTrend(token, { days: 7 }),
+          adminMetricsApi.getTopShows(token, { limit: 5 }),
+          adminMetricsApi.getRecentOrders(token, { limit: 10 }),
+        ]);
+        setAdminOverview(ov);
+        setOverview(null);
+        setTrend(tr);
+        setTopShows(ts);
+        setRecentOrders(ro);
+      } else {
+        const [ov, tr, ts, ro] = await Promise.all([
+          organizerMetricsApi.getOverview(token),
+          organizerMetricsApi.getSalesTrend(token, { days: 7 }),
+          organizerMetricsApi.getTopShows(token, { limit: 5 }),
+          organizerMetricsApi.getRecentOrders(token, { limit: 10 }),
+        ]);
+        setOverview(ov);
+        setAdminOverview(null);
+        setTrend(tr);
+        setTopShows(ts);
+        setRecentOrders(ro);
+      }
     } catch (e) {
       setError(readableError(t, e));
       setOverview(null);
+      setAdminOverview(null);
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [isSuperAdmin, t]);
 
-  // Inicializácia: SUPERADMIN najprv načíta zoznam organizátorov a auto-vyberie prvého.
   useEffect(() => {
     if (user === null) return; // čaká na resolúciu tokenu
-    let active = true;
-    (async () => {
-      if (isSuperAdmin) {
-        try {
-          const token = await getValidToken();
-          if (!token) return;
-          const orgs = await adminMetricsApi.getOrganizers(token, { limit: 100, sort: 'name' });
-          if (!active) return;
-          setOrgList(orgs);
-          const first = orgs[0]?.organizerId;
-          setSelectedOrg(first);
-          if (first) {
-            await load(first);
-          } else {
-            setLoading(false);
-          }
-        } catch (e) {
-          if (active) {
-            setError(readableError(t, e));
-            setLoading(false);
-          }
-        }
-      } else {
-        await load();
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [user, isSuperAdmin, load, t]);
-
-  function onSwitchOrg(id: string) {
-    setSelectedOrg(id);
-    load(id);
-  }
+    load();
+  }, [user, load]);
 
   const capacityPct =
     overview && overview.myCapacityTotal > 0
@@ -150,18 +133,10 @@ export default function OrganizerDashboardPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-2">
-            {isSuperAdmin && orgList.length > 0 && (
-              <Select
-                value={selectedOrg ?? ''}
-                onChange={(e) => onSwitchOrg(e.target.value)}
-                className="py-1.5 text-sm"
-                options={orgList.map((o) => ({ value: o.organizerId, label: o.name }))}
-              />
-            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => load(isSuperAdmin ? selectedOrg : undefined)}
+              onClick={() => load()}
               disabled={loading}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -174,9 +149,40 @@ export default function OrganizerDashboardPage() {
 
         {/* KPI karty */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-          {loading || !overview ? (
+          {loading || (!overview && !adminOverview) ? (
             Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28" />)
-          ) : (
+          ) : adminOverview ? (
+            /* SUPERADMIN – platformové súčty za VŠETKÝCH organizátorov */
+            <>
+              <KpiCard
+                title={ta('kpiTodayRevenue')}
+                value={fmtPrice(adminOverview.todayRevenue)}
+                icon={<TrendingUp className="h-5 w-5" />}
+                change={adminOverview.todayRevenueChange}
+              />
+              <KpiCard
+                title={ta('kpiSoldToday')}
+                value={String(adminOverview.ticketsSoldToday)}
+                icon={<Ticket className="h-5 w-5" />}
+                change={adminOverview.ticketsSoldChange}
+              />
+              <KpiCard
+                title={ta('kpiActiveShows')}
+                value={String(adminOverview.activeShowsCount)}
+                icon={<Calendar className="h-5 w-5" />}
+              />
+              <KpiCard
+                title={ta('kpiOrganizers')}
+                value={String(adminOverview.organizersCount)}
+                icon={<Users className="h-5 w-5" />}
+              />
+              <KpiCard
+                title={ta('kpiPendingRefunds')}
+                value={String(adminOverview.pendingRefundsCount)}
+                icon={<RotateCcw className="h-5 w-5" />}
+              />
+            </>
+          ) : overview ? (
             <>
               <KpiCard
                 title={t('kpiMyShows')}
@@ -226,7 +232,7 @@ export default function OrganizerDashboardPage() {
                 </p>
               </div>
             </>
-          )}
+          ) : null}
         </div>
 
         {/* Graf + top podujatia */}
