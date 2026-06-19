@@ -713,7 +713,16 @@
         "COMING_SOON": "Čoskoro",
         "SOLD_OUT": "Vypredané",
         "CANCELLED": "Zrušený"
-      }
+      },
+      "editAction": "Editovať",
+      "save": "Uložiť",
+      "nameLabel": "Názov",
+      "priceLabel": "Cena (€)",
+      "quantityLabel": "Počet kusov",
+      "maxPerOrderLabel": "Max. na objednávku",
+      "activeForSale": "Aktívny (v predaji)",
+      "unlimitedPlaceholder": "neobmedzené",
+      "qrLabel": "QR platba"
     },
     "termin": {
       "backToShow": "Späť na podujatie",

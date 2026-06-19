@@ -5,8 +5,11 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations, useFormatter } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
-import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, ticketTypesApi, refundExportApi, eventOpsApi } from '@/lib/api';
+import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, CreateTicketTypeBody, ticketTypesApi, refundExportApi, eventOpsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
+import { QrCode } from 'lucide-react';
 import { CouponsSection } from '@/components/coupons/CouponsSection';
 import { CancelTerminModal } from '@/components/shows/CancelTerminModal';
 
@@ -356,8 +359,58 @@ function TerminCard({
   const t = useTranslations('organizer.editor');
   const format = useFormatter();
   const date = format.dateTime(new Date(termin.startsAt), { dateStyle: 'medium', timeStyle: 'short' });
-  const ticketTypes: TicketType[] = termin.ticketTypes ?? [];
   const isCancelled = termin.status === 'CANCELLED';
+  const isGeneral = (termin.mode ?? 'GENERAL') === 'GENERAL';
+
+  // Lokálny stav typov lístkov (inline edit + QR slider); re-sync pri reloade rodiča.
+  const [tts, setTts] = useState<TicketType[]>(termin.ticketTypes ?? []);
+  useEffect(() => { setTts(termin.ticketTypes ?? []); }, [termin.ticketTypes]);
+  const [qrSaving, setQrSaving] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', price: '', totalQuantity: '', maxPerOrder: '', isActive: true });
+
+  async function toggleQr(tt: TicketType) {
+    setQrSaving(tt.id);
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      const u = await ticketTypesApi.update(termin.id, tt.id, { qrPaymentEnabled: !tt.qrPaymentEnabled }, token);
+      setTts((prev) => prev.map((x) => (x.id === tt.id ? { ...x, qrPaymentEnabled: u.qrPaymentEnabled } : x)));
+    } catch { /* stav sa neprepne */ } finally { setQrSaving(null); }
+  }
+
+  function startEdit(tt: TicketType) {
+    setEditId(tt.id);
+    setEditForm({
+      name: tt.name,
+      price: String(tt.price),
+      totalQuantity: tt.totalQuantity != null ? String(tt.totalQuantity) : '',
+      maxPerOrder: String(tt.maxPerOrder),
+      isActive: tt.isActive,
+    });
+  }
+  function cancelEdit() { setEditId(null); }
+
+  async function saveEdit() {
+    if (!editId) return;
+    setEditSaving(true);
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      const body: Partial<CreateTicketTypeBody> = {
+        name: editForm.name.trim(),
+        price: Number(editForm.price),
+        maxPerOrder: Number(editForm.maxPerOrder) || 10,
+        isActive: editForm.isActive,
+      };
+      const q = editForm.totalQuantity.trim();
+      if (q !== '') body.totalQuantity = Number(q);
+      const u = await ticketTypesApi.update(termin.id, editId, body, token);
+      setTts((prev) => prev.map((x) => (x.id === editId ? u : x)));
+      setEditId(null);
+    } catch { /* ponechaj editor */ } finally { setEditSaving(false); }
+  }
 
   return (
     <div className="rounded-md border border-gray-200 dark:border-gray-800 p-4">
@@ -382,17 +435,51 @@ function TerminCard({
 
       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">{t('ticketTypes', { count: ticketTypes.length })}</p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">{t('ticketTypes', { count: tts.length })}</p>
           <button onClick={onAddTicketType} className="text-xs text-brand hover:underline">+ {t('addTicketType')}</button>
         </div>
-        {ticketTypes.length > 0 && (
+        {tts.length > 0 && (
           <div className="space-y-1">
-            {ticketTypes.map((tt) => (
-              <div key={tt.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-900 rounded px-2 py-1">
-                <span className="font-medium">{tt.name}</span>
-                <span className="text-gray-500 dark:text-gray-400">{format.number(Number(tt.price), { style: 'currency', currency: tt.currency })}</span>
-                <span className={tt.isActive ? 'text-green-600' : 'text-gray-400 dark:text-gray-500'}>{tt.isActive ? t('active') : t('inactive')}</span>
-                <button onClick={() => onDeleteTicketType(tt.id)} className="text-red-500 hover:text-red-700 ml-2">×</button>
+            {tts.map((tt) => (
+              <div key={tt.id} className="rounded bg-gray-50 dark:bg-gray-900 px-2 py-1.5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  <span className="font-medium">{tt.name}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{format.number(Number(tt.price), { style: 'currency', currency: tt.currency })}</span>
+                  <span className={tt.isActive ? 'text-green-600' : 'text-gray-400 dark:text-gray-500'}>{tt.isActive ? t('active') : t('inactive')}</span>
+                  <div className="ml-auto flex items-center gap-2">
+                    {isGeneral && (
+                      <span className="flex items-center gap-1" title={t('qrLabel')}>
+                        <QrCode size={13} className={tt.qrPaymentEnabled ? 'text-brand' : 'text-gray-400'} />
+                        <ToggleSwitch checked={tt.qrPaymentEnabled} disabled={qrSaving === tt.id} onChange={() => toggleQr(tt)} label={t('qrLabel')} size="sm" />
+                      </span>
+                    )}
+                    <button onClick={() => (editId === tt.id ? cancelEdit() : startEdit(tt))} className="text-brand hover:underline">
+                      {editId === tt.id ? t('cancel') : t('editAction')}
+                    </button>
+                    <button onClick={() => onDeleteTicketType(tt.id)} className="text-red-500 hover:text-red-700">×</button>
+                  </div>
+                </div>
+
+                {editId === tt.id && (
+                  <div className="mt-2 grid grid-cols-1 gap-2 border-t border-gray-200 dark:border-gray-700 pt-2 sm:grid-cols-2">
+                    <label className="block"><span className="mb-0.5 block text-[11px] text-gray-500">{t('nameLabel')}</span>
+                      <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} /></label>
+                    <label className="block"><span className="mb-0.5 block text-[11px] text-gray-500">{t('priceLabel')}</span>
+                      <Input type="number" step="0.01" min={0} value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))} /></label>
+                    <label className="block"><span className="mb-0.5 block text-[11px] text-gray-500">{t('quantityLabel')}</span>
+                      <Input type="number" min={1} value={editForm.totalQuantity} onChange={(e) => setEditForm((f) => ({ ...f, totalQuantity: e.target.value }))} placeholder={t('unlimitedPlaceholder')} /></label>
+                    <label className="block"><span className="mb-0.5 block text-[11px] text-gray-500">{t('maxPerOrderLabel')}</span>
+                      <Input type="number" min={1} value={editForm.maxPerOrder} onChange={(e) => setEditForm((f) => ({ ...f, maxPerOrder: e.target.value }))} /></label>
+                    <label className="flex items-center gap-2 sm:col-span-2">
+                      <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm((f) => ({ ...f, isActive: e.target.checked }))} className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand" />
+                      <span className="text-xs">{t('activeForSale')}</span>
+                    </label>
+                    <div className="flex justify-end gap-2 sm:col-span-2">
+                      <Button variant="outline" size="sm" onClick={cancelEdit}>{t('cancel')}</Button>
+                      <Button size="sm" loading={editSaving} onClick={saveEdit}>{t('save')}</Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

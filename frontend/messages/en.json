@@ -713,7 +713,16 @@
         "COMING_SOON": "Coming soon",
         "SOLD_OUT": "Sold out",
         "CANCELLED": "Cancelled"
-      }
+      },
+      "editAction": "Edit",
+      "save": "Save",
+      "nameLabel": "Name",
+      "priceLabel": "Price (€)",
+      "quantityLabel": "Total quantity",
+      "maxPerOrderLabel": "Max per order",
+      "activeForSale": "Active (on sale)",
+      "unlimitedPlaceholder": "unlimited",
+      "qrLabel": "QR payment"
     },
     "termin": {
       "backToShow": "Back to event",
