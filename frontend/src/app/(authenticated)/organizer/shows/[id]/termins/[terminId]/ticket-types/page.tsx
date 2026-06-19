@@ -11,6 +11,7 @@ import { seatmapsApi, SeatMapSummary } from '@/lib/api/seatmaps';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 
 const EMPTY_FORM: CreateTicketTypeBody = {
   name: '', price: 0, currency: 'EUR',
@@ -40,6 +41,47 @@ export default function TicketTypesPage() {
   const router = useRouter();
   const { id, terminId } = useParams<{ id: string; terminId: string }>();
   const [qrSaving, setQrSaving] = useState<string | null>(null);
+
+  // Inline editor typu lístka
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', price: '', totalQuantity: '', maxPerOrder: '', isActive: true });
+
+  function startEdit(tt: TicketType) {
+    setEditId(tt.id);
+    setEditForm({
+      name: tt.name,
+      price: String(tt.price),
+      totalQuantity: tt.totalQuantity != null ? String(tt.totalQuantity) : '',
+      maxPerOrder: String(tt.maxPerOrder),
+      isActive: tt.isActive,
+    });
+  }
+  function cancelEdit() { setEditId(null); }
+
+  async function saveEdit() {
+    if (!editId) return;
+    setEditSaving(true);
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      const body: Partial<CreateTicketTypeBody> = {
+        name: editForm.name.trim(),
+        price: Number(editForm.price),
+        maxPerOrder: Number(editForm.maxPerOrder) || 10,
+        isActive: editForm.isActive,
+      };
+      const tqVal = editForm.totalQuantity.trim();
+      if (tqVal !== '') body.totalQuantity = Number(tqVal);
+      const updated = await ticketTypesApi.update(terminId, editId, body, token);
+      setTicketTypes((prev) => prev.map((x) => (x.id === editId ? updated : x)));
+      setEditId(null);
+    } catch {
+      /* ponechaj editor otvorený */
+    } finally {
+      setEditSaving(false);
+    }
+  }
 
   async function toggleQr(tt: TicketType) {
     setQrSaving(tt.id);
@@ -298,40 +340,65 @@ export default function TicketTypesPage() {
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
             {ticketTypes.map((tt) => {
               const badge = getSaleBadge(tt);
+              const editing = editId === tt.id;
               return (
-                <div key={tt.id} className="flex items-center justify-between px-4 py-3 gap-4">
-                  <div>
-                    <p className="font-medium text-sm">{tt.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {format.number(Number(tt.price), { style: 'currency', currency: tt.currency })}
-                      {tt.totalQuantity ? ` · ${t('quantityPcs', { count: tt.totalQuantity })}` : ''}
-                      {` · ${t('maxPerOrder', { count: tt.maxPerOrder })}`}
-                    </p>
-                    {tt.saleStartsAt && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        {t('saleFrom')} {format.dateTime(new Date(tt.saleStartsAt), { dateStyle: 'medium', timeStyle: 'short' })}
-                        {tt.saleEndsAt ? ` – ${format.dateTime(new Date(tt.saleEndsAt), { dateStyle: 'medium', timeStyle: 'short' })}` : ''}
+                <div key={tt.id} className="px-4 py-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-sm">{tt.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {format.number(Number(tt.price), { style: 'currency', currency: tt.currency })}
+                        {tt.totalQuantity ? ` · ${t('quantityPcs', { count: tt.totalQuantity })}` : ''}
+                        {` · ${t('maxPerOrder', { count: tt.maxPerOrder })}`}
                       </p>
-                    )}
+                      {tt.saleStartsAt && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          {t('saleFrom')} {format.dateTime(new Date(tt.saleStartsAt), { dateStyle: 'medium', timeStyle: 'short' })}
+                          {tt.saleEndsAt ? ` – ${format.dateTime(new Date(tt.saleEndsAt), { dateStyle: 'medium', timeStyle: 'short' })}` : ''}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
+                        {t(badge.key)}
+                      </span>
+                      {/* QR rýchly nákup – iOS slider (len GA) */}
+                      {mode === 'GENERAL' && (
+                        <span className="flex items-center gap-1.5" title={tq('toggleHint')}>
+                          <QrCode size={14} className={tt.qrPaymentEnabled ? 'text-brand' : 'text-gray-400'} />
+                          <ToggleSwitch checked={tt.qrPaymentEnabled} disabled={qrSaving === tt.id} onChange={() => toggleQr(tt)} label={tq('toggleLabel')} size="sm" />
+                        </span>
+                      )}
+                      <Button variant="ghost" size="sm" onClick={() => (editing ? cancelEdit() : startEdit(tt))}>
+                        {editing ? t('cancel') : t('editAction')}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => handleDelete(tt.id)}>
+                        {t('delete')}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
-                      {t(badge.key)}
-                    </span>
-                    {mode === 'GENERAL' && (
-                      <button
-                        onClick={() => toggleQr(tt)}
-                        disabled={qrSaving === tt.id}
-                        title={tq('toggleHint')}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${tt.qrPaymentEnabled ? 'border-brand bg-brand/10 text-brand' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}
-                      >
-                        <QrCode size={13} /> {tq('toggleLabel')}: {tt.qrPaymentEnabled ? tq('on') : tq('off')}
-                      </button>
-                    )}
-                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => handleDelete(tt.id)}>
-                      {t('delete')}
-                    </Button>
-                  </div>
+
+                  {/* Inline editor (meno, cena, počty, aktívny) */}
+                  {editing && (
+                    <div className="mt-3 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:grid-cols-2">
+                      <label className="block"><span className="mb-1 block text-xs text-gray-500">{t('nameLabel')}</span>
+                        <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} /></label>
+                      <label className="block"><span className="mb-1 block text-xs text-gray-500">{t('priceLabel')}</span>
+                        <Input type="number" step="0.01" min={0} value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))} /></label>
+                      <label className="block"><span className="mb-1 block text-xs text-gray-500">{t('quantityLabel')}</span>
+                        <Input type="number" min={1} value={editForm.totalQuantity} onChange={(e) => setEditForm((f) => ({ ...f, totalQuantity: e.target.value }))} placeholder={t('unlimitedPlaceholder')} /></label>
+                      <label className="block"><span className="mb-1 block text-xs text-gray-500">{t('maxPerOrderLabel')}</span>
+                        <Input type="number" min={1} value={editForm.maxPerOrder} onChange={(e) => setEditForm((f) => ({ ...f, maxPerOrder: e.target.value }))} /></label>
+                      <label className="flex items-center gap-2 sm:col-span-2">
+                        <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm((f) => ({ ...f, isActive: e.target.checked }))} className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand" />
+                        <span className="text-sm">{t('activeForSale')}</span>
+                      </label>
+                      <div className="flex justify-end gap-2 sm:col-span-2">
+                        <Button variant="outline" size="sm" onClick={cancelEdit}>{t('cancel')}</Button>
+                        <Button size="sm" loading={editSaving} onClick={saveEdit}>{t('save')}</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -76,10 +76,10 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
 
       {/* HOVER zväčšenie (desktop, keď nie je otvorený popover) */}
       {dataUrl && !open && (
-        <div className="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden rounded-xl border border-slate-200 bg-white p-2 shadow-lg group-hover:block">
+        <div className="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden rounded-xl border border-slate-200 bg-white p-3 shadow-lg group-hover:block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={dataUrl} alt="QR" className="h-40 w-40" />
-          <p className="mt-1 text-center text-[11px] text-slate-500">{t('shareScan')}</p>
+          <img src={dataUrl} alt="QR" width={208} height={208} style={{ width: 208, height: 208, display: 'block', imageRendering: 'pixelated' }} className="aspect-square object-contain" />
+          <p className="mt-1.5 text-center text-[11px] text-slate-500">{t('shareScan')}</p>
         </div>
       )}
 
@@ -88,8 +88,8 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
         <div className="absolute right-0 top-full z-30 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
           <div className="flex flex-col items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {dataUrl && <img src={dataUrl} alt="QR" className="h-44 w-44" />}
-            <p className="mt-1 mb-2 text-center text-xs font-medium text-slate-700">{shareText}</p>
+            {dataUrl && <img src={dataUrl} alt="QR" width={200} height={200} style={{ width: 200, height: 200, display: 'block', imageRendering: 'pixelated' }} className="aspect-square object-contain" />}
+            <p className="mt-1.5 mb-2 text-center text-xs font-medium text-slate-700">{shareText}</p>
           </div>
           <div className="space-y-0.5">
             <button onClick={emailShare} className={action}><Mail size={16} /> {t('shareEmail')}</button>

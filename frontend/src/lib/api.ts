@@ -268,6 +268,7 @@ export interface Show {
   organizerId: string;
   images?: ShowImage[];
   createdAt: string;
+  isPast?: boolean; // posledný termín skončil >5 h → skryté z verejného zoznamu
 }
 
 export interface ShowDetail extends Show {

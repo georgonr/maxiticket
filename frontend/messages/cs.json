@@ -641,7 +641,9 @@
       "actionHide": "Skrýt z veřejné nabídky",
       "actionPublish": "Publikovat (zveřejnit)",
       "badgeDraft": "Koncept – nezobrazuje se veřejně",
-      "manage": "Spravovat"
+      "manage": "Spravovat",
+      "badgePast": "Skončeno",
+      "badgePastHint": "Poslední termín skončil – skryté z veřejného seznamu, stále spravovatelné."
     },
     "showForm": {
       "titleNew": "Nová akce",
@@ -789,7 +791,10 @@
       "confirmTypeLabel": "Pro potvrzení napište název akce:",
       "back": "Zpět",
       "cancelling": "Ruším…",
-      "cancelFailed": "Zrušení selhalo."
+      "cancelFailed": "Zrušení selhalo.",
+      "editAction": "Upravit",
+      "quantityLabel": "Počet kusů",
+      "unlimitedPlaceholder": "neomezeno"
     },
     "coupon": {
       "title": "Kupóny",

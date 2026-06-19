@@ -157,6 +157,12 @@ export default function ShowsPage() {
                         {t('statusArchived')}
                       </span>
                     )}
+                    {/* Skončené: posledný termín skončil >5 h → skryté z verejného zoznamu, ale spravovateľné */}
+                    {show.isPast && !isArchived && (
+                      <span className="inline-block mb-2 rounded-full px-2 py-0.5 text-xs font-medium bg-orange-50 text-orange-600" title={t('badgePastHint')}>
+                        {t('badgePast')}
+                      </span>
+                    )}
 
                     {show.category && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{show.category}</p>

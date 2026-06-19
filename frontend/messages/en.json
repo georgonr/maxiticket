@@ -641,7 +641,9 @@
       "actionHide": "Hide from public offer",
       "actionPublish": "Publish (make public)",
       "badgeDraft": "Draft – not publicly visible",
-      "manage": "Manage"
+      "manage": "Manage",
+      "badgePast": "Ended",
+      "badgePastHint": "Last date has passed – hidden from public listing, still manageable."
     },
     "showForm": {
       "titleNew": "New event",
@@ -789,7 +791,10 @@
       "confirmTypeLabel": "To confirm, type the event name:",
       "back": "Back",
       "cancelling": "Cancelling…",
-      "cancelFailed": "Cancellation failed."
+      "cancelFailed": "Cancellation failed.",
+      "editAction": "Edit",
+      "quantityLabel": "Total quantity",
+      "unlimitedPlaceholder": "unlimited"
     },
     "coupon": {
       "title": "Coupons",

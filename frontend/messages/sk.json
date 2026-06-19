@@ -641,7 +641,9 @@
       "actionHide": "Skryť z verejnej ponuky",
       "actionPublish": "Publikovať (zverejniť)",
       "badgeDraft": "Koncept – nezobrazuje sa verejne",
-      "manage": "Spravovať"
+      "manage": "Spravovať",
+      "badgePast": "Skončené",
+      "badgePastHint": "Posledný termín skončil – skryté z verejného zoznamu, stále spravovateľné."
     },
     "showForm": {
       "titleNew": "Nové podujatie",
@@ -789,7 +791,10 @@
       "confirmTypeLabel": "Pre potvrdenie napíšte názov podujatia:",
       "back": "Späť",
       "cancelling": "Rušim…",
-      "cancelFailed": "Zrušenie zlyhalo."
+      "cancelFailed": "Zrušenie zlyhalo.",
+      "editAction": "Editovať",
+      "quantityLabel": "Počet kusov",
+      "unlimitedPlaceholder": "neobmedzené"
     },
     "coupon": {
       "title": "Kupóny",

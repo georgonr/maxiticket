@@ -20,18 +20,27 @@ export class ShowsService {
     if (user.organizerId !== organizerId) throw new ForbiddenException();
   }
 
-  findAll(user: JwtPayload) {
+  async findAll(user: JwtPayload) {
     const where =
       user.role === UserRole.SUPERADMIN || user.role === UserRole.STAFF
         ? {}
         : { organizerId: this.orgId(user) };
-    return this.prisma.show.findMany({
+    const shows = await this.prisma.show.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         _count: { select: { termins: true } },
         images: { where: { isCover: true }, take: 1 },
+        termins: { select: { startsAt: true, endsAt: true } },
       },
+    });
+    // isPast = posledný termín skončil pred >5 h (endsAt, fallback startsAt) → v org zozname „Skončené".
+    const cutoff = Date.now() - 5 * 60 * 60 * 1000;
+    return shows.map((s) => {
+      const ends = s.termins.map((t) => (t.endsAt ?? t.startsAt).getTime());
+      const lastEnd = ends.length ? Math.max(...ends) : null;
+      const { termins: _t, ...rest } = s;
+      return { ...rest, isPast: lastEnd != null && lastEnd < cutoff };
     });
   }
 
