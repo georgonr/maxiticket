@@ -2022,7 +2022,8 @@
       "NOT_ON_SALE": "The event is not on sale at the moment.",
       "PAST": "This event has already taken place.",
       "SOLD_OUT": "Sold out.",
-      "SALE_WINDOW": "Sale of this ticket is not currently open."
+      "SALE_WINDOW": "Sale of this ticket is not currently open.",
+      "QR_DISABLED": "QR purchase is not available for this ticket."
     },
     "qrButton": "QR payments",
     "modalTitle": "QR for quick purchase",
@@ -2031,6 +2032,17 @@
     "print": "Print",
     "payErr": "Could not start payment. Please try again.",
     "posPayButton": "QR card payment",
-    "posInstruction": "The customer scans and pays by card; tickets arrive by e-mail."
+    "posInstruction": "The customer scans and pays by card; tickets arrive by e-mail.",
+    "toggleLabel": "QR payment",
+    "toggleHint": "Enable/disable QR quick purchase for this ticket",
+    "on": "on",
+    "off": "off",
+    "shareTitle": "QR quick purchase",
+    "shareScan": "Scan with your phone",
+    "shareBody": "Buy your ticket by scanning the QR or via the link:",
+    "shareEmail": "Send by e-mail",
+    "shareCopyLink": "Copy link",
+    "shareCopyImage": "Copy QR image",
+    "shareDownload": "Download QR"
   }
 }

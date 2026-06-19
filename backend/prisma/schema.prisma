@@ -453,6 +453,8 @@ model TicketType {
 
   sortOrder         Int       @default(0)
   isActive          Boolean   @default(true)
+  // QR v2: master prepínač QR rýchleho nákupu (scan-to-buy) pre tento GA typ. Default vypnuté.
+  qrPaymentEnabled  Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

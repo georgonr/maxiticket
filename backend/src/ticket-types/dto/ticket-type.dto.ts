@@ -11,6 +11,7 @@ export class CreateTicketTypeDto {
   @IsOptional() @IsDateString() saleStartsAt?: string;
   @IsOptional() @IsDateString() saleEndsAt?: string;
   @IsOptional() @IsBoolean() isActive?: boolean;
+  @IsOptional() @IsBoolean() qrPaymentEnabled?: boolean;
   @IsOptional() @IsNumber() @Type(() => Number) sortOrder?: number;
 }
 

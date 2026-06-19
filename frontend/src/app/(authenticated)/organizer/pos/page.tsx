@@ -256,8 +256,8 @@ export default function PosPage() {
                         </div>
                       )}
                     </div>
-                    {/* QR platba kartou – len GA (GENERAL) typy; nezávislá online objednávka */}
-                    {selected.mode === 'GENERAL' && !soldOut && (
+                    {/* QR platba kartou – len GA typy s zapnutým master prepínačom (qrPaymentEnabled) */}
+                    {selected.mode === 'GENERAL' && tt.qrPaymentEnabled && !soldOut && (
                       <button
                         onClick={() => setQrModal({ id: tt.ticketTypeId, name: tt.name, qty: n > 0 ? n : 1 })}
                         className="flex w-full items-center justify-center gap-1.5 border-t border-gray-100 dark:border-gray-800 px-4 py-2.5 text-sm font-medium text-brand active:bg-gray-50 dark:active:bg-gray-800"

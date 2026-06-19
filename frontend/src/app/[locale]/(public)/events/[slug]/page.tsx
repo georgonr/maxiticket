@@ -7,6 +7,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { publicApi, PublicShowDetail, PublicTerminDetail, PublicSeatSection } from '@/lib/api';
 import { setCart, Cart, CartItem } from '@/lib/cart';
 import { SeatPicker } from '@/components/seatmaps/SeatPicker';
+import { QrTicketShare } from '@/components/qr/QrTicketShare';
 import {
   Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart,
   ChevronRight, ChevronLeft, Tag, AlertCircle, CheckCircle2,
@@ -502,31 +503,36 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                               )}
                             </div>
 
-                            {/* Quantity stepper */}
-                            {!disabled && (
-                              <div className="flex flex-shrink-0 items-center gap-2">
-                                <button
-                                  onClick={() => adjustQty(tt.id, -1, tt.maxPerOrder)}
-                                  disabled={qty === 0}
-                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition-colors"
-                                >
-                                  <Minus size={13} />
-                                </button>
-                                <span className="w-5 text-center text-sm font-bold text-slate-900">
-                                  {qty}
-                                </span>
-                                <button
-                                  onClick={() => adjustQty(tt.id, +1, tt.maxPerOrder)}
-                                  disabled={
-                                    qty >= tt.maxPerOrder ||
-                                    (tt.available != null && qty >= tt.available)
-                                  }
-                                  className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-600 disabled:opacity-30 transition-colors"
-                                >
-                                  <Plus size={13} />
-                                </button>
-                              </div>
-                            )}
+                            {/* QR rýchly nákup (zákazník) + množstvo */}
+                            <div className="flex flex-shrink-0 items-center gap-2">
+                              {tt.qrPaymentEnabled && selectedTermin.mode === 'GENERAL' && !isSoldOut && (
+                                <QrTicketShare ticketTypeId={tt.id} ticketTypeName={tt.name} showName={show.name} />
+                              )}
+                              {!disabled && (
+                                <>
+                                  <button
+                                    onClick={() => adjustQty(tt.id, -1, tt.maxPerOrder)}
+                                    disabled={qty === 0}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                                  >
+                                    <Minus size={13} />
+                                  </button>
+                                  <span className="w-5 text-center text-sm font-bold text-slate-900">
+                                    {qty}
+                                  </span>
+                                  <button
+                                    onClick={() => adjustQty(tt.id, +1, tt.maxPerOrder)}
+                                    disabled={
+                                      qty >= tt.maxPerOrder ||
+                                      (tt.available != null && qty >= tt.available)
+                                    }
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-600 disabled:opacity-30 transition-colors"
+                                  >
+                                    <Plus size={13} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

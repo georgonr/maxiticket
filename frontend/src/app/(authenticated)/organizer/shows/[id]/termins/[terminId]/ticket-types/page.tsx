@@ -11,7 +11,6 @@ import { seatmapsApi, SeatMapSummary } from '@/lib/api/seatmaps';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
-import { QrPaymentModal } from '@/components/qr/QrPaymentModal';
 
 const EMPTY_FORM: CreateTicketTypeBody = {
   name: '', price: 0, currency: 'EUR',
@@ -40,7 +39,21 @@ export default function TicketTypesPage() {
   const format = useFormatter();
   const router = useRouter();
   const { id, terminId } = useParams<{ id: string; terminId: string }>();
-  const [qrModal, setQrModal] = useState<{ id: string; name: string } | null>(null);
+  const [qrSaving, setQrSaving] = useState<string | null>(null);
+
+  async function toggleQr(tt: TicketType) {
+    setQrSaving(tt.id);
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      const updated = await ticketTypesApi.update(terminId, tt.id, { qrPaymentEnabled: !tt.qrPaymentEnabled }, token);
+      setTicketTypes((prev) => prev.map((x) => (x.id === tt.id ? { ...x, qrPaymentEnabled: updated.qrPaymentEnabled } : x)));
+    } catch {
+      /* ignore – stav sa neprepne */
+    } finally {
+      setQrSaving(null);
+    }
+  }
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -306,9 +319,14 @@ export default function TicketTypesPage() {
                       {t(badge.key)}
                     </span>
                     {mode === 'GENERAL' && (
-                      <Button variant="outline" size="sm" onClick={() => setQrModal({ id: tt.id, name: tt.name })}>
-                        <QrCode size={14} className="mr-1.5" /> {tq('qrButton')}
-                      </Button>
+                      <button
+                        onClick={() => toggleQr(tt)}
+                        disabled={qrSaving === tt.id}
+                        title={tq('toggleHint')}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${tt.qrPaymentEnabled ? 'border-brand bg-brand/10 text-brand' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}
+                      >
+                        <QrCode size={13} /> {tq('toggleLabel')}: {tt.qrPaymentEnabled ? tq('on') : tq('off')}
+                      </button>
                     )}
                     <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => handleDelete(tt.id)}>
                       {t('delete')}
@@ -403,9 +421,6 @@ export default function TicketTypesPage() {
         </div>
         </>)}
       </main>
-      {qrModal && (
-        <QrPaymentModal ticketTypeId={qrModal.id} ticketTypeName={qrModal.name} onClose={() => setQrModal(null)} />
-      )}
     </div>
   );
 }

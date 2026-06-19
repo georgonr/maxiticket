@@ -6,6 +6,7 @@ export interface PosTicketType {
   price: number;
   currency: string;
   maxPerOrder: number;
+  qrPaymentEnabled: boolean;
   remaining: number | null; // null = neobmedzené
 }
 

@@ -2022,7 +2022,8 @@
       "NOT_ON_SALE": "Podujatie momentálne nie je v predaji.",
       "PAST": "Toto podujatie už prebehlo.",
       "SOLD_OUT": "Vypredané.",
-      "SALE_WINDOW": "Predaj tohto lístka momentálne neprebieha."
+      "SALE_WINDOW": "Predaj tohto lístka momentálne neprebieha.",
+      "QR_DISABLED": "QR predaj nie je pre tento lístok dostupný."
     },
     "qrButton": "QR platby",
     "modalTitle": "QR pre rýchly nákup",
@@ -2031,6 +2032,17 @@
     "print": "Tlačiť",
     "payErr": "Platbu sa nepodarilo spustiť. Skúste znova.",
     "posPayButton": "QR platba kartou",
-    "posInstruction": "Zákazník naskenuje a zaplatí kartou; lístky mu prídu e-mailom."
+    "posInstruction": "Zákazník naskenuje a zaplatí kartou; lístky mu prídu e-mailom.",
+    "toggleLabel": "QR platba",
+    "toggleHint": "Zapnúť/vypnúť QR rýchly nákup pre tento lístok",
+    "on": "zap",
+    "off": "vyp",
+    "shareTitle": "QR rýchly nákup",
+    "shareScan": "Naskenujte telefónom",
+    "shareBody": "Kúpte si lístok naskenovaním QR alebo cez odkaz:",
+    "shareEmail": "Poslať e-mailom",
+    "shareCopyLink": "Kopírovať odkaz",
+    "shareCopyImage": "Kopírovať QR",
+    "shareDownload": "Stiahnuť QR"
   }
 }

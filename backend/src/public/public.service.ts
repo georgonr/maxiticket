@@ -472,8 +472,9 @@ export class PublicService {
     const available = tt.totalQuantity != null ? Math.max(0, tt.totalQuantity - (sold._sum.quantity ?? 0)) : null;
 
     // purchasable + dôvod
-    let reason: 'OK' | 'NOT_GA' | 'INACTIVE' | 'NOT_ON_SALE' | 'PAST' | 'SOLD_OUT' | 'SALE_WINDOW' = 'OK';
+    let reason: 'OK' | 'NOT_GA' | 'QR_DISABLED' | 'INACTIVE' | 'NOT_ON_SALE' | 'PAST' | 'SOLD_OUT' | 'SALE_WINDOW' = 'OK';
     if (termin.mode !== 'GENERAL') reason = 'NOT_GA';
+    else if (!tt.qrPaymentEnabled) reason = 'QR_DISABLED'; // master prepínač vypnutý
     else if (show.status !== EventStatus.PUBLISHED || !tt.isActive) reason = 'INACTIVE';
     else if (termin.status !== TerminStatus.ON_SALE) reason = 'NOT_ON_SALE';
     else if (termin.startsAt < now) reason = 'PAST';
@@ -490,6 +491,7 @@ export class PublicService {
       description: tt.description,
       price: Number(tt.price),
       currency: tt.currency,
+      qrPaymentEnabled: tt.qrPaymentEnabled,
       available,
       maxQuantity,
       purchasable: reason === 'OK' && maxQuantity > 0,

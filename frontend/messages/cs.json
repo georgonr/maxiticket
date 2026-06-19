@@ -2022,7 +2022,8 @@
       "NOT_ON_SALE": "Akce momentálně není v prodeji.",
       "PAST": "Tato akce už proběhla.",
       "SOLD_OUT": "Vyprodáno.",
-      "SALE_WINDOW": "Prodej této vstupenky momentálně neprobíhá."
+      "SALE_WINDOW": "Prodej této vstupenky momentálně neprobíhá.",
+      "QR_DISABLED": "QR prodej není pro tuto vstupenku dostupný."
     },
     "qrButton": "QR platby",
     "modalTitle": "QR pro rychlý nákup",
@@ -2031,6 +2032,17 @@
     "print": "Tisk",
     "payErr": "Platbu se nepodařilo spustit. Zkuste to znovu.",
     "posPayButton": "QR platba kartou",
-    "posInstruction": "Zákazník naskenuje a zaplatí kartou; vstupenky mu přijdou e-mailem."
+    "posInstruction": "Zákazník naskenuje a zaplatí kartou; vstupenky mu přijdou e-mailem.",
+    "toggleLabel": "QR platba",
+    "toggleHint": "Zapnout/vypnout QR rychlý nákup pro tuto vstupenku",
+    "on": "zap",
+    "off": "vyp",
+    "shareTitle": "QR rychlý nákup",
+    "shareScan": "Naskenujte telefonem",
+    "shareBody": "Kupte si vstupenku naskenováním QR nebo přes odkaz:",
+    "shareEmail": "Poslat e-mailem",
+    "shareCopyLink": "Kopírovat odkaz",
+    "shareCopyImage": "Kopírovat QR",
+    "shareDownload": "Stáhnout QR"
   }
 }

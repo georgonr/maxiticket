@@ -321,6 +321,7 @@ export interface TicketType {
   saleStartsAt?: string;
   saleEndsAt?: string;
   isActive: boolean;
+  qrPaymentEnabled: boolean;
 }
 
 export interface CreateShowBody {
@@ -366,6 +367,7 @@ export interface CreateTicketTypeBody {
   saleStartsAt?: string;
   saleEndsAt?: string;
   isActive?: boolean;
+  qrPaymentEnabled?: boolean;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -403,6 +405,7 @@ export interface PublicTicketType {
   saleEndsAt?: string;
   isActive: boolean;
   available: number | null;
+  qrPaymentEnabled?: boolean;
 }
 
 export interface PublicSection {
@@ -468,7 +471,7 @@ export const publicApi = {
     apiFetch<{ url: string }>('/v1/public/qr-checkout', { method: 'POST', body: JSON.stringify(body) }),
 };
 
-export type QrReason = 'OK' | 'NOT_GA' | 'INACTIVE' | 'NOT_ON_SALE' | 'PAST' | 'SOLD_OUT' | 'SALE_WINDOW';
+export type QrReason = 'OK' | 'NOT_GA' | 'QR_DISABLED' | 'INACTIVE' | 'NOT_ON_SALE' | 'PAST' | 'SOLD_OUT' | 'SALE_WINDOW';
 
 export interface QrTicketInfo {
   ticketTypeId: string;
@@ -476,6 +479,7 @@ export interface QrTicketInfo {
   description: string | null;
   price: number;
   currency: string;
+  qrPaymentEnabled: boolean;
   available: number | null;
   maxQuantity: number;
   purchasable: boolean;

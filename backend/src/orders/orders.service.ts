@@ -461,6 +461,7 @@ export class OrdersService {
     if (termin.mode !== TerminMode.GENERAL) {
       throw codedBadRequest('NOT_GA', 'QR nákup je dostupný len pre podujatia s voľným sedením.');
     }
+    if (!tt.qrPaymentEnabled) throw codedBadRequest('QR_DISABLED', 'QR predaj nie je pre tento lístok dostupný.');
     if (!tt.isActive) throw codedBadRequest('TICKET_TYPE_INACTIVE', 'Typ lístka nie je aktívny.');
     if (termin.status !== TerminStatus.ON_SALE) throw codedBadRequest('EVENT_NOT_AVAILABLE', 'Podujatie nie je v predaji.');
     if (termin.startsAt < new Date()) throw codedBadRequest('EVENT_PAST', 'Podujatie už prebehlo.');
@@ -884,6 +885,7 @@ export class OrdersService {
         price: Number(tt.price),
         currency: tt.currency,
         maxPerOrder: tt.maxPerOrder,
+        qrPaymentEnabled: tt.qrPaymentEnabled,
         remaining:
           tt.totalQuantity == null
             ? null
