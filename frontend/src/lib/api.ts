@@ -183,12 +183,36 @@ export interface CancelOccurrenceResult {
   orderCount: number;
   emailsSent: number;
 }
+export interface CancelEventResult {
+  eventId: string;
+  status: string;
+  cancelledCount: number;
+  refundedCount: number;
+  totalRefunded: number;
+  emailsSent: number;
+}
 export const eventOpsApi = {
   cancelOccurrence: (eventId: string, occurrenceId: string, token: string) =>
     apiFetch<CancelOccurrenceResult>(`/v1/events/${eventId}/occurrences/${occurrenceId}/cancel`, {
       method: 'POST',
       token,
     }),
+  // Event-level zrušenie (SUPERADMIN) – hromadný refund + notifikácie.
+  cancelEvent: (eventId: string, reason: string | undefined, token: string) =>
+    apiFetch<CancelEventResult>(`/v1/events/${eventId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason: reason ?? undefined }),
+      token,
+    }),
+  // Organizer žiada o zrušenie (SUPERADMIN vykoná neskôr).
+  requestCancel: (eventId: string, token: string) =>
+    apiFetch<{ eventId: string; cancelRequested: boolean }>(`/v1/events/${eventId}/request-cancel`, {
+      method: 'POST',
+      token,
+    }),
+  // Kópia podujatia do nového draftu.
+  copyEvent: (eventId: string, token: string) =>
+    apiFetch<Show>(`/v1/events/${eventId}/copy`, { method: 'POST', token }),
 };
 
 // Úloha 25: platobné brány (SUPERADMIN/STAFF)
@@ -269,6 +293,10 @@ export interface Show {
   images?: ShowImage[];
   createdAt: string;
   isPast?: boolean; // posledný termín skončil >5 h → skryté z verejného zoznamu
+  // Event-level zrušenie / žiadosť o zrušenie
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
+  cancelRequestedAt?: string | null;
 }
 
 export interface ShowDetail extends Show {

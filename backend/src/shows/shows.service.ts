@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from '../casl/casl-ability.factory';
-import { UserRole, EventStatus } from '@prisma/client';
+import { UserRole, EventStatus, TerminStatus } from '@prisma/client';
 import { CreateShowDto, UpdateShowDto } from './dto/show.dto';
 
 @Injectable()
@@ -90,5 +90,86 @@ export class ShowsService {
   async remove(id: string, user: JwtPayload) {
     await this.findOne(id, user);
     return this.prisma.show.delete({ where: { id } });
+  }
+
+  /**
+   * Kópia podujatia do nového draftu: názov, popis, kategória, SEO, šablóna lístka,
+   * fotky, termíny (miesto) a ich typy lístkov. Kópia je vždy DRAFT a neverejná.
+   * Pozn.: startsAt je NOT NULL, preto sa dátum kopíruje ako placeholder (organizer upraví).
+   * Sedadlá (TerminSeat/TerminSection) a objednávky sa NEkopírujú.
+   */
+  async copyEvent(id: string, user: JwtPayload) {
+    const source = await this.prisma.show.findUnique({
+      where: { id },
+      include: {
+        images: { orderBy: [{ isCover: 'desc' }, { sortOrder: 'asc' }] },
+        termins: { include: { ticketTypes: { orderBy: { sortOrder: 'asc' } } } },
+      },
+    });
+    if (!source) throw new NotFoundException('Podujatie neexistuje.');
+    this.assertAccess(source.organizerId, user);
+
+    // Kópia patrí tej istej organizácii ako originál (aj keď kopíruje SUPERADMIN).
+    const organizerId = source.organizerId;
+
+    // Unikátny slug v rámci organizácie: "<slug>-kopia", "-kopia-2", ...
+    const base = `${source.slug}-kopia`;
+    let slug = base;
+    for (let n = 2; ; n++) {
+      const clash = await this.prisma.show.findUnique({
+        where: { organizerId_slug: { organizerId, slug } },
+      });
+      if (!clash) break;
+      slug = `${base}-${n}`;
+    }
+
+    return this.prisma.show.create({
+      data: {
+        organizerId,
+        name: `${source.name} (kópia)`,
+        slug,
+        description: source.description,
+        category: source.category,
+        seoTitle: source.seoTitle,
+        seoDescription: source.seoDescription,
+        ticketTemplate: source.ticketTemplate ?? undefined,
+        status: EventStatus.DRAFT, // kópia je vždy koncept
+        isPromoted: false,         // nededí propagáciu na hero
+        // sliderImageId zámerne vynechané – odkazuje na obrázok originálu
+        images: {
+          create: source.images.map((img) => ({
+            url: img.url, thumbUrl: img.thumbUrl, squareUrl: img.squareUrl,
+            isCover: img.isCover, sortOrder: img.sortOrder,
+          })),
+        },
+        termins: {
+          create: source.termins.map((t) => ({
+            venueId: t.venueId,
+            startsAt: t.startsAt, // placeholder (NOT NULL) – organizer upraví
+            endsAt: t.endsAt,
+            doorsOpenAt: t.doorsOpenAt,
+            timezone: t.timezone,
+            notes: t.notes,
+            status: TerminStatus.DRAFT,
+            visible: false, // neverejné kým organizer nespustí
+            capacity: t.capacity,
+            mode: t.mode,
+            seatMapId: t.seatMapId, // zdieľaná definícia plániku; sedadlá sa nekopírujú
+            ticketTypes: {
+              create: t.ticketTypes.map((tt) => ({
+                name: tt.name, description: tt.description, price: tt.price,
+                currency: tt.currency, totalQuantity: tt.totalQuantity, maxPerOrder: tt.maxPerOrder,
+                saleStartsAt: tt.saleStartsAt, saleEndsAt: tt.saleEndsAt,
+                sortOrder: tt.sortOrder, isActive: tt.isActive, qrPaymentEnabled: tt.qrPaymentEnabled,
+              })),
+            },
+          })),
+        },
+      },
+      include: {
+        images: true,
+        termins: { include: { ticketTypes: true } },
+      },
+    });
   }
 }

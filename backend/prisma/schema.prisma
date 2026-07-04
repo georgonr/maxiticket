@@ -354,6 +354,15 @@ model Show {
   sliderImage     ShowImage?  @relation("ShowSliderImage", fields: [sliderImageId], references: [id])
 
   status        EventStatus @default(DRAFT)
+
+  // Zrušenie podujatia (event-level cancel + hromadný refund)
+  cancelledAt         DateTime?  // moment vykonania zrušenia SUPERADMINom
+  cancellationReason  String?    @db.Text // voliteľný dôvod (zadaný pri zrušení)
+  cancelledByUserId   String?    // User.id (cuid) SUPERADMINa, ktorý zrušil; plain FK-less
+  // Žiadosť organizátora o zrušenie (organizer žiada → SUPERADMIN vykoná)
+  cancelRequestedAt   DateTime?  // moment podania žiadosti organizátorom
+  cancelRequestedById String?    // User.id organizátora, ktorý požiadal
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

@@ -200,6 +200,45 @@ export class MailService {
     this.logger.log(`Sent termin-cancelled notice to ${data.to} (order ${data.orderNumber})`);
   }
 
+  /** Zrušenie celého podujatia (event-level cancel) – bez konkrétneho termínu/dátumu. */
+  async sendShowCancelled(data: {
+    to: string;
+    locale?: string;
+    showName: string;
+    orderNumber: string;
+    refundInfo: string;
+  }): Promise<void> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].showCancelled;
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="display:inline-block;background:#10B981;color:#fff;border-radius:8px;padding:8px 16px;font-weight:700;font-size:18px;">TicketAll</div>
+    <h1 style="font-size:22px;margin:12px 0 4px;">${m.heading}</h1>
+    <p style="color:#6b7280;margin:0;">${m.orderLabel} <strong>${data.orderNumber}</strong></p>
+  </div>
+  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:20px;">
+    <h2 style="font-size:18px;margin:0 0 8px;">${data.showName}</h2>
+    <p style="color:#b91c1c;margin:12px 0 0;font-weight:600;">${m.cancelledNotice}</p>
+  </div>
+  <div style="background:#f9fafb;border-radius:8px;padding:16px;margin-bottom:20px;">
+    <p style="color:#374151;margin:0;"><strong>${m.refundLabel}</strong> ${data.refundInfo}</p>
+  </div>
+  <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
+    ${m.footer}
+  </p>
+</body></html>`;
+
+    await this.transporter.sendMail({
+      from,
+      to: data.to,
+      subject: `${m.subjectPrefix} – ${data.showName}`,
+      html,
+    });
+    this.logger.log(`Sent show-cancelled notice to ${data.to} (order ${data.orderNumber})`);
+  }
+
   private async generateTicketPdf(
     data: TicketEmailData & {
       ticket: TicketEmailData['tickets'][0];

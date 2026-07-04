@@ -643,7 +643,35 @@
       "badgeDraft": "Koncept – nezobrazuje sa verejne",
       "manage": "Spravovať",
       "badgePast": "Skončené",
-      "badgePastHint": "Posledný termín skončil – skryté z verejného zoznamu, stále spravovateľné."
+      "badgePastHint": "Posledný termín skončil – skryté z verejného zoznamu, stále spravovateľné.",
+      "badgeCancelled": "Zrušené",
+      "cancelledSection": "Zrušené podujatia"
+    },
+    "eventCancel": {
+      "copyBtn": "Vytvoriť kópiu",
+      "cancelBtn": "Zrušiť podujatie",
+      "requestBtn": "Požiadať o zrušenie",
+      "requestedNotice": "Žiadosť o zrušenie bola odoslaná. SUPERADMIN bol notifikovaný.",
+      "copyFailed": "Kópiu podujatia sa nepodarilo vytvoriť.",
+      "bannerCancelled": "Toto podujatie bolo zrušené. Platba bude zákazníkom vrátená.",
+      "bannerRequested": "Organizátor požiadal o zrušenie tohto podujatia – čaká na vykonanie SUPERADMINom.",
+      "reasonLabel": "Dôvod",
+      "resultSummary": "Podujatie zrušené. Dotknuté objednávky: {cancelled}, na refund: {refunded}, celková suma refundu: {total} €."
+    },
+    "showCancel": {
+      "requestTitle": "Požiadať o zrušenie",
+      "executeTitle": "Zrušiť podujatie",
+      "requestWarning": "Naozaj chcete požiadať o zrušenie podujatia <strong>{name}</strong>? SUPERADMIN bude notifikovaný.",
+      "executeWarning": "Zrušenie podujatia <strong>{name}</strong> je nezvratné. Všetky termíny sa zrušia, lístky zneplatnia a zaplatené objednávky pôjdu na refund (poplatok 0,40 € za lístok).",
+      "reasonLabel": "Dôvod zrušenia (voliteľné)",
+      "reasonPlaceholder": "napr. choroba účinkujúceho",
+      "confirmTypeLabel": "Pre potvrdenie napíšte názov podujatia:",
+      "requestConfirm": "Odoslať žiadosť",
+      "executeConfirm": "Zrušiť podujatie",
+      "working": "Spracúvam…",
+      "back": "Späť",
+      "close": "Zavrieť",
+      "failed": "Akcia zlyhala."
     },
     "showForm": {
       "titleNew": "Nové podujatie",

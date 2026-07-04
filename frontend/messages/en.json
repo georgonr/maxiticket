@@ -643,7 +643,35 @@
       "badgeDraft": "Draft – not publicly visible",
       "manage": "Manage",
       "badgePast": "Ended",
-      "badgePastHint": "Last date has passed – hidden from public listing, still manageable."
+      "badgePastHint": "Last date has passed – hidden from public listing, still manageable.",
+      "badgeCancelled": "Cancelled",
+      "cancelledSection": "Cancelled events"
+    },
+    "eventCancel": {
+      "copyBtn": "Create copy",
+      "cancelBtn": "Cancel event",
+      "requestBtn": "Request cancellation",
+      "requestedNotice": "Cancellation request sent. The SUPERADMIN has been notified.",
+      "copyFailed": "Failed to create a copy of the event.",
+      "bannerCancelled": "This event has been cancelled. Customers will be refunded.",
+      "bannerRequested": "The organizer has requested cancellation of this event – awaiting action by the SUPERADMIN.",
+      "reasonLabel": "Reason",
+      "resultSummary": "Event cancelled. Affected orders: {cancelled}, to refund: {refunded}, total refund amount: €{total}."
+    },
+    "showCancel": {
+      "requestTitle": "Request cancellation",
+      "executeTitle": "Cancel event",
+      "requestWarning": "Do you really want to request cancellation of <strong>{name}</strong>? The SUPERADMIN will be notified.",
+      "executeWarning": "Cancelling <strong>{name}</strong> is irreversible. All dates will be cancelled, tickets invalidated and paid orders sent for refund (€0.40 fee per ticket).",
+      "reasonLabel": "Cancellation reason (optional)",
+      "reasonPlaceholder": "e.g. performer illness",
+      "confirmTypeLabel": "To confirm, type the event name:",
+      "requestConfirm": "Send request",
+      "executeConfirm": "Cancel event",
+      "working": "Processing…",
+      "back": "Back",
+      "close": "Close",
+      "failed": "Action failed."
     },
     "showForm": {
       "titleNew": "New event",

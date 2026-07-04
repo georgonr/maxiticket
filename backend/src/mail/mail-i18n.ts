@@ -63,6 +63,11 @@ interface MailStrings {
     refundLabel: string; footer: string;
     refundInfo: { stripe: string; pos: string; comp: string; default: string };
   };
+  showCancelled: {
+    subjectPrefix: string; heading: string; orderLabel: string; cancelledNotice: string;
+    refundLabel: string; footer: string;
+    refundInfo: { stripe: string; pos: string; comp: string; default: string };
+  };
   refundRequested: {
     subjectPrefix: string; heading: string; introPrefix: string; introSuffix: string;
     orderLabel: string; customerLabel: string; amountLabel: string; reasonLabel: string;
@@ -137,6 +142,20 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       footer: 'V prípade otázok kontaktujte organizátora podujatia.',
       refundInfo: {
         stripe: 'Peniaze vám vrátime na pôvodnú platobnú kartu (spracujeme manuálne, môže trvať niekoľko dní).',
+        pos: 'Vrátenie peňazí zabezpečí organizátor (platba prebehla na mieste).',
+        comp: 'Lístok bol komplimentárny (zdarma) – vrátenie peňazí sa neuplatňuje.',
+        default: 'O spôsobe vrátenia peňazí vás bude kontaktovať organizátor.',
+      },
+    },
+    showCancelled: {
+      subjectPrefix: 'Podujatie zrušené',
+      heading: 'Podujatie bolo zrušené',
+      orderLabel: 'Objednávka',
+      cancelledNotice: 'Toto podujatie bolo zrušené usporiadateľom. Platba bude vrátená na váš účet v priebehu niekoľkých pracovných dní.',
+      refundLabel: 'Vrátenie peňazí:',
+      footer: 'V prípade otázok kontaktujte organizátora podujatia.',
+      refundInfo: {
+        stripe: 'Peniaze vám vrátime na pôvodnú platobnú kartu (spracujeme manuálne, môže trvať niekoľko pracovných dní).',
         pos: 'Vrátenie peňazí zabezpečí organizátor (platba prebehla na mieste).',
         comp: 'Lístok bol komplimentárny (zdarma) – vrátenie peňazí sa neuplatňuje.',
         default: 'O spôsobe vrátenia peňazí vás bude kontaktovať organizátor.',
@@ -269,6 +288,20 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
         default: 'The organizer will contact you about the refund method.',
       },
     },
+    showCancelled: {
+      subjectPrefix: 'Event cancelled',
+      heading: 'The event has been cancelled',
+      orderLabel: 'Order',
+      cancelledNotice: 'This event has been cancelled by the organizer. Your payment will be refunded to your account within a few business days.',
+      refundLabel: 'Refund:',
+      footer: 'If you have any questions, please contact the event organizer.',
+      refundInfo: {
+        stripe: 'We will refund the money to your original payment card (processed manually, may take a few business days).',
+        pos: 'The refund will be handled by the organizer (payment was made on site).',
+        comp: 'The ticket was complimentary (free of charge) – no refund applies.',
+        default: 'The organizer will contact you about the refund method.',
+      },
+    },
     refundRequested: {
       subjectPrefix: 'New refund request',
       heading: 'New refund request',
@@ -391,6 +424,20 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       footer: 'V případě dotazů kontaktujte pořadatele akce.',
       refundInfo: {
         stripe: 'Peníze vám vrátíme na původní platební kartu (zpracujeme ručně, může trvat několik dní).',
+        pos: 'Vrácení peněz zajistí pořadatel (platba proběhla na místě).',
+        comp: 'Vstupenka byla komplimentární (zdarma) – vrácení peněz se neuplatňuje.',
+        default: 'O způsobu vrácení peněz vás bude kontaktovat pořadatel.',
+      },
+    },
+    showCancelled: {
+      subjectPrefix: 'Akce zrušena',
+      heading: 'Akce byla zrušena',
+      orderLabel: 'Objednávka',
+      cancelledNotice: 'Tato akce byla zrušena pořadatelem. Platba vám bude vrácena na váš účet během několika pracovních dnů.',
+      refundLabel: 'Vrácení peněz:',
+      footer: 'V případě dotazů kontaktujte pořadatele akce.',
+      refundInfo: {
+        stripe: 'Peníze vám vrátíme na původní platební kartu (zpracujeme ručně, může trvat několik pracovních dní).',
         pos: 'Vrácení peněz zajistí pořadatel (platba proběhla na místě).',
         comp: 'Vstupenka byla komplimentární (zdarma) – vrácení peněz se neuplatňuje.',
         default: 'O způsobu vrácení peněz vás bude kontaktovat pořadatel.',

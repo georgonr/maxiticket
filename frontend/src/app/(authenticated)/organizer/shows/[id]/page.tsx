@@ -5,13 +5,15 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations, useFormatter } from 'next-intl';
 import { getValidToken } from '@/lib/auth';
-import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, CreateTicketTypeBody, ticketTypesApi, refundExportApi, eventOpsApi } from '@/lib/api';
+import { showsApi, showImagesApi, ShowDetail, ShowImage, Termin, TicketType, CreateTicketTypeBody, ticketTypesApi, refundExportApi, eventOpsApi, CancelEventResult } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { QrCode } from 'lucide-react';
 import { CouponsSection } from '@/components/coupons/CouponsSection';
 import { CancelTerminModal } from '@/components/shows/CancelTerminModal';
+import { CancelShowModal } from '@/components/shows/CancelShowModal';
+import { useAuth } from '@/hooks/useAuth';
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300',
@@ -115,9 +117,51 @@ export default function ShowDetailPage() {
     } catch (e) { setError(e instanceof Error ? e.message : t('errDelete')); }
   }
 
+  const { isSuperAdmin } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [cancelTermin, setCancelTermin] = useState<Termin | null>(null);
   const [notice, setNotice] = useState('');
+  // Event-level zrušenie / kópia
+  const [showCancelMode, setShowCancelMode] = useState<'request' | 'execute' | null>(null);
+  const [copying, setCopying] = useState(false);
+  const [cancelResult, setCancelResult] = useState<CancelEventResult | null>(null);
+
+  const te = useTranslations('organizer.eventCancel');
+
+  // Organizer žiada o zrušenie → SUPERADMIN notifikovaný.
+  async function handleRequestCancel() {
+    const token = await getValidToken();
+    if (!token) { router.replace('/login'); return; }
+    await eventOpsApi.requestCancel(id, token);
+    setShowCancelMode(null);
+    setNotice(te('requestedNotice'));
+    await load(token);
+  }
+
+  // SUPERADMIN reálne zruší podujatie (hromadný refund).
+  async function handleCancelEvent(reason?: string) {
+    const token = await getValidToken();
+    if (!token) { router.replace('/login'); return; }
+    const res = await eventOpsApi.cancelEvent(id, reason, token);
+    setShowCancelMode(null);
+    setCancelResult(res);
+    await load(token);
+  }
+
+  // Kópia podujatia → presmeruj na editáciu nového draftu.
+  async function handleCopyEvent() {
+    setError('');
+    setCopying(true);
+    try {
+      const token = await getValidToken();
+      if (!token) { router.replace('/login'); return; }
+      const copy = await eventOpsApi.copyEvent(id, token);
+      router.push(`/organizer/shows/${copy.id}/edit`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : te('copyFailed'));
+      setCopying(false);
+    }
+  }
 
   // Krok 27: zrušenie termínu (po potvrdení v modáli).
   async function handleCancelTermin(occurrenceId: string) {
@@ -176,6 +220,32 @@ export default function ShowDetailPage() {
           <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">{notice}</div>
         )}
 
+        {/* Podujatie zrušené – banner */}
+        {show.status === 'CANCELLED' && (
+          <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <strong>{te('bannerCancelled')}</strong>
+            {show.cancellationReason && <span className="block mt-1 text-red-600">{te('reasonLabel')}: {show.cancellationReason}</span>}
+          </div>
+        )}
+
+        {/* Žiadosť o zrušenie (organizer podal, SUPERADMIN vidí a vykoná) */}
+        {show.status !== 'CANCELLED' && show.cancelRequestedAt && (
+          <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+            {te('bannerRequested')}
+          </div>
+        )}
+
+        {/* Výsledok zrušenia (po vykonaní SUPERADMINom) */}
+        {cancelResult && (
+          <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+            {te('resultSummary', {
+              cancelled: cancelResult.cancelledCount,
+              refunded: cancelResult.refundedCount,
+              total: cancelResult.totalRefunded.toFixed(2),
+            })}
+          </div>
+        )}
+
         {/* Show header */}
         <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <div className="flex items-start justify-between gap-4">
@@ -198,7 +268,16 @@ export default function ShowDetailPage() {
               <Button variant="outline" size="sm" loading={exporting} onClick={() => handleRefundExport()} title={t('refundExportTitle')}>
                 {t('refundExportBtn')}
               </Button>
+              <Button variant="outline" size="sm" loading={copying} onClick={handleCopyEvent}>{te('copyBtn')}</Button>
               <Button variant="outline" size="sm" onClick={() => router.push(`/organizer/shows/${id}/edit`)}>{t('edit')}</Button>
+              {show.status !== 'CANCELLED' && (
+                <button
+                  onClick={() => setShowCancelMode(isSuperAdmin ? 'execute' : 'request')}
+                  className="inline-flex items-center justify-center rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                  {isSuperAdmin ? te('cancelBtn') : te('requestBtn')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -339,6 +418,14 @@ export default function ShowDetailPage() {
           terminLabel={format.dateTime(new Date(cancelTermin.startsAt), { dateStyle: 'medium', timeStyle: 'short' })}
           onClose={() => setCancelTermin(null)}
           onConfirm={() => handleCancelTermin(cancelTermin.id)}
+        />
+      )}
+      {showCancelMode && (
+        <CancelShowModal
+          mode={showCancelMode}
+          showName={show.name}
+          onClose={() => setShowCancelMode(null)}
+          onConfirm={showCancelMode === 'execute' ? handleCancelEvent : () => handleRequestCancel()}
         />
       )}
     </div>

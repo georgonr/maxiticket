@@ -643,7 +643,35 @@
       "badgeDraft": "Koncept – nezobrazuje se veřejně",
       "manage": "Spravovat",
       "badgePast": "Skončeno",
-      "badgePastHint": "Poslední termín skončil – skryté z veřejného seznamu, stále spravovatelné."
+      "badgePastHint": "Poslední termín skončil – skryté z veřejného seznamu, stále spravovatelné.",
+      "badgeCancelled": "Zrušeno",
+      "cancelledSection": "Zrušené akce"
+    },
+    "eventCancel": {
+      "copyBtn": "Vytvořit kopii",
+      "cancelBtn": "Zrušit akci",
+      "requestBtn": "Požádat o zrušení",
+      "requestedNotice": "Žádost o zrušení byla odeslána. SUPERADMIN byl upozorněn.",
+      "copyFailed": "Kopii akce se nepodařilo vytvořit.",
+      "bannerCancelled": "Tato akce byla zrušena. Platba bude zákazníkům vrácena.",
+      "bannerRequested": "Pořadatel požádal o zrušení této akce – čeká na provedení SUPERADMINem.",
+      "reasonLabel": "Důvod",
+      "resultSummary": "Akce zrušena. Dotčené objednávky: {cancelled}, k refundaci: {refunded}, celková částka refundace: {total} €."
+    },
+    "showCancel": {
+      "requestTitle": "Požádat o zrušení",
+      "executeTitle": "Zrušit akci",
+      "requestWarning": "Opravdu chcete požádat o zrušení akce <strong>{name}</strong>? SUPERADMIN bude upozorněn.",
+      "executeWarning": "Zrušení akce <strong>{name}</strong> je nevratné. Všechny termíny se zruší, vstupenky zneplatní a zaplacené objednávky půjdou k refundaci (poplatek 0,40 € za vstupenku).",
+      "reasonLabel": "Důvod zrušení (volitelné)",
+      "reasonPlaceholder": "např. nemoc účinkujícího",
+      "confirmTypeLabel": "Pro potvrzení napište název akce:",
+      "requestConfirm": "Odeslat žádost",
+      "executeConfirm": "Zrušit akci",
+      "working": "Zpracovávám…",
+      "back": "Zpět",
+      "close": "Zavřít",
+      "failed": "Akce selhala."
     },
     "showForm": {
       "titleNew": "Nová akce",
