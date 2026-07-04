@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as QRCode from 'qrcode';
@@ -237,6 +237,18 @@ export class MailService {
       html,
     });
     this.logger.log(`Sent show-cancelled notice to ${data.to} (order ${data.orderNumber})`);
+  }
+
+  /**
+   * Verejné: vygeneruje PDF JEDNEJ vstupenky z objednávky – reuse `generateTicketPdf`
+   * (ten istý generátor ako v e-maile). Používa guest ticket PDF endpoint.
+   */
+  async renderTicketPdf(data: TicketEmailData, ticketId: string): Promise<Buffer> {
+    const ticket = data.tickets.find((t) => t.id === ticketId);
+    if (!ticket) throw new NotFoundException('Ticket not found');
+    const qrPng = await QRCode.toBuffer(ticket.qrToken, { width: 300, margin: 2 });
+    const locale = normalizeMailLocale(data.locale);
+    return this.generateTicketPdf({ ...data, ticket, qrPng }, locale);
   }
 
   private async generateTicketPdf(

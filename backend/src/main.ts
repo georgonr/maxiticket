@@ -7,7 +7,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: true }),
+    // maxParamLength default je 100 – guest ticket token (~136 zn.) by ho prekročil a route by dala 404.
+    new FastifyAdapter({ logger: true, maxParamLength: 500 }),
   );
 
   const fastify = app.getHttpAdapter().getInstance() as any;

@@ -1,18 +1,17 @@
 import { Logger } from '@nestjs/common';
 import { TicketStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { MailService } from '../mail/mail.service';
+import { MailService, TicketEmailData } from '../mail/mail.service';
 
 /**
- * Loads a PAID order and sends tickets by email.
- * Used by fulfillOrder (Stripe/mock) and compOrder (SUPERADMIN).
+ * Načíta PAID objednávku a poskladá TicketEmailData (rovnaké dáta ako pre e-mail lístka).
+ * Zdieľané medzi e-mailom (sendTicketsForOrder) a verejným PDF endpointom (guest ticket).
+ * Vráti null ak objednávka/show/termín/venue chýba.
  */
-export async function sendTicketsForOrder(
+export async function buildTicketEmailData(
   orderId: string,
   prisma: PrismaService,
-  mail: MailService,
-  logger: Logger,
-): Promise<void> {
+): Promise<TicketEmailData | null> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
@@ -35,20 +34,14 @@ export async function sendTicketsForOrder(
     },
   });
 
-  if (!order) {
-    logger.error(`sendTicketsForOrder: order ${orderId} not found`);
-    return;
-  }
+  if (!order) return null;
 
   const firstItem = order.items[0];
   const termin = firstItem?.termin;
   const show = termin?.show;
   const venue = termin?.venue;
 
-  if (!show || !termin || !venue) {
-    logger.error(`sendTicketsForOrder: missing show/termin/venue for order ${orderId}`);
-    return;
-  }
+  if (!show || !termin || !venue) return null;
 
   // Platform singleton (legal footer + VAT defaults)
   const platform = await prisma.platformInfo.findFirst();
@@ -66,7 +59,7 @@ export async function sendTicketsForOrder(
     }
   }
 
-  await mail.sendTickets({
+  return {
     to: order.buyerEmail,
     locale: order.locale,
     buyerName: order.buyerName ?? undefined,
@@ -108,7 +101,24 @@ export async function sendTicketsForOrder(
       price: t.ticketType?.price != null ? Number(t.ticketType.price) : undefined,
       currency: t.ticketType?.currency ?? 'EUR',
     })),
-  });
+  };
+}
 
-  logger.log(`sendTicketsForOrder: sent ${order.tickets.length} ticket(s) for order ${orderId} to ${order.buyerEmail}`);
+/**
+ * Načíta PAID objednávku a pošle lístky e-mailom.
+ * Používané z fulfillOrder (Stripe/mock) a compOrder (SUPERADMIN).
+ */
+export async function sendTicketsForOrder(
+  orderId: string,
+  prisma: PrismaService,
+  mail: MailService,
+  logger: Logger,
+): Promise<void> {
+  const data = await buildTicketEmailData(orderId, prisma);
+  if (!data) {
+    logger.error(`sendTicketsForOrder: order ${orderId} not found or missing show/termin/venue`);
+    return;
+  }
+  await mail.sendTickets(data);
+  logger.log(`sendTicketsForOrder: sent ${data.tickets.length} ticket(s) for order ${orderId} to ${data.to}`);
 }

@@ -14,6 +14,7 @@ import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { PaymentGatewayService } from '../payment/payment-gateways.service';
 import { sendTicketsForOrder } from './orders-mail.helper';
+import { signGuestTicketToken, guestTicketSecret } from './guest-ticket-token';
 import { codedBadRequest, codedNotFound, codedConflict } from '../common/errors/coded-exception';
 import { CouponsService } from '../coupons/coupons.service';
 import { EkasaService } from '../ekasa/ekasa.service';
@@ -313,6 +314,15 @@ export class OrdersService {
     if (!order) throw new NotFoundException();
     // Guest order (userId=null) → autorizácia cez cuid id; user order → musí sedieť vlastník.
     if (order.userId && order.userId !== user?.sub) throw new ForbiddenException();
+    // Po PAID priložíme bezstavový 1h guest token → success stránka ním zobrazí/stiahne lístky
+    // (aj neprihlásený hosť; po expirácii je odkaz mŕtvy). Approach (a): token vzniká pri pollingu.
+    if (order.status === OrderStatus.PAID) {
+      const secret = guestTicketSecret(
+        this.config.get<string>('QR_HMAC_SECRET'),
+        this.config.get<string>('JWT_SECRET'),
+      );
+      return { ...order, guestTicketToken: signGuestTicketToken(order.id, secret) };
+    }
     return order;
   }
 

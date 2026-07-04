@@ -499,7 +499,33 @@ export const publicApi = {
   qrInfo: (ticketTypeId: string) => apiFetch<QrTicketInfo>(`/v1/public/qr/${ticketTypeId}`),
   qrCheckout: (body: { ticketTypeId: string; quantity: number; email: string; locale?: string }) =>
     apiFetch<{ url: string }>('/v1/public/qr-checkout', { method: 'POST', body: JSON.stringify(body) }),
+
+  // Guest ticket view na success stránke (1h token z order pollingu). 410 po expirácii.
+  guestTicketsByToken: (token: string) =>
+    apiFetch<GuestTickets>(`/v1/public/orders/by-token/${encodeURIComponent(token)}`),
+  guestTicketPdf: async (token: string, ticketId: string): Promise<Blob> => {
+    const res = await fetch(
+      `${API_BASE}/v1/public/orders/by-token/${encodeURIComponent(token)}/tickets/${ticketId}/pdf`,
+    );
+    if (!res.ok) throw new ApiError(res.status, `PDF download failed (HTTP ${res.status})`);
+    return res.blob();
+  },
 };
+
+export interface GuestTicket {
+  id: string;
+  typeName: string;
+  qrToken: string;
+}
+export interface GuestTickets {
+  orderNumber: string;
+  showName: string;
+  startsAt: string;
+  timezone: string;
+  venueName: string;
+  venueCity: string | null;
+  tickets: GuestTicket[];
+}
 
 export type QrReason = 'OK' | 'NOT_GA' | 'QR_DISABLED' | 'INACTIVE' | 'NOT_ON_SALE' | 'PAST' | 'SOLD_OUT' | 'SALE_WINDOW';
 
@@ -591,6 +617,8 @@ export interface Order {
   paidAt?: string;
   items: OrderItem[];
   tickets?: { id: string; status: string; qrToken: string }[];
+  // Po PAID: bezstavový 1h token pre guest zobrazenie/stiahnutie lístkov na success stránke.
+  guestTicketToken?: string;
 }
 
 export const ordersApi = {

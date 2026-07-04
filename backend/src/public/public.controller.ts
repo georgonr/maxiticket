@@ -1,16 +1,71 @@
-import { Controller, Get, Post, Param, Query, Body, HttpCode, Ip, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, HttpCode, Ip, Headers, Res, GoneException, NotFoundException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { FastifyReply } from 'fastify';
+import { ConfigService } from '@nestjs/config';
 import { PublicService } from './public.service';
 import { ContactDto } from './contact.dto';
 import { QrCheckoutDto } from './qr-checkout.dto';
 import { OrdersService } from '../orders/orders.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { buildTicketEmailData } from '../orders/orders-mail.helper';
+import { verifyGuestTicketToken, guestTicketSecret } from '../orders/guest-ticket-token';
 
 @Controller('public')
 export class PublicController {
   constructor(
     private readonly svc: PublicService,
     private readonly orders: OrdersService,
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
+
+  // Guest ticket: token → orderId (410 ak neplatný/expirovaný).
+  private orderIdFromToken(token: string): string {
+    const secret = guestTicketSecret(
+      this.config.get<string>('QR_HMAC_SECRET'),
+      this.config.get<string>('JWT_SECRET'),
+    );
+    const res = verifyGuestTicketToken(token, secret);
+    if (!res) throw new GoneException('Odkaz na lístok expiroval alebo je neplatný.');
+    return res.orderId;
+  }
+
+  // Verejné zobrazenie lístkov objednávky cez 1h guest token (QR + info). 410 po expirácii.
+  @Get('orders/by-token/:token')
+  @Throttle({ default: { limit: 60, ttl: 3_600_000 } })
+  async ticketsByToken(@Param('token') token: string) {
+    const orderId = this.orderIdFromToken(token);
+    const data = await buildTicketEmailData(orderId, this.prisma);
+    if (!data) throw new NotFoundException('Objednávka sa nenašla.');
+    return {
+      orderNumber: data.orderNumber,
+      showName: data.showName,
+      startsAt: data.startsAt,
+      timezone: data.timezone,
+      venueName: data.venueName,
+      venueCity: data.venueCity ?? null,
+      tickets: data.tickets.map((t) => ({ id: t.id, typeName: t.typeName, qrToken: t.qrToken })),
+    };
+  }
+
+  // Verejné stiahnutie PDF jednej vstupenky cez 1h guest token (reuse e-mailový generátor).
+  @Get('orders/by-token/:token/tickets/:ticketId/pdf')
+  @Throttle({ default: { limit: 60, ttl: 3_600_000 } })
+  async ticketPdfByToken(
+    @Param('token') token: string,
+    @Param('ticketId') ticketId: string,
+    @Res() res: FastifyReply,
+  ) {
+    const orderId = this.orderIdFromToken(token);
+    const data = await buildTicketEmailData(orderId, this.prisma);
+    if (!data) throw new NotFoundException('Objednávka sa nenašla.');
+    const pdf = await this.mail.renderTicketPdf(data, ticketId);
+    res.header('Content-Type', 'application/pdf');
+    res.header('Content-Disposition', `attachment; filename="vstupenka-${ticketId.slice(-6).toUpperCase()}.pdf"`);
+    res.send(pdf);
+  }
 
   @Get('hero')
   getHero() {
