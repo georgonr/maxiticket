@@ -180,6 +180,7 @@
     "qrScanHint": "Scan the QR code to share"
   },
   "eventDetail": {
+    "cancelledBanner": "This event has been cancelled by the organizer. Your payment will be refunded to your account within a few business days.",
     "notFoundTitle": "Event not found",
     "notFoundDesc": "The link may be invalid or the event has been removed.",
     "backToEvents": "Back to events",

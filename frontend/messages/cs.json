@@ -180,6 +180,7 @@
     "qrScanHint": "Naskenujte QR kód pro sdílení"
   },
   "eventDetail": {
+    "cancelledBanner": "Tato akce byla zrušena pořadatelem. Platba vám bude vrácena na váš účet během několika pracovních dnů.",
     "notFoundTitle": "Akce nenalezena",
     "notFoundDesc": "Odkaz může být neplatný nebo byla akce odstraněna.",
     "backToEvents": "Zpět na akce",

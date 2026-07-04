@@ -265,7 +265,8 @@ export class PublicService {
 
   async getShowBySlug(slug: string) {
     const show = await this.prisma.show.findFirst({
-      where: { slug, status: EventStatus.PUBLISHED },
+      // CANCELLED zostáva dostupný cez priamy link/lístok (zákazník uvidí banner o zrušení).
+      where: { slug, status: { in: [EventStatus.PUBLISHED, EventStatus.CANCELLED] } },
       include: {
         images: { orderBy: [{ isCover: 'desc' }, { sortOrder: 'asc' }] },
         termins: {

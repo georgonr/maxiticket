@@ -466,6 +466,7 @@ export interface PublicShowDetail {
   name: string;
   description?: string;
   category?: string;
+  status: string; // EventStatus – 'CANCELLED' → banner o zrušení
   images: ShowImage[];
   termins: PublicTerminDetail[];
 }

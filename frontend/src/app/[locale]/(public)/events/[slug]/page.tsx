@@ -10,7 +10,7 @@ import { SeatPicker } from '@/components/seatmaps/SeatPicker';
 import { QrTicketShare } from '@/components/qr/QrTicketShare';
 import {
   Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart,
-  ChevronRight, ChevronLeft, Tag, AlertCircle, CheckCircle2,
+  ChevronRight, ChevronLeft, Tag, AlertCircle, AlertTriangle, CheckCircle2,
   Share2, Copy, Check, MessageCircle,
 } from 'lucide-react';
 
@@ -174,6 +174,14 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
 
   return (
     <div>
+      {/* Podujatie zrušené – banner nad obsahom */}
+      {show.status === 'CANCELLED' && (
+        <div className="mb-6 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+          <span>{t('cancelledBanner')}</span>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-1.5 text-sm text-slate-400">
         <Link href="/events" className="hover:text-purple-700 transition-colors">{t('breadcrumbEvents')}</Link>

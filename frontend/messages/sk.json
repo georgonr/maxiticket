@@ -180,6 +180,7 @@
     "qrScanHint": "Naskenujte QR kód na zdieľanie"
   },
   "eventDetail": {
+    "cancelledBanner": "Toto podujatie bolo zrušené usporiadateľom. Platba bude vrátená na váš účet v priebehu niekoľkých pracovných dní.",
     "notFoundTitle": "Podujatie nenájdené",
     "notFoundDesc": "Odkaz môže byť neplatný alebo podujatie bolo odstránené.",
     "backToEvents": "Späť na podujatia",
