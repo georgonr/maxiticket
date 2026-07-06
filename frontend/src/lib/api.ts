@@ -1,9 +1,11 @@
+import { getValidToken, clearAccessToken } from './auth';
+
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 
-type FetchOptions = RequestInit & { token?: string };
+type FetchOptions = RequestInit & { token?: string; _retried?: boolean };
 
 export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
-  const { token, headers, body, ...rest } = options;
+  const { token, headers, body, _retried, ...rest } = options;
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const hasBody = body !== undefined && body !== null;
   const res = await fetch(`${API_BASE}${path}`, {
@@ -19,6 +21,18 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   });
 
   if (!res.ok) {
+    // 401 na autentizovanom requeste → jednorazový retry s čerstvým tokenom.
+    // getValidToken() zdieľa _refreshPromise, takže N paralelných requestov spustí len 1 refresh.
+    // Body je string/FormData (nie skonzumovaný stream), takže zopakovanie requestu je bezpečné.
+    if (res.status === 401 && token && !_retried) {
+      clearAccessToken();
+      const fresh = await getValidToken();
+      if (fresh) {
+        return apiFetch<T>(path, { ...options, token: fresh, _retried: true });
+      }
+      // Refresh zlyhal → propaguj 401 (stránky spravia redirect na login).
+    }
+
     const errBody = await res.json().catch(() => ({}));
     const message =
       typeof errBody?.message === 'string'
