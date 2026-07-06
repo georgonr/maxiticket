@@ -143,12 +143,8 @@ export default function OrganizerSettingsPage() {
         </div>
       )}
 
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
-        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← {t('backToDashboard')}</Link>
-      </header>
-
       <main className="mx-auto max-w-2xl p-6 sm:p-8">
+        <Link href="/organizer/dashboard" className="inline-block text-sm text-brand hover:underline">← {t('backToDashboard')}</Link>
         <h1 className="text-2xl font-bold mb-1">{t('title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
           {t('subtitle')}

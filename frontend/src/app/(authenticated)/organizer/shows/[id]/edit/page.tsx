@@ -74,12 +74,8 @@ export default function EditShowPage() {
 
   return (
     <div className="min-h-screen bg-cream dark:bg-gray-900">
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
-        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href={`/organizer/shows/${id}`} className="text-sm text-brand hover:underline">{t('backToShow')}</Link>
-      </header>
-
       <main className="mx-auto max-w-2xl p-8">
+        <Link href={`/organizer/shows/${id}`} className="inline-block text-sm text-brand hover:underline">{t('backToShow')}</Link>
         <h1 className="text-2xl font-bold mb-6">{t('titleEdit')}</h1>
 
         {error && (

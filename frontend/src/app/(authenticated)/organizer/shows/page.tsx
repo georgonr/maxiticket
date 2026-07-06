@@ -162,12 +162,8 @@ export default function ShowsPage() {
         </div>
       )}
 
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
-        <Link href="/organizer/dashboard"><img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" /></Link>
-        <Link href="/organizer/dashboard" className="text-sm text-brand hover:underline">← Dashboard</Link>
-      </header>
-
       <main className="mx-auto max-w-5xl p-8">
+        <Link href="/organizer/dashboard" className="inline-block text-sm text-brand hover:underline">← Dashboard</Link>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">{t('title')}</h1>
           <Button onClick={() => router.push('/organizer/shows/new')}>{t('newShow')}</Button>
