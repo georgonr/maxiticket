@@ -85,6 +85,8 @@ export default function NewTerminPage() {
         capacity: form.capacity ? Number(form.capacity) : undefined,
       };
       await terminsApi.create(id, body, token);
+      // Invaliduj Router Cache detailu, inak sa nový termín zobrazí až po hard reloade.
+      router.refresh();
       router.push(`/organizer/shows/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errorCreateTermin'));
