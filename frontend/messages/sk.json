@@ -2090,6 +2090,7 @@
     "on": "zap",
     "off": "vyp",
     "shareTitle": "QR rýchly nákup",
+    "close": "Zavrieť",
     "shareScan": "Naskenujte telefónom",
     "shareBody": "Kúpte si lístok naskenovaním QR alebo cez odkaz:",
     "shareEmail": "Poslať e-mailom",
