@@ -651,7 +651,11 @@
       "badgePast": "Ended",
       "badgePastHint": "Last date has passed – hidden from public listing, still manageable.",
       "badgeCancelled": "Cancelled",
-      "cancelledSection": "Cancelled events"
+      "cancelledSection": "Cancelled events",
+      "colEvent": "Event",
+      "colNext": "Next occurrence",
+      "colVisible": "Visible",
+      "noTermin": "No occurrence"
     },
     "eventCancel": {
       "copyBtn": "Create copy",

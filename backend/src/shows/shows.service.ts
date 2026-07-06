@@ -35,12 +35,37 @@ export class ShowsService {
       },
     });
     // isPast = posledný termín skončil pred >5 h (endsAt, fallback startsAt) → v org zozname „Skončené".
-    const cutoff = Date.now() - 5 * 60 * 60 * 1000;
-    return shows.map((s) => {
+    const now = Date.now();
+    const cutoff = now - 5 * 60 * 60 * 1000;
+    const mapped = shows.map((s) => {
       const ends = s.termins.map((t) => (t.endsAt ?? t.startsAt).getTime());
       const lastEnd = ends.length ? Math.max(...ends) : null;
+      // nextTerminAt = najbližší budúci startsAt; fallback posledný minulý; inak null.
+      const starts = s.termins.map((t) => t.startsAt.getTime());
+      const upcoming = starts.filter((ms) => ms >= now);
+      const nextMs = upcoming.length
+        ? Math.min(...upcoming)
+        : starts.length
+          ? Math.max(...starts)
+          : null;
       const { termins: _t, ...rest } = s;
-      return { ...rest, isPast: lastEnd != null && lastEnd < cutoff };
+      return {
+        ...rest,
+        isPast: lastEnd != null && lastEnd < cutoff,
+        nextTerminAt: nextMs != null ? new Date(nextMs) : null,
+      };
+    });
+    // Radenie: budúce (najbližší hore, asc) → minulé (najnovšie minulé hore, desc) → bez termínu dole.
+    const rank = (ms: number | null) => (ms == null ? 2 : ms >= now ? 0 : 1);
+    return mapped.sort((a, b) => {
+      const am = a.nextTerminAt?.getTime() ?? null;
+      const bm = b.nextTerminAt?.getTime() ?? null;
+      const ra = rank(am);
+      const rb = rank(bm);
+      if (ra !== rb) return ra - rb;
+      if (ra === 0) return (am as number) - (bm as number); // budúce vzostupne
+      if (ra === 1) return (bm as number) - (am as number); // minulé zostupne
+      return 0;
     });
   }
 

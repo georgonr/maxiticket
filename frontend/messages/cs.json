@@ -651,7 +651,11 @@
       "badgePast": "Skončeno",
       "badgePastHint": "Poslední termín skončil – skryté z veřejného seznamu, stále spravovatelné.",
       "badgeCancelled": "Zrušeno",
-      "cancelledSection": "Zrušené akce"
+      "cancelledSection": "Zrušené akce",
+      "colEvent": "Akce",
+      "colNext": "Nejbližší termín",
+      "colVisible": "Viditelné",
+      "noTermin": "Bez termínu"
     },
     "eventCancel": {
       "copyBtn": "Vytvořit kopii",

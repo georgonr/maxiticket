@@ -307,6 +307,8 @@ export interface Show {
   images?: ShowImage[];
   createdAt: string;
   isPast?: boolean; // posledný termín skončil >5 h → skryté z verejného zoznamu
+  nextTerminAt?: string | null; // najbližší budúci termín (fallback posledný minulý); null = bez termínu
+
   // Event-level zrušenie / žiadosť o zrušenie
   cancelledAt?: string | null;
   cancellationReason?: string | null;
