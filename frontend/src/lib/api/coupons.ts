@@ -90,6 +90,15 @@ export interface CouponListResponse {
   offset: number;
 }
 
+/** GET /v1/coupons/stats?showId= – agregácia predaja per kupón (C8 affiliate tracking). */
+export interface CouponStat {
+  couponId: string;
+  code: string;
+  ticketsSold: number;
+  revenue: number;
+  scanned: number;
+}
+
 export interface ListCouponsQuery {
   scope?: CouponScope;
   status?: CouponStatus | 'all';
@@ -163,6 +172,9 @@ export const couponsAdminApi = {
 
   get: (id: string, token: string) =>
     apiFetch<CouponDetail>('/v1/coupons/' + id, { token }),
+
+  stats: (showId: string, token: string) =>
+    apiFetch<CouponStat[]>('/v1/coupons/stats?showId=' + encodeURIComponent(showId), { token }),
 
   create: (input: CreateCouponInput, token: string) =>
     apiFetch<{ coupon: CouponRecord }>('/v1/coupons', {

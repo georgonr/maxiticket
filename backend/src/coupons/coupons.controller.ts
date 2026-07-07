@@ -80,6 +80,15 @@ export class CouponsController {
     });
   }
 
+  // ── Stats: predaj per kupón pre podujatie (C8 affiliate tracking) ──
+  // POZOR: musí byť pred @Get(':id'), inak by 'stats' spadlo do :id.
+  @Get('stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN, UserRole.ORGANIZER_OWNER)
+  stats(@CurrentUser() user: JwtPayload, @Query('showId') showId: string) {
+    return this.svc.statsForShow(user, showId);
+  }
+
   // ── Redeem (interne z order/checkout flow) ──
   @Post(':code/redeem')
   @UseGuards(JwtAuthGuard)

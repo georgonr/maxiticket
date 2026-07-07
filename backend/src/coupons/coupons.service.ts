@@ -150,7 +150,8 @@ export class CouponsService {
   private normalizeValue(type: CouponType, value: number): number {
     if (type === CouponType.FREE_TICKET) return 100;
     if (type === CouponType.PERCENTAGE) {
-      if (value <= 0 || value > 100) {
+      // C8: povolené 0 % = čistý tracking/affiliate kód (plná cena, len sa zaznamená couponId).
+      if (value < 0 || value > 100) {
         throw new BadRequestException('PERCENTAGE hodnota musí byť v rozsahu 0–100');
       }
       return value;
@@ -359,6 +360,58 @@ export class CouponsService {
       limit,
       offset,
     };
+  }
+
+  // ───────────────────────── stats (affiliate/tracking) ─────────────────────────
+
+  /**
+   * C8: agregácia predaja per kupón pre dané podujatie (affiliate/kampaň tracking).
+   * Vracia VŠETKY SHOW-scoped kupóny daného show – aj s 0 predajmi (0, nie chýbajúce).
+   * ticketsSold/revenue/scanned sú počítané cez Ticket→Order (PAID) filtrované na tento show,
+   * per-ticket tt.price konzistentne s metrics.topShows (comp/manual vylúčené z revenue).
+   */
+  async statsForShow(user: JwtPayload, showId: string) {
+    if (!showId) throw new BadRequestException('showId je povinný');
+
+    const show = await this.prisma.show.findUnique({
+      where: { id: showId },
+      select: { id: true, organizerId: true },
+    });
+    if (!show) throw new NotFoundException('Podujatie neexistuje');
+    if (user.role !== UserRole.SUPERADMIN) {
+      const orgId = await this.resolveOwnerOrganizerId(user);
+      if (show.organizerId !== orgId) throw new ForbiddenException('Nemáte prístup k tomuto podujatiu');
+    }
+
+    // comp/manual sa nezapočítava do revenue (konzistentne s metrics.service NON_COMP),
+    // ale započítava do ticketsSold. Tickety filtrujeme na termíny tohto show.
+    const rows = await this.prisma.$queryRaw<
+      { couponId: string; code: string; ticketsSold: unknown; revenue: unknown; scanned: unknown }[]
+    >(Prisma.sql`
+      SELECT c.id AS "couponId", c.code AS code,
+             COUNT(t.id) AS "ticketsSold",
+             COALESCE(SUM(CASE
+               WHEN (o."paymentProvider" IS NULL OR LOWER(o."paymentProvider") NOT IN ('comp', 'manual'))
+               THEN tt.price ELSE 0 END), 0) AS revenue,
+             COUNT(t.id) FILTER (WHERE t."usedAt" IS NOT NULL) AS scanned
+      FROM "Coupon" c
+      LEFT JOIN "Order" o ON o."couponId" = c.id AND o.status = 'PAID'
+      LEFT JOIN "Ticket" t
+        ON t."orderId" = o.id
+        AND t."terminId" IN (SELECT te.id FROM "Termin" te WHERE te."showId" = ${showId})
+      LEFT JOIN "TicketType" tt ON tt.id = t."ticketTypeId"
+      WHERE c."showId" = ${showId}
+      GROUP BY c.id, c.code
+      ORDER BY "ticketsSold" DESC, c.code ASC
+    `);
+
+    return rows.map((r) => ({
+      couponId: r.couponId,
+      code: r.code,
+      ticketsSold: Number(r.ticketsSold),
+      revenue: Number(r.revenue),
+      scanned: Number(r.scanned),
+    }));
   }
 
   // ───────────────────────── detail ─────────────────────────

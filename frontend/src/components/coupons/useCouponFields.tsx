@@ -54,7 +54,7 @@ export function useCouponFields(opts: { showId: string; ticketTypes: FlatTicketT
     } else {
       const n = num(value);
       if (n == null) throw new Error(t('errors.valueRequired'));
-      if (type === 'PERCENTAGE' && (n <= 0 || n > 100)) {
+      if (type === 'PERCENTAGE' && (n < 0 || n > 100)) {
         throw new Error(t('errors.percentRange'));
       }
       if (type === 'FIXED_AMOUNT' && n <= 0) throw new Error(t('errors.amountPositive'));
@@ -119,12 +119,15 @@ export function useCouponFields(opts: { showId: string; ticketTypes: FlatTicketT
           value={isFree ? 100 : value}
           onChange={(e) => setValue(e.target.value)}
           disabled={isFree}
-          min={type === 'PERCENTAGE' ? 1 : 0}
+          min={type === 'PERCENTAGE' ? 0 : 1}
           max={type === 'PERCENTAGE' ? 100 : undefined}
           className={inputCls + (isFree ? ' bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-500' : '')}
           placeholder={type === 'PERCENTAGE' ? t('placeholders.valuePercent') : t('placeholders.valueAmount')}
         />
       </Field>
+      {type === 'PERCENTAGE' && (
+        <p className="-mt-2 text-xs text-gray-500 dark:text-gray-400">{t('hints.trackingZero')}</p>
+      )}
 
       <Field label={t('fields.scope')}>
         <div className="flex gap-2">

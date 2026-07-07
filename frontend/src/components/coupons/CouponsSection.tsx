@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   couponsAdminApi,
   CouponListItem,
+  CouponStat,
 } from '@/lib/api/coupons';
 import { SectionCard, Skeleton } from '@/components/dashboard/parts';
 import {
@@ -42,6 +43,7 @@ export function CouponsSection({
   const { typeValueLabel, usageLabel, validityLabel } = useCouponLabels();
   const { user } = useAuth();
   const [coupons, setCoupons] = useState<CouponListItem[]>([]);
+  const [stats, setStats] = useState<Record<string, CouponStat>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
@@ -58,6 +60,13 @@ export function CouponsSection({
       if (!token) throw new Error(t('errors.loginRequired'));
       const res = await couponsAdminApi.list({ relevantToShowId: showId, limit: 100 }, token);
       setCoupons(res.items);
+      // C8: predaj per kupón (affiliate tracking). Zlyhanie statistiky nezhodí zoznam kupónov.
+      try {
+        const st = await couponsAdminApi.stats(showId, token);
+        setStats(Object.fromEntries(st.map((s) => [s.couponId, s])));
+      } catch {
+        setStats({});
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t('errors.loadFailed'));
     } finally {
@@ -158,6 +167,9 @@ export function CouponsSection({
                 <th className="py-2 px-3 font-medium">{t('table.scope')}</th>
                 <th className="py-2 px-3 font-medium">{t('table.validity')}</th>
                 <th className="py-2 px-3 font-medium">{t('table.usage')}</th>
+                <th className="py-2 px-3 font-medium text-right">{t('table.ticketsSold')}</th>
+                <th className="py-2 px-3 font-medium text-right">{t('table.revenue')}</th>
+                <th className="py-2 px-3 font-medium text-right">{t('table.scanned')}</th>
                 <th className="py-2 px-3 font-medium">{t('table.status')}</th>
                 <th className="py-2 pl-3 font-medium text-right">{t('table.actions')}</th>
               </tr>
@@ -166,6 +178,7 @@ export function CouponsSection({
               {coupons.map((c) => {
                 const inherited = isInherited(c);
                 const canDelete = !inherited && c.usedCount === 0;
+                const stat = stats[c.id];
                 return (
                   <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="py-2.5 pr-3 font-mono font-medium text-gray-900 dark:text-gray-100">{c.code}</td>
@@ -173,6 +186,9 @@ export function CouponsSection({
                     <td className="px-3"><ScopeBadge scope={c.scope} inherited={inherited} /></td>
                     <td className="px-3 text-gray-500 dark:text-gray-400">{validityLabel(c.validFrom, c.validUntil)}</td>
                     <td className="px-3 tabular-nums text-gray-600 dark:text-gray-300">{usageLabel(c.usedCount, c.maxUses)}</td>
+                    <td className="px-3 text-right tabular-nums text-gray-700 dark:text-gray-200">{stat ? stat.ticketsSold : inherited ? '–' : 0}</td>
+                    <td className="px-3 text-right tabular-nums text-gray-700 dark:text-gray-200">{stat ? `${stat.revenue.toFixed(2)} €` : inherited ? '–' : '0.00 €'}</td>
+                    <td className="px-3 text-right tabular-nums text-gray-500 dark:text-gray-400">{stat ? stat.scanned : inherited ? '–' : 0}</td>
                     <td className="px-3"><StatusBadge status={c.status} /></td>
                     <td className="py-2.5 pl-3">
                       <div className="flex items-center justify-end gap-1">
