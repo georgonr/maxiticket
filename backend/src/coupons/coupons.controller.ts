@@ -34,18 +34,21 @@ export class CouponsController {
   }
 
   // ── Create single ──
+  // Tvorbu smie robiť IBA organizátor pre vlastné podujatie (SHOW scope).
+  // SUPERADMIN je zámerne vynechaný – nesmie vytvárať GLOBAL/organizer-wide kódy.
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPERADMIN, UserRole.ORGANIZER_OWNER)
+  @Roles(UserRole.ORGANIZER_OWNER)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateCouponDto, @CurrentUser() user: JwtPayload) {
     return this.svc.create(dto, user);
   }
 
   // ── Bulk generate ──
+  // Rovnaké obmedzenie ako create – iba ORGANIZER_OWNER, len pre vlastné show.
   @Post('bulk-generate')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPERADMIN, UserRole.ORGANIZER_OWNER)
+  @Roles(UserRole.ORGANIZER_OWNER)
   @HttpCode(HttpStatus.OK)
   bulkGenerate(@Body() dto: BulkGenerateCouponsDto, @CurrentUser() user: JwtPayload) {
     return this.svc.bulkGenerate(dto, user);

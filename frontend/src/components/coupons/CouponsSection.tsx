@@ -169,7 +169,6 @@ export function CouponsSection({
                 <th className="py-2 px-3 font-medium">{t('table.usage')}</th>
                 <th className="py-2 px-3 font-medium text-right">{t('table.ticketsSold')}</th>
                 <th className="py-2 px-3 font-medium text-right">{t('table.revenue')}</th>
-                <th className="py-2 px-3 font-medium text-right">{t('table.scanned')}</th>
                 <th className="py-2 px-3 font-medium">{t('table.status')}</th>
                 <th className="py-2 pl-3 font-medium text-right">{t('table.actions')}</th>
               </tr>
@@ -188,7 +187,6 @@ export function CouponsSection({
                     <td className="px-3 tabular-nums text-gray-600 dark:text-gray-300">{usageLabel(c.usedCount, c.maxUses)}</td>
                     <td className="px-3 text-right tabular-nums text-gray-700 dark:text-gray-200">{stat ? stat.ticketsSold : inherited ? '–' : 0}</td>
                     <td className="px-3 text-right tabular-nums text-gray-700 dark:text-gray-200">{stat ? `${stat.revenue.toFixed(2)} €` : inherited ? '–' : '0.00 €'}</td>
-                    <td className="px-3 text-right tabular-nums text-gray-500 dark:text-gray-400">{stat ? stat.scanned : inherited ? '–' : 0}</td>
                     <td className="px-3"><StatusBadge status={c.status} /></td>
                     <td className="py-2.5 pl-3">
                       <div className="flex items-center justify-end gap-1">

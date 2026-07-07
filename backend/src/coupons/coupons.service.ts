@@ -98,52 +98,32 @@ export class CouponsService {
     return u.organizerId;
   }
 
-  /** Spoločná validácia scope + ownership pre create/bulk. Vracia normalizované scope-target IDs. */
+  /**
+   * Bezpečnostné pravidlo tvorby kupónu: kód smie vzniknúť IBA ako SHOW-scope
+   * viazaný na podujatie, ktoré volajúci organizátor vlastní. GLOBAL, ORGANIZER
+   * (platform-/organizer-wide) aj TICKET_TYPE sú zakázané pre VŠETKÝCH vrátane
+   * SUPERADMINa. Ownership sa vyžaduje vždy (defensive – route guard superadmina
+   * do create/bulk už aj tak nepustí, no service musí byť samostatne bezpečné).
+   */
   private async resolveScopeTargets(
     user: JwtPayload,
     scope: CouponScope,
     input: { organizerId?: string; showId?: string; ticketTypeId?: string },
   ): Promise<{ organizerId: string | null; showId: string | null; ticketTypeId: string | null }> {
-    const isSuper = user.role === UserRole.SUPERADMIN;
-
-    if (scope === CouponScope.GLOBAL) {
-      if (!isSuper) throw new ForbiddenException('GLOBAL kupóny môže vytvárať iba SUPERADMIN');
-      return { organizerId: null, showId: null, ticketTypeId: null };
+    if (scope !== CouponScope.SHOW) {
+      throw new ForbiddenException(
+        'Kupón je možné vytvoriť iba pre konkrétne vlastné podujatie (scope SHOW)',
+      );
     }
+    if (!input.showId) throw new BadRequestException('showId je povinný pre scope SHOW');
 
-    const ownerOrgId = isSuper ? null : await this.resolveOwnerOrganizerId(user);
-
-    if (scope === CouponScope.ORGANIZER) {
-      if (!input.organizerId) throw new BadRequestException('organizerId je povinný pre scope ORGANIZER');
-      const org = await this.prisma.organizer.findUnique({ where: { id: input.organizerId } });
-      if (!org) throw new NotFoundException('Organizátor neexistuje');
-      if (!isSuper && org.id !== ownerOrgId) {
-        throw new ForbiddenException('Kupón môžete vytvoriť iba pre vlastného organizátora');
-      }
-      return { organizerId: org.id, showId: null, ticketTypeId: null };
+    const ownerOrgId = await this.resolveOwnerOrganizerId(user);
+    const show = await this.prisma.show.findUnique({ where: { id: input.showId } });
+    if (!show) throw new NotFoundException('Podujatie neexistuje');
+    if (show.organizerId !== ownerOrgId) {
+      throw new ForbiddenException('Kupón môžete vytvoriť iba pre vlastné podujatie');
     }
-
-    if (scope === CouponScope.SHOW) {
-      if (!input.showId) throw new BadRequestException('showId je povinný pre scope SHOW');
-      const show = await this.prisma.show.findUnique({ where: { id: input.showId } });
-      if (!show) throw new NotFoundException('Podujatie neexistuje');
-      if (!isSuper && show.organizerId !== ownerOrgId) {
-        throw new ForbiddenException('Kupón môžete vytvoriť iba pre vlastné podujatie');
-      }
-      return { organizerId: null, showId: show.id, ticketTypeId: null };
-    }
-
-    // TICKET_TYPE
-    if (!input.ticketTypeId) throw new BadRequestException('ticketTypeId je povinný pre scope TICKET_TYPE');
-    const tt = await this.prisma.ticketType.findUnique({
-      where: { id: input.ticketTypeId },
-      include: { termin: { include: { show: { select: { organizerId: true } } } } },
-    });
-    if (!tt) throw new NotFoundException('Typ vstupenky neexistuje');
-    if (!isSuper && tt.termin.show.organizerId !== ownerOrgId) {
-      throw new ForbiddenException('Kupón môžete vytvoriť iba pre vlastný typ vstupenky');
-    }
-    return { organizerId: null, showId: null, ticketTypeId: tt.id };
+    return { organizerId: null, showId: show.id, ticketTypeId: null };
   }
 
   /** Normalizuje hodnotu podľa typu (FREE_TICKET = 100, validuje rozsahy). */

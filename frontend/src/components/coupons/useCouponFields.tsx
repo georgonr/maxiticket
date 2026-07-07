@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { CouponType, CouponScope, CouponBaseInput } from '@/lib/api/coupons';
+import type { CouponType, CouponBaseInput } from '@/lib/api/coupons';
 import { Field, inputCls } from './couponUi';
 
 export interface FlatTicketType {
@@ -29,15 +29,14 @@ function toIso(v: string): string | undefined {
 
 /**
  * Zdieľané polia kupónu pre Create + Bulk modaly.
- * Scope je v kontexte editora obmedzený na SHOW / TICKET_TYPE (kupón daného podujatia).
+ * Scope je natvrdo SHOW – kupón je vždy viazaný na aktuálne podujatie
+ * (žiadny GLOBAL/ORGANIZER/TICKET_TYPE; vynucuje aj backend).
  */
 export function useCouponFields(opts: { showId: string; ticketTypes: FlatTicketType[] }) {
-  const { showId, ticketTypes } = opts;
+  const { showId } = opts;
   const t = useTranslations('organizer.coupon');
   const [type, setType] = useState<CouponType>('PERCENTAGE');
   const [value, setValue] = useState('15');
-  const [scope, setScope] = useState<CouponScope>('SHOW');
-  const [ticketTypeId, setTicketTypeId] = useState('');
   const [validFrom, setValidFrom] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [maxUses, setMaxUses] = useState('');
@@ -61,13 +60,8 @@ export function useCouponFields(opts: { showId: string; ticketTypes: FlatTicketT
       val = n;
     }
 
-    if (scope === 'TICKET_TYPE' && !ticketTypeId) {
-      throw new Error(t('errors.ticketTypeRequired'));
-    }
-
-    const base: CouponBaseInput = { type, value: val, scope };
-    if (scope === 'SHOW') base.showId = showId;
-    if (scope === 'TICKET_TYPE') base.ticketTypeId = ticketTypeId;
+    // Scope je vždy SHOW viazaný na aktuálne podujatie (bezpečnostné pravidlo).
+    const base: CouponBaseInput = { type, value: val, scope: 'SHOW', showId };
 
     const vf = toIso(validFrom);
     const vu = toIso(validUntil);
@@ -127,48 +121,6 @@ export function useCouponFields(opts: { showId: string; ticketTypes: FlatTicketT
       </Field>
       {type === 'PERCENTAGE' && (
         <p className="-mt-2 text-xs text-gray-500 dark:text-gray-400">{t('hints.trackingZero')}</p>
-      )}
-
-      <Field label={t('fields.scope')}>
-        <div className="flex gap-2">
-          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm">
-            <input
-              type="radio"
-              name="coupon-scope"
-              checked={scope === 'SHOW'}
-              onChange={() => setScope('SHOW')}
-              className="accent-brand"
-            />
-            {t('scopeOption.wholeShow')}
-          </label>
-          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm">
-            <input
-              type="radio"
-              name="coupon-scope"
-              checked={scope === 'TICKET_TYPE'}
-              onChange={() => setScope('TICKET_TYPE')}
-              className="accent-brand"
-            />
-            {t('scopeOption.ticketType')}
-          </label>
-        </div>
-      </Field>
-
-      {scope === 'TICKET_TYPE' && (
-        <Field label={t('fields.ticketType')}>
-          <select
-            value={ticketTypeId}
-            onChange={(e) => setTicketTypeId(e.target.value)}
-            className={inputCls}
-          >
-            <option value="">{t('selectPlaceholder')}</option>
-            {ticketTypes.map((tt) => (
-              <option key={tt.id} value={tt.id}>
-                {tt.label}
-              </option>
-            ))}
-          </select>
-        </Field>
       )}
 
       <div className="grid grid-cols-2 gap-3">
