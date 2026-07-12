@@ -9,9 +9,10 @@ import { OpenAiProvider } from './llm/openai.provider';
 import { AnthropicProvider } from './llm/anthropic.provider';
 import { ASSISTANT_LLM } from './llm/llm.types';
 import { OrdersModule } from '../orders/orders.module';
+import { PublicModule } from '../public/public.module';
 
 @Module({
-  imports: [ConfigModule, OrdersModule],
+  imports: [ConfigModule, OrdersModule, PublicModule],
   controllers: [AssistantController, GuestAssistantController],
   providers: [
     AssistantService,

@@ -66,7 +66,7 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       # AI asistent – Claude (default). OPENAI_* ostáva ako fallback (ASSISTANT_PROVIDER=openai).
       ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-anthropic}
-      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-haiku-4-5-20251001}
+      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-sonnet-5}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Fakturačný systém (krok 13b) – DODÁVATEĽ na faktúre. Placeholdery – účtovník vyplní.
       PLATFORM_LEGAL_NAME: ${PLATFORM_LEGAL_NAME:-}
