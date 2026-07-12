@@ -77,8 +77,9 @@ export class PublicController {
     @Query('category') category?: string,
     @Query('date') dateFilter?: string,
     @Query('city') city?: string,
+    @Query('q') search?: string,
   ) {
-    return this.svc.listShows({ category, dateFilter, city });
+    return this.svc.listShows({ category, dateFilter, city, search });
   }
 
   // Krok 30: pool vybraných podujatí pre homepage (mix predané+najnovšie).

@@ -492,11 +492,12 @@ export type HeroSlideType =
   | { type: 'show'; id: string; slug: string; name: string; imageUrl: string | null; startsAt: string; timezone: string; city: string | null; venueName: string | null; ctaUrl: string };
 
 export const publicApi = {
-  listShows: (params?: { category?: string; date?: string; city?: string }) => {
+  listShows: (params?: { category?: string; date?: string; city?: string; q?: string }) => {
     const q = new URLSearchParams();
     if (params?.category) q.set('category', params.category);
     if (params?.date) q.set('date', params.date);
     if (params?.city) q.set('city', params.city);
+    if (params?.q) q.set('q', params.q);
     const qs = q.toString();
     return apiFetch<PublicShow[]>(`/v1/public/shows${qs ? '?' + qs : ''}`);
   },

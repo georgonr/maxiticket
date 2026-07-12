@@ -105,7 +105,7 @@ export class PublicService {
     return { ok: true };
   }
 
-  async listShows(q: { category?: string; dateFilter?: string; city?: string }) {
+  async listShows(q: { category?: string; dateFilter?: string; city?: string; search?: string }) {
     const now = new Date();
     const terminDateFilter = this.buildDateFilter(q.dateFilter, now);
 
@@ -117,10 +117,15 @@ export class PublicService {
       ...(q.city ? { venue: { city: { contains: q.city, mode: 'insensitive' } } } : {}),
     };
 
+    // C3 blok 1A: voliteľné fulltextové hľadanie podľa názvu (kombinuje sa AND
+    // s existujúcimi filtrami category/dateFilter/city).
+    const search = q.search?.trim();
+
     const shows = await this.prisma.show.findMany({
       where: {
         status: EventStatus.PUBLISHED,
         ...(q.category ? { category: q.category } : {}),
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
         termins: { some: terminWhere },
       },
       include: {
