@@ -60,9 +60,9 @@ const STATUS_LABELS: Record<AssistantLocale, Record<string, string>> = {
 
 const MSG_WORKING: Record<AssistantLocale, string> = { sk: 'Pracujem…', en: 'Working…', cs: 'Pracuji…' };
 const MSG_NOT_CONFIGURED: Record<AssistantLocale, string> = {
-  sk: 'Asistent momentálne nie je dostupný (chýba konfigurácia OPENAI_API_KEY).',
-  en: 'The assistant is currently unavailable (OPENAI_API_KEY is not configured).',
-  cs: 'Asistent momentálně není dostupný (chybí konfigurace OPENAI_API_KEY).',
+  sk: 'Asistent momentálne nie je dostupný (chýba konfigurácia API kľúča asistenta).',
+  en: 'The assistant is currently unavailable (the assistant API key is not configured).',
+  cs: 'Asistent momentálně není dostupný (chybí konfigurace API klíče asistenta).',
 };
 const MSG_REFINE: Record<AssistantLocale, string> = {
   sk: '\n\nSkúste prosím otázku spresniť.',

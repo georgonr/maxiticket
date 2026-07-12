@@ -12,6 +12,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@casl/ability": "^6.7.1",
     "@fastify/multipart": "^8.3.0",
     "@nestjs/common": "^10.0.0",
