@@ -29,19 +29,16 @@ export function LandingPage() {
       <section className="relative overflow-hidden border-b border-plum/5">
         <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-amber/15 blur-3xl" />
         <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-coral/10 blur-3xl" />
-        <div className="relative mx-auto max-w-3xl px-4 py-12 text-center sm:px-6 lg:py-16">
+        <div className="relative mx-auto max-w-3xl px-4 py-8 text-center sm:px-6 lg:py-10">
           <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-coral shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-coral" /> {t('hero.badge')}
           </span>
-          <h1 className="mx-auto mt-5 max-w-2xl font-display text-4xl font-semibold leading-[1.08] tracking-tight text-plum sm:text-5xl">
+          <h1 className="mx-auto mt-4 max-w-2xl font-display text-4xl font-semibold leading-[1.08] tracking-tight text-plum sm:text-5xl">
             {t('hero.title1')} <span className="text-coral">{t('hero.title2')}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted">{t('hero.subtitle')}</p>
 
-          {/* C3 blok 1B: prominentný vyhľadávací bar → submit redirectuje na /events */}
-          <HeroSearch />
-
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <NextLink
               href={REGISTER_URL}
               className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3 text-base font-semibold text-white shadow-md transition-all hover:bg-coral-dark hover:shadow-lg"
@@ -58,8 +55,13 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── Vybrané podujatia (reálne, auto-preklápanie) ──── */}
+      {/* ── Vybrané podujatia (reálne, auto-preklápanie) – vytiahnuté hneď pod hero ──── */}
       <FeaturedEvents />
+
+      {/* ── Vyhľadávací bar (pod podujatiami) → submit redirectuje na /events ──── */}
+      <section className="mx-auto max-w-3xl px-4 pb-14 sm:px-6">
+        <HeroSearch />
+      </section>
 
       {/* ── Features ──────────────────────────────────────── */}
       <section id="features" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">

@@ -8,7 +8,7 @@ import { publicApi, PublicShow } from '@/lib/api';
 import { EventCard } from '@/components/events/EventCard';
 
 const PAGE_SIZE = 12;
-const ROTATE_MS = 7000;
+const ROTATE_MS = 10000;
 const FADE_MS = 350;
 
 export function FeaturedEvents() {
