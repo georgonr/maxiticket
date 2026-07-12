@@ -13,7 +13,8 @@
       "title2": "lidé milují.",
       "subtitle": "Spusť prodej lístků online během pár minut – od malého koncertu po vyprodanou halu.",
       "ctaPrimary": "Začni zdarma",
-      "ctaSecondary": "Prohlédnout akce"
+      "ctaSecondary": "Prohlédnout akce",
+      "searchCta": "Hledat"
     },
     "featured": {
       "heading": "Vybrané akce",
@@ -131,6 +132,7 @@
   },
   "events": {
     "title": "Nadcházející akce",
+    "searchPlaceholder": "Hledat akce…",
     "viewGrid": "Grid",
     "viewCalendar": "Kalendář",
     "dateAll": "Všechna data",

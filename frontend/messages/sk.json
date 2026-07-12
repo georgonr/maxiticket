@@ -13,7 +13,8 @@
       "title2": "ľudia milujú.",
       "subtitle": "Spusti predaj lístkov online za pár minút – od malého koncertu po vypredanú halu.",
       "ctaPrimary": "Začni zadarmo",
-      "ctaSecondary": "Prezri podujatia"
+      "ctaSecondary": "Prezri podujatia",
+      "searchCta": "Hľadať"
     },
     "featured": {
       "heading": "Vybrané podujatia",
@@ -131,6 +132,7 @@
   },
   "events": {
     "title": "Najbližšie podujatia",
+    "searchPlaceholder": "Hľadať podujatie…",
     "viewGrid": "Grid",
     "viewCalendar": "Kalendár",
     "dateAll": "Všetky dátumy",

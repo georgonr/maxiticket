@@ -7,6 +7,7 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { ChatWidget } from '@/components/assistant/ChatWidget';
 import { FeaturedEvents } from './FeaturedEvents';
+import { HeroSearch } from './HeroSearch';
 
 const REGISTER_URL = '/register'; // ploché (nelokalizované) – staff/customer registrácia
 
@@ -93,6 +94,10 @@ export function LandingPage() {
             {t('hero.title1')} <span className="text-coral">{t('hero.title2')}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted">{t('hero.subtitle')}</p>
+
+          {/* C3 blok 1B: prominentný vyhľadávací bar → submit redirectuje na /events */}
+          <HeroSearch />
+
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <NextLink
               href={REGISTER_URL}

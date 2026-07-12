@@ -13,7 +13,8 @@
       "title2": "love.",
       "subtitle": "Start selling tickets online in minutes – from a tiny gig to a sold-out arena.",
       "ctaPrimary": "Start free",
-      "ctaSecondary": "Browse events"
+      "ctaSecondary": "Browse events",
+      "searchCta": "Search"
     },
     "featured": {
       "heading": "Featured events",
@@ -131,6 +132,7 @@
   },
   "events": {
     "title": "Upcoming events",
+    "searchPlaceholder": "Search events…",
     "viewGrid": "Grid",
     "viewCalendar": "Calendar",
     "dateAll": "All dates",

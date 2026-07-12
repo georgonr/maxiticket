@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations, useFormatter } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
@@ -40,15 +41,28 @@ function toDateStr(iso: string) {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+// useSearchParams() vyžaduje Suspense boundary počas prerenderu (Next App Router).
 export default function EventsPage() {
+  return (
+    <Suspense>
+      <EventsPageInner />
+    </Suspense>
+  );
+}
+
+function EventsPageInner() {
   const t = useTranslations('events');
+  const sp = useSearchParams();
   const [shows, setShows]           = useState<PublicShow[]>([]);
   const [loading, setLoading]       = useState(true);
   const [cities, setCities]         = useState<string[]>([]);
   const [extraCats, setExtraCats]   = useState<string[]>([]);
-  const [filterCat, setFilterCat]   = useState('');
-  const [filterDate, setFilterDate] = useState('');
-  const [filterCity, setFilterCity] = useState('');
+  // Filtre sa inicializujú z URL query (zdieľateľné/refreshnuteľné, handoff z homepage heró).
+  const [filterCat, setFilterCat]   = useState(() => sp.get('category') ?? '');
+  const [filterDate, setFilterDate] = useState(() => sp.get('date') ?? '');
+  const [filterCity, setFilterCity] = useState(() => sp.get('city') ?? '');
+  const [filterQ, setFilterQ]       = useState(() => sp.get('q') ?? '');
+  const [qInput, setQInput]         = useState(() => sp.get('q') ?? '');
   const [view, setView]             = useState<'grid' | 'calendar'>('grid');
 
   useEffect(() => {
@@ -59,10 +73,17 @@ export default function EventsPage() {
     }).catch(() => {});
   }, []);
 
+  // Debounce textového vstupu → filterQ (spúšťa fetch + URL sync).
+  useEffect(() => {
+    const id = setTimeout(() => setFilterQ(qInput.trim()), 350);
+    return () => clearTimeout(id);
+  }, [qInput]);
+
   useEffect(() => {
     setLoading(true);
     publicApi
       .listShows({
+        q:        filterQ || undefined,
         category: filterCat || undefined,
         // Calendar view needs all dates to mark dots correctly
         date:     view === 'calendar' ? undefined : (filterDate || undefined),
@@ -71,7 +92,18 @@ export default function EventsPage() {
       .then(setShows)
       .catch(() => setShows([]))
       .finally(() => setLoading(false));
-  }, [filterCat, filterDate, filterCity, view]);
+  }, [filterQ, filterCat, filterDate, filterCity, view]);
+
+  // URL sync – q/category/city/date do adresy (bez Next navigácie, len replaceState).
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filterQ) params.set('q', filterQ);
+    if (filterCat) params.set('category', filterCat);
+    if (filterCity) params.set('city', filterCity);
+    if (filterDate) params.set('date', filterDate);
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+  }, [filterQ, filterCat, filterCity, filterDate]);
 
   const allCategories = [
     // Fixed categories: translate label via labelKey. Extra (DB) categories: keep raw value as label.
@@ -85,9 +117,22 @@ export default function EventsPage() {
       {/* ── Hero Slider ──────────────────────────────────────────────────── */}
       <HeroSlider />
 
-      {/* ── Subheader: title + Grid/Calendar toggle ───────────────────── */}
+      {/* ── Subheader: search + title + Grid/Calendar toggle ──────────── */}
       <section className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
-        <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-7xl space-y-3">
+          {/* Search bar (C3 blok 1B) */}
+          <div className="relative">
+            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={qInput}
+              onChange={(e) => setQInput(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchPlaceholder')}
+              className="w-full rounded-full border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 transition-colors focus:border-coral focus:bg-white focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
           <h1 className="text-lg sm:text-xl font-bold text-slate-900">
             {t('title')}
           </h1>
@@ -111,6 +156,7 @@ export default function EventsPage() {
               <span className="hidden sm:inline">{t('viewCalendar')}</span>
             </button>
           </div>
+          </div>
         </div>
       </section>
 
@@ -126,8 +172,8 @@ export default function EventsPage() {
                   onClick={() => setFilterCat(value)}
                   className={`flex flex-none items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all whitespace-nowrap ${
                     active
-                      ? 'bg-purple-700 text-white shadow-sm'
-                      : 'bg-slate-50 border border-slate-200 text-slate-600 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50'
+                      ? 'bg-coral text-white shadow-sm'
+                      : 'bg-slate-50 border border-slate-200 text-slate-600 hover:border-coral/40 hover:text-coral hover:bg-coral/10'
                   }`}
                 >
                   <Icon size={13} />
@@ -152,7 +198,7 @@ export default function EventsPage() {
                     onClick={() => setFilterDate(chip.value)}
                     className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
                       active
-                        ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                        ? 'bg-coral/15 text-coral border border-coral/40'
                         : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -169,7 +215,7 @@ export default function EventsPage() {
                 <select
                   value={filterCity}
                   onChange={(e) => setFilterCity(e.target.value)}
-                  className="appearance-none rounded-full border border-slate-200 bg-white pl-7 pr-7 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 focus:outline-none focus:border-purple-400 transition-colors cursor-pointer"
+                  className="appearance-none rounded-full border border-slate-200 bg-white pl-7 pr-7 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 focus:outline-none focus:border-coral transition-colors cursor-pointer"
                 >
                   <option value="">{t('allCities')}</option>
                   {cities.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -187,7 +233,7 @@ export default function EventsPage() {
           {loading ? (
             view === 'calendar' ? (
               <div className="flex justify-center py-24">
-                <Loader2 className="animate-spin text-purple-600" size={36} />
+                <Loader2 className="animate-spin text-coral" size={36} />
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -203,10 +249,10 @@ export default function EventsPage() {
               <Search size={40} className="mb-4 text-slate-300" />
               <p className="text-lg font-semibold text-slate-500">{t('emptyTitle')}</p>
               <p className="mt-1 text-sm text-slate-400">{t('emptyHint')}</p>
-              {(filterCat || filterDate || filterCity) && (
+              {(filterQ || filterCat || filterDate || filterCity) && (
                 <button
-                  onClick={() => { setFilterCat(''); setFilterDate(''); setFilterCity(''); }}
-                  className="mt-5 rounded-xl bg-purple-700 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
+                  onClick={() => { setQInput(''); setFilterQ(''); setFilterCat(''); setFilterDate(''); setFilterCity(''); }}
+                  className="mt-5 rounded-xl bg-coral px-5 py-2 text-sm font-semibold text-white hover:bg-coral-dark transition-colors"
                 >
                   {t('clearFilters')}
                 </button>
@@ -224,7 +270,7 @@ export default function EventsPage() {
                     {' '}
                     {t.rich('inCategory', {
                       cat: filterCat,
-                      b: (chunks) => <span className="font-semibold text-purple-700">{chunks}</span>,
+                      b: (chunks) => <span className="font-semibold text-coral">{chunks}</span>,
                     })}
                   </>
                 )}
@@ -361,11 +407,11 @@ function CalendarView({
                   onClick={() => setSelectedDay(isSelected ? null : ds)}
                   className={`relative mx-auto flex h-9 w-9 flex-col items-center justify-center rounded-full text-sm font-medium transition-all ${
                     isSelected
-                      ? 'bg-purple-700 text-white shadow-md'
+                      ? 'bg-coral text-white shadow-md'
                       : isToday
-                      ? 'ring-2 ring-purple-400 text-slate-900 hover:bg-purple-50'
+                      ? 'ring-2 ring-coral/50 text-slate-900 hover:bg-coral/10'
                       : hasShows
-                      ? 'text-slate-900 hover:bg-purple-50 font-semibold'
+                      ? 'text-slate-900 hover:bg-coral/10 font-semibold'
                       : isPast
                       ? 'text-slate-300 cursor-default'
                       : 'text-slate-500 hover:bg-slate-50'
@@ -374,7 +420,7 @@ function CalendarView({
                 >
                   {day}
                   {hasShows && !isSelected && (
-                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-purple-500" />
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-coral" />
                   )}
                 </button>
               );
@@ -384,10 +430,10 @@ function CalendarView({
           {/* Legend */}
           <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-4 text-[10px] text-slate-400">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" /> {t('legendEvents')}
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-coral" /> {t('legendEvents')}
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3.5 w-3.5 rounded-full ring-2 ring-purple-400" /> {t('legendToday')}
+              <span className="inline-block h-3.5 w-3.5 rounded-full ring-2 ring-coral/50" /> {t('legendToday')}
             </span>
           </div>
         </div>
@@ -399,7 +445,7 @@ function CalendarView({
             <select
               value={filterCity}
               onChange={(e) => setFilterCity(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-slate-200 bg-white pl-8 pr-8 py-2.5 text-sm text-slate-600 hover:border-slate-300 focus:outline-none focus:border-purple-400 transition-colors cursor-pointer"
+              className="w-full appearance-none rounded-xl border border-slate-200 bg-white pl-8 pr-8 py-2.5 text-sm text-slate-600 hover:border-slate-300 focus:outline-none focus:border-coral transition-colors cursor-pointer"
             >
               <option value="">{t('allCities')}</option>
               {cities.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -456,10 +502,10 @@ function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay:
   return (
     <Link
       href={`/events/${show.slug}`}
-      className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 hover:border-purple-200 hover:shadow-md transition-all"
+      className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 hover:border-coral/30 hover:shadow-md transition-all"
     >
       {/* Thumbnail */}
-      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-purple-100 to-violet-100">
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-coral/15 to-amber/15">
         {show.coverUrl ? (
           <Image
             src={show.coverUrl}
@@ -470,20 +516,20 @@ function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay:
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <span className="text-lg font-bold text-purple-300">{show.name.charAt(0)}</span>
+            <span className="text-lg font-bold text-coral/40">{show.name.charAt(0)}</span>
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="min-w-0 flex-1">
-        <h4 className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-1 text-sm">
+        <h4 className="font-semibold text-slate-900 group-hover:text-coral transition-colors line-clamp-1 text-sm">
           {show.name}
         </h4>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
           {termin && (
             <span className="flex items-center gap-1 text-xs text-slate-500">
-              <Calendar size={10} className="text-purple-400" />
+              <Calendar size={10} className="text-coral" />
               {format.dateTime(new Date(termin.startsAt), {
                 timeZone: termin.timezone,
                 hour: '2-digit', minute: '2-digit',
@@ -492,7 +538,7 @@ function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay:
           )}
           {termin?.city && (
             <span className="flex items-center gap-1 text-xs text-slate-500">
-              <MapPin size={10} className="text-purple-400" />
+              <MapPin size={10} className="text-coral" />
               {termin.city}
             </span>
           )}
@@ -508,7 +554,7 @@ function CalendarShowRow({ show, selectedDay }: { show: PublicShow; selectedDay:
             })}
           </span>
         )}
-        <span className="flex items-center gap-0.5 text-xs font-medium text-purple-600 group-hover:gap-1.5 transition-all">
+        <span className="flex items-center gap-0.5 text-xs font-medium text-coral group-hover:gap-1.5 transition-all">
           {t('detail')} <ChevronRight size={12} />
         </span>
       </div>
