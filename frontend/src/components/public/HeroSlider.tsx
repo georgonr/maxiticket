@@ -151,7 +151,7 @@ export function HeroSlider() {
                 sizes="100vw"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-purple-800 to-violet-900" />
+              <div className="absolute inset-0 bg-gradient-to-br from-plum via-plum to-coral-dark" />
             )}
 
             {/* Overlay gradient – left for text legibility */}

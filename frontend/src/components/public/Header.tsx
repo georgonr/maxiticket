@@ -66,7 +66,7 @@ export function PublicHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-coral hover:bg-coral/10 rounded-lg transition-colors"
             >
               {t(link.key)}
             </Link>
@@ -81,7 +81,7 @@ export function PublicHeader() {
             <>
               <Link
                 href="/account/tickets"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-coral hover:bg-coral/10 rounded-lg transition-colors"
               >
                 <Ticket size={15} />
                 {t('myTickets')}
@@ -92,7 +92,7 @@ export function PublicHeader() {
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
                   aria-label={t('account')}
                 >
-                  <UserCircle2 size={18} className="text-purple-700" />
+                  <UserCircle2 size={18} className="text-coral" />
                   <ChevronDown size={13} className={`text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {userMenuOpen && (
@@ -144,7 +144,7 @@ export function PublicHeader() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:text-coral hover:bg-coral/10 rounded-lg transition-colors"
               >
                 {Icon && <Icon size={15} />}
                 {t(link.key)}

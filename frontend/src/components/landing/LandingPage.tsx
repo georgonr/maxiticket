@@ -1,11 +1,12 @@
 'use client';
 
 import NextLink from 'next/link';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Bot, ScanLine, Tag, ArrowRight } from 'lucide-react';
-import { Link, usePathname, useRouter } from '@/i18n/navigation';
-import { routing } from '@/i18n/routing';
+import { Link } from '@/i18n/navigation';
 import { ChatWidget } from '@/components/assistant/ChatWidget';
+import { PublicHeader } from '@/components/public/Header';
+import { PublicFooter } from '@/components/public/Footer';
 import { FeaturedEvents } from './FeaturedEvents';
 import { HeroSearch } from './HeroSearch';
 
@@ -14,39 +15,6 @@ const REGISTER_URL = '/register'; // ploché (nelokalizované) – staff/custome
 // 3 funkcie (krok 30): AI podpora, Skenovanie, Kupóny a zľavy
 const FEATURE_ICONS = [Bot, ScanLine, Tag];
 
-function LangSwitch({ small }: { small?: boolean }) {
-  const locale = useLocale();
-  const pathname = usePathname();
-  const router = useRouter();
-  const switchTo = (l: string) => router.replace(pathname, { locale: l });
-
-  if (small) {
-    return (
-      <div className="flex items-center gap-1.5">
-        {routing.locales.map((l) => (
-          <button key={l} onClick={() => switchTo(l)} className={locale === l ? 'font-semibold text-plum' : 'hover:text-plum'}>
-            {l.toUpperCase()}
-          </button>
-        ))}
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center rounded-full border border-plum/10 bg-white p-0.5 text-xs font-semibold">
-      {routing.locales.map((l) => (
-        <button
-          key={l}
-          onClick={() => switchTo(l)}
-          className={`rounded-full px-2.5 py-1 transition-colors ${locale === l ? 'bg-plum text-cream' : 'text-muted hover:text-plum'}`}
-          aria-pressed={locale === l}
-        >
-          {l.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export function LandingPage() {
   const t = useTranslations('landing');
   const features = t.raw('features.items') as { title: string; desc: string }[];
@@ -54,33 +22,8 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-cream font-sans text-plum" style={{ colorScheme: 'light' }}>
-      {/* ── Nav ───────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-plum/5 bg-cream/80 backdrop-blur-md">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
-          <Link href="/" aria-label="TicketAll" className="flex-shrink-0">
-            <img src="/logo-horizontal.svg" alt="TicketAll" className="h-10 w-auto sm:h-11" />
-          </Link>
-
-          <div className="hidden items-center gap-7 text-sm font-medium text-muted md:flex">
-            <Link href="/events" className="transition-colors hover:text-plum">{t('nav.events')}</Link>
-            <a href="#features" className="transition-colors hover:text-plum">{t('nav.features')}</a>
-            <a href="#how" className="transition-colors hover:text-plum">{t('nav.how')}</a>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <LangSwitch />
-            <Link href="/account/login" className="hidden text-sm font-medium text-plum hover:text-coral sm:inline">
-              {t('nav.login')}
-            </Link>
-            <NextLink
-              href={REGISTER_URL}
-              className="rounded-full bg-coral px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-coral-dark"
-            >
-              {t('nav.cta')}
-            </NextLink>
-          </div>
-        </nav>
-      </header>
+      {/* ── Zjednotený chrome (rovnaký header ako zvyšok public webu) ── */}
+      <PublicHeader />
 
       {/* ── Hero (kompaktný pás) ──────────────────────────── */}
       <section className="relative overflow-hidden border-b border-plum/5">
@@ -177,37 +120,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────── */}
-      <footer className="border-t border-plum/5 bg-cream">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-3">
-          <div>
-            <img src="/logo-horizontal.svg" alt="TicketAll" className="h-8 w-auto" />
-            <p className="mt-3 max-w-xs text-sm text-muted">{t('footer.tagline')}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-plum/50">{t('footer.product')}</p>
-            <ul className="mt-3 space-y-2 text-sm text-muted">
-              <li><Link href="/events" className="hover:text-coral">{t('footer.links.events')}</Link></li>
-              <li><a href="#features" className="hover:text-coral">{t('footer.links.features')}</a></li>
-              <li><a href="#how" className="hover:text-coral">{t('footer.links.how')}</a></li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-plum/50">{t('footer.company')}</p>
-            <ul className="mt-3 space-y-2 text-sm text-muted">
-              <li><Link href="/pre-organizatorov" className="hover:text-coral">{t('footer.links.organizers')}</Link></li>
-              <li><Link href="/faq" className="hover:text-coral">{t('footer.links.faq')}</Link></li>
-              <li><Link href="/kontakt" className="hover:text-coral">{t('footer.links.contact')}</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div className="border-t border-plum/5">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-muted sm:flex-row sm:px-6">
-            <span>© {new Date().getFullYear()} TicketAll · MaceT s.r.o. {t('footer.rights')}</span>
-            <LangSwitch small />
-          </div>
-        </div>
-      </footer>
+      {/* ── Zjednotený footer (rovnaký ako zvyšok public webu) ── */}
+      <PublicFooter />
 
       {/* Krok 28 chat asistent – ostáva mountnutý (self-hide pre non-customer), coral ladí s paletou. */}
       <ChatWidget />
