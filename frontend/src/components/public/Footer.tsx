@@ -1,7 +1,7 @@
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { ShieldCheck, ArrowRight } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { RegisterChoice } from './RegisterChoice';
 
@@ -81,6 +81,17 @@ export function PublicFooter() {
 
           {/* Brand column */}
           <div className="lg:col-span-1">
+            {/* TicketAll Protect – kompaktný trust prvok nad logom, coral „logo" ikona */}
+            <Link href="/protect" className="group mb-6 inline-flex items-center gap-2.5">
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-coral to-coral-dark shadow-md shadow-coral/20 transition-transform group-hover:scale-105">
+                <ShieldCheck size={24} className="text-white" strokeWidth={2.5} />
+              </span>
+              <span className="leading-tight">
+                <span className="block font-display text-sm font-bold text-white">{t('protect')}</span>
+                <span className="block text-xs text-slate-400">{t('protectSubtitle')}</span>
+              </span>
+            </Link>
+
             <div className="mb-4">
               <Image
                 src="/logo-horizontal.svg"
@@ -138,23 +149,8 @@ export function PublicFooter() {
           ))}
         </div>
 
-        {/* Prominentný TicketAll Protect trust band – coral akcent na tmavej pätičke */}
-        <Link
-          href="/protect"
-          className="mt-12 flex items-center gap-4 rounded-2xl border border-coral/40 bg-coral/5 px-5 py-4 transition-colors hover:bg-coral/10"
-        >
-          <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-coral/15">
-            <ShieldCheck size={26} className="text-coral" />
-          </span>
-          <div className="min-w-0">
-            <p className="font-display text-base font-bold text-white">{t('protect')}</p>
-            <p className="text-sm text-slate-400">{t('protectSubtitle')}</p>
-          </div>
-          <ArrowRight size={18} className="ml-auto flex-shrink-0 text-coral" />
-        </Link>
-
         {/* Bottom bar */}
-        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500">
             © {new Date().getFullYear()} TicketAll. {t('rights')}
           </p>
