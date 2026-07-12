@@ -105,7 +105,8 @@
     "faq": "FAQ",
     "gdpr": "Privacy policy",
     "cookies": "Cookies",
-    "forOrganizers": "For organizers"
+    "forOrganizers": "For organizers",
+    "protect": "TicketAll Protect"
   },
   "chat": {
     "title": "TicketAll Assistant",
@@ -2108,5 +2109,23 @@
     "shareCopyImage": "Copy QR image",
     "shareDownload": "Download QR",
     "clickToEnlarge": "click to enlarge"
+  },
+  "protect": {
+    "badge": "Secure ticket purchase",
+    "modalTitle": "TicketAll Protect",
+    "pointPayment": "Secure encrypted payment — we never store your card numbers.",
+    "pointRefund": "If the organizer cancels the event, you get your money back.",
+    "learnMore": "Learn more",
+    "close": "Close",
+    "page": {
+      "title": "TicketAll Protect",
+      "subtitle": "Buy tickets with confidence.",
+      "paymentTitle": "Secure payment",
+      "paymentBody": "Payments are processed through a certified payment provider over an encrypted connection. We never store your card numbers.",
+      "refundTitle": "Money back on cancellation",
+      "refundBody": "If the organizer cancels the event, we refund your tickets. Refunds are processed within a few days and we notify you by email. A small payment processing fee may be deducted from the refunded amount.",
+      "note": "TicketAll Protect applies to event cancellations by the organizer. Returning a ticket due to a change of mind follows the specific organizer's rules.",
+      "backToEvents": "Browse events"
+    }
   }
 }

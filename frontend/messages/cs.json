@@ -105,7 +105,8 @@
     "faq": "FAQ",
     "gdpr": "Ochrana osobních údajů",
     "cookies": "Cookies",
-    "forOrganizers": "Pro pořadatele"
+    "forOrganizers": "Pro pořadatele",
+    "protect": "TicketAll Protect"
   },
   "chat": {
     "title": "Asistent TicketAll",
@@ -2108,5 +2109,23 @@
     "shareCopyImage": "Kopírovat QR",
     "shareDownload": "Stáhnout QR",
     "clickToEnlarge": "klikni pro zvětšení"
+  },
+  "protect": {
+    "badge": "Bezpečný nákup lístků",
+    "modalTitle": "TicketAll Protect",
+    "pointPayment": "Bezpečná šifrovaná platba — čísla platebních karet u nás neukládáme.",
+    "pointRefund": "Pokud pořadatel akci zruší, dostaneš peníze zpět.",
+    "learnMore": "Více informací",
+    "close": "Zavřít",
+    "page": {
+      "title": "TicketAll Protect",
+      "subtitle": "Nakupuj lístky s jistotou.",
+      "paymentTitle": "Bezpečná platba",
+      "paymentBody": "Platby probíhají přes certifikovaný platební systém se šifrovaným spojením. Čísla platebních karet u nás nikdy neukládáme.",
+      "refundTitle": "Peníze zpět při zrušení",
+      "refundBody": "Pokud pořadatel akci zruší, vrátíme ti peníze za lístky. Refund zpracujeme během několika dnů a informujeme tě e-mailem. Z vrácené částky se může odečíst malý poplatek za zpracování platby.",
+      "note": "TicketAll Protect se vztahuje na zrušení akce pořadatelem. Vrácení lístku při změně názoru se řídí pravidly konkrétního pořadatele.",
+      "backToEvents": "Procházet akce"
+    }
   }
 }

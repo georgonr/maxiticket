@@ -8,6 +8,7 @@ import { publicApi, PublicShowDetail, PublicTerminDetail, PublicSeatSection } fr
 import { setCart, Cart, CartItem } from '@/lib/cart';
 import { SeatPicker } from '@/components/seatmaps/SeatPicker';
 import { QrTicketShare } from '@/components/qr/QrTicketShare';
+import { ProtectBadge } from '@/components/public/ProtectBadge';
 import {
   Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart,
   ChevronRight, ChevronLeft, Tag, AlertCircle, AlertTriangle, CheckCircle2,
@@ -574,6 +575,11 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 </button>
               </div>
             )}
+
+            {/* TicketAll Protect – dôveryhodnostný odznak pri kúpe */}
+            <div className="flex justify-center pt-1">
+              <ProtectBadge variant="pill" />
+            </div>
           </div>
         </div>
       </div>

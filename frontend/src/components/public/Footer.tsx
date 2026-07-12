@@ -18,6 +18,7 @@ const FOOTER_COLS = [
   {
     titleKey: 'colHelp',
     links: [
+      { href: '/protect', key: 'protect' },
       { href: '/faq', key: 'faq' },
       { href: '/kontakt', key: 'contact' },
     ],

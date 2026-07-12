@@ -13,6 +13,7 @@ import { localizeApiError } from '@/lib/api-error';
 import { usePublicAuth } from '@/lib/public-auth';
 import { Button } from '@/components/ui/button';
 import { CouponInput, AppliedCoupon } from '@/components/checkout/CouponInput';
+import { ProtectBadge } from '@/components/public/ProtectBadge';
 import { Calendar, MapPin, ShoppingBag, Loader2, Lock } from 'lucide-react';
 
 // useSearchParams (?coupon=) musí byť v Suspense boundary (Next 14 CSR bailout).
@@ -267,6 +268,11 @@ function CheckoutContent() {
       <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
         <Lock size={14} />
         {t('securePayment')}
+      </div>
+
+      {/* TicketAll Protect – dôveryhodnostný pás */}
+      <div className="mb-4">
+        <ProtectBadge variant="strip" />
       </div>
 
       {/* Terms */}
