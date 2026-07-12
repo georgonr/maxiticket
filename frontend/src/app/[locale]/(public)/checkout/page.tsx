@@ -22,7 +22,7 @@ export default function CheckoutPage() {
     <Suspense
       fallback={
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-indigo-600" size={32} />
+          <Loader2 className="animate-spin text-coral" size={32} />
         </div>
       }
     >
@@ -148,7 +148,7 @@ function CheckoutContent() {
   if (isLoading || !cart) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="animate-spin text-indigo-600" size={32} />
+        <Loader2 className="animate-spin text-coral" size={32} />
       </div>
     );
   }
@@ -183,7 +183,7 @@ function CheckoutContent() {
                 <p className="text-sm font-medium text-gray-800">{item.name}</p>
                 <p className="text-xs text-gray-400">{item.quantity} × {fmtPrice(item.price, item.currency)}</p>
                 {item.seatLabels?.length ? (
-                  <p className="text-xs text-purple-600 mt-0.5">{t('seats')}: {item.seatLabels.join(', ')}</p>
+                  <p className="text-xs text-coral mt-0.5">{t('seats')}: {item.seatLabels.join(', ')}</p>
                 ) : null}
               </div>
               <span className="font-semibold text-gray-900">{fmtPrice(item.price * item.quantity, item.currency)}</span>
@@ -200,25 +200,25 @@ function CheckoutContent() {
               value={buyerEmail}
               onChange={(e) => setBuyerEmail(e.target.value)}
               placeholder={t('emailPlaceholder')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral"
             />
             <input
               type="text"
               value={buyerName}
               onChange={(e) => setBuyerName(e.target.value)}
               placeholder={t('namePlaceholder')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral"
             />
             <input
               type="tel"
               value={buyerPhone}
               onChange={(e) => setBuyerPhone(e.target.value)}
               placeholder={t('phonePlaceholder')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral"
             />
             <p className="text-xs text-gray-400">
               {t('haveAccount')}{' '}
-              <Link href="/account/login?next=/checkout" className="text-indigo-600 hover:underline">
+              <Link href="/account/login?next=/checkout" className="text-coral hover:underline">
                 {t('signIn')}
               </Link>
             </p>
@@ -259,13 +259,13 @@ function CheckoutContent() {
           )}
           <div className="flex items-center justify-between pt-1">
             <span className="font-semibold text-gray-900">{t('total')}</span>
-            <span className="text-xl font-bold text-indigo-600">{fmtPrice(grandTotal, currency)}</span>
+            <span className="text-xl font-bold text-coral">{fmtPrice(grandTotal, currency)}</span>
           </div>
         </div>
       </div>
 
       {/* Payment info */}
-      <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
+      <div className="mb-4 flex items-center gap-2 rounded-lg border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-plum">
         <Lock size={14} />
         {t('securePayment')}
       </div>
@@ -281,11 +281,11 @@ function CheckoutContent() {
           type="checkbox"
           checked={acceptTerms}
           onChange={(e) => setAcceptTerms(e.target.checked)}
-          className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-indigo-600"
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-coral"
         />
         <span className="text-sm text-gray-600">
           {t('agreeStart')}{' '}
-          <NextLink href="#" className="text-indigo-600 hover:underline">{t('terms')}</NextLink>
+          <NextLink href="#" className="text-coral hover:underline">{t('terms')}</NextLink>
           {' '}{t('agreeEnd')}
         </span>
       </label>
@@ -307,7 +307,7 @@ function CheckoutContent() {
 
       <p className="mt-3 text-center text-xs text-gray-400">
         {t('cancelQ')}{' '}
-        <Link href={`/events/${cart.showSlug}`} className="text-indigo-600 hover:underline">
+        <Link href={`/events/${cart.showSlug}`} className="text-coral hover:underline">
           {t('backToEvent')}
         </Link>
       </p>

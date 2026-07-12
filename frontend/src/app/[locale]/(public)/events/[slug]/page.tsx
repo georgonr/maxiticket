@@ -138,7 +138,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="animate-spin text-purple-600" size={40} />
+        <Loader2 className="animate-spin text-coral" size={40} />
       </div>
     );
   }
@@ -151,7 +151,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
         <p className="mt-1 text-sm text-slate-400">{t('notFoundDesc')}</p>
         <Link
           href="/events"
-          className="mt-6 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-600 transition-colors"
+          className="mt-6 rounded-xl bg-coral px-5 py-2.5 text-sm font-semibold text-white hover:bg-coral-dark transition-colors"
         >
           {t('backToEvents')}
         </Link>
@@ -185,7 +185,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
 
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-1.5 text-sm text-slate-400">
-        <Link href="/events" className="hover:text-purple-700 transition-colors">{t('breadcrumbEvents')}</Link>
+        <Link href="/events" className="hover:text-coral transition-colors">{t('breadcrumbEvents')}</Link>
         <ChevronRight size={14} />
         <span className="text-slate-600 font-medium line-clamp-1">{show.name}</span>
       </nav>
@@ -196,7 +196,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
         <div className="lg:col-span-2 space-y-6">
 
           {/* Main image */}
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-violet-100 aspect-video">
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-coral/15 to-amber/15 aspect-video">
             {coverImages.length > 0 ? (
               <Image
                 src={coverImages[coverIdx].squareUrl ?? coverImages[coverIdx].url}
@@ -208,7 +208,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
               />
             ) : (
               <div className="flex h-full items-center justify-center">
-                <span className="text-8xl font-extrabold text-purple-200">{show.name.charAt(0)}</span>
+                <span className="text-8xl font-extrabold text-coral/30">{show.name.charAt(0)}</span>
               </div>
             )}
 
@@ -256,7 +256,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                   onClick={() => setCoverIdx(idx)}
                   className={`relative h-16 w-16 flex-none overflow-hidden rounded-xl border-2 transition-all ${
                     idx === coverIdx
-                      ? 'border-purple-600 shadow-md'
+                      ? 'border-coral shadow-md'
                       : 'border-transparent opacity-60 hover:opacity-100 hover:border-slate-300'
                   }`}
                 >
@@ -292,7 +292,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   {show.category && (
-                    <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700">
+                    <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-coral/15 px-2.5 py-0.5 text-xs font-medium text-coral">
                       <Tag size={11} />
                       {show.category}
                     </span>
@@ -301,7 +301,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 </div>
                 <button
                   onClick={copyLink}
-                  className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-purple-300 hover:text-purple-700 transition-colors"
+                  className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-coral/40 hover:text-coral transition-colors"
                   title={t('copyLink')}
                 >
                   {copied ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
@@ -321,12 +321,12 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                       onClick={() => { setSelectedTermin(t); setQuantities({}); }}
                       className={`w-full rounded-xl border p-3 text-left text-sm transition-all ${
                         selectedTermin?.id === t.id
-                          ? 'border-purple-600 bg-purple-50 ring-1 ring-purple-200'
+                          ? 'border-coral bg-coral/10 ring-1 ring-coral/30'
                           : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <span className="flex items-center gap-1.5 font-semibold text-slate-900">
-                        <Calendar size={13} className="text-purple-500" />
+                        <Calendar size={13} className="text-coral" />
                         {format.dateTime(new Date(t.startsAt), {
                           timeZone: t.timezone,
                           weekday: 'short', day: 'numeric', month: 'numeric',
@@ -347,7 +347,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
             {selectedTermin && show.termins.length === 1 && (
               <div className="rounded-xl border border-slate-100 bg-white p-4 space-y-2.5">
                 <div className="flex items-center gap-2 text-sm text-slate-700">
-                  <Calendar size={15} className="flex-shrink-0 text-purple-500" />
+                  <Calendar size={15} className="flex-shrink-0 text-coral" />
                   <span>{format.dateTime(new Date(selectedTermin.startsAt), {
                     timeZone: selectedTermin.timezone,
                     weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
@@ -366,7 +366,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm text-slate-700">
-                  <MapPin size={15} className="flex-shrink-0 text-purple-500" />
+                  <MapPin size={15} className="flex-shrink-0 text-coral" />
                   <span>
                     {selectedTermin.venue.name}
                     {selectedTermin.venue.city ? `, ${selectedTermin.venue.city}` : ''}
@@ -396,13 +396,13 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="font-semibold text-slate-900 text-sm">{s.name}</p>
-                                  <p className="text-base font-bold text-purple-700 mt-0.5">{format.number(s.price, { style: 'currency', currency: s.currency })} / {t('perSeat')}</p>
+                                  <p className="text-base font-bold text-coral mt-0.5">{format.number(s.price, { style: 'currency', currency: s.currency })} / {t('perSeat')}</p>
                                   {selCount > 0 && <p className="mt-1 text-xs text-emerald-600">{t('seatsSelected', { count: selCount })}</p>}
                                 </div>
                                 {!terminNotOnSale && seatSection && (
                                   <button
                                     onClick={() => setOpenPicker(isOpen ? null : s.id)}
-                                    className="flex-shrink-0 rounded-lg border border-purple-300 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-50"
+                                    className="flex-shrink-0 rounded-lg border border-coral/40 px-3 py-1.5 text-xs font-semibold text-coral hover:bg-coral/10"
                                   >
                                     {isOpen ? t('hideMap') : t('selectSeats')}
                                   </button>
@@ -433,7 +433,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <p className="font-semibold text-slate-900 text-sm">{s.name}</p>
-                                <p className="text-base font-bold text-purple-700 mt-0.5">{format.number(s.price, { style: 'currency', currency: s.currency })}</p>
+                                <p className="text-base font-bold text-coral mt-0.5">{format.number(s.price, { style: 'currency', currency: s.currency })}</p>
                                 {isSoldOut && (
                                   <p className="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle size={11} /> {t('soldOut')}</p>
                                 )}
@@ -457,7 +457,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                                   <button
                                     onClick={() => adjustQty(s.id, +1, s.available ?? 50)}
                                     disabled={s.available != null && qty >= s.available}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-600 disabled:opacity-30 transition-colors"
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-coral text-white hover:bg-coral-dark disabled:opacity-30 transition-colors"
                                   >
                                     <Plus size={13} />
                                   </button>
@@ -486,7 +486,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="font-semibold text-slate-900 text-sm">{tt.name}</p>
-                              <p className="text-base font-bold text-purple-700 mt-0.5">
+                              <p className="text-base font-bold text-coral mt-0.5">
                                 {format.number(tt.price, { style: 'currency', currency: tt.currency })}
                               </p>
                               {tt.description && (
@@ -535,7 +535,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                                       qty >= tt.maxPerOrder ||
                                       (tt.available != null && qty >= tt.available)
                                     }
-                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-700 text-white hover:bg-purple-600 disabled:opacity-30 transition-colors"
+                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-coral text-white hover:bg-coral-dark disabled:opacity-30 transition-colors"
                                   >
                                     <Plus size={13} />
                                   </button>
@@ -555,9 +555,9 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
             {canAddToCart() && (
               <div className="space-y-3">
                 {/* Summary */}
-                <div className="flex items-center justify-between rounded-xl bg-purple-50 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between rounded-xl bg-coral/10 px-4 py-3 text-sm">
                   <span className="text-slate-600 flex items-center gap-1.5">
-                    <CheckCircle2 size={14} className="text-purple-600" />
+                    <CheckCircle2 size={14} className="text-coral" />
                     {t('ticketCount', { count: totalQty })}
                   </span>
                   <span className="font-bold text-slate-900">
@@ -568,7 +568,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 {/* CTA button */}
                 <button
                   onClick={addToCart}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500 px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-rose-600 hover:shadow-md transition-all active:scale-[0.98]"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-coral px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-coral-dark hover:shadow-md transition-all active:scale-[0.98]"
                 >
                   <ShoppingCart size={18} />
                   {t('continueToOrder')}
