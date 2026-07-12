@@ -69,6 +69,11 @@ export class PaymentsController {
       const paymentRef = (session.payment_intent as string) ?? session.id;
       try {
         await this.ordersService.fulfillOrder(orderId, 'stripe', paymentRef);
+        // Best-effort: zachyť posledné 4 čísla karty (podklad pre budúce overenie identity).
+        // Zlyhanie NIKDY nezhodí fulfillment – karta nemusí byť dostupná (napr. iný typ platby).
+        await this.captureCardLast4(provider, orderId, session).catch((e) =>
+          this.logger.warn(`captureCardLast4 skipped for ${orderId}: ${e.message}`),
+        );
       } catch (err: any) {
         this.logger.error(`fulfillOrder failed for ${orderId}: ${err.message}`);
         // Return 200 to avoid Stripe retrying for business-logic errors (already paid / cancelled)
@@ -81,5 +86,27 @@ export class PaymentsController {
     }
 
     return { received: true };
+  }
+
+  /**
+   * Dotiahne posledné 4 čísla karty zo Stripe: session → payment_intent →
+   * latest_charge → payment_method_details.card.last4. Best-effort, tichý fail.
+   */
+  private async captureCardLast4(
+    provider: { client: Stripe },
+    orderId: string,
+    session: Stripe.Checkout.Session,
+  ): Promise<void> {
+    const piId =
+      typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id;
+    if (!piId) return;
+    const pi = await provider.client.paymentIntents.retrieve(piId, {
+      expand: ['latest_charge'],
+    });
+    const charge = pi.latest_charge as Stripe.Charge | null;
+    const last4 = charge?.payment_method_details?.card?.last4;
+    if (last4) await this.ordersService.setCardLast4(orderId, last4);
   }
 }

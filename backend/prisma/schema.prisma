@@ -545,6 +545,7 @@ model Order {
   // Payment
   paymentProvider  String?   // "stripe", "mock", etc.
   paymentRef       String?   // provider session/transaction ID
+  cardLast4        String?   // posledné 4 čísla karty (best-effort zo Stripe pri webhooku; NULL pre nekartové platby) – budúce overenie identity guest zákazníka
   paidAt           DateTime?
   refundedAt       DateTime?
   expiresAt        DateTime? // PENDING orders expire at this time

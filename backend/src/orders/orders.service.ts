@@ -736,6 +736,15 @@ export class OrdersService {
     return { orderId, ticketCount: dto.quantity };
   }
 
+  /**
+   * Best-effort zápis posledných 4 čísel karty (zo Stripe webhooku). Nekritické –
+   * nikdy nesmie zhodiť fulfillment. Podklad pre budúce overenie identity guest zákazníka.
+   */
+  async setCardLast4(orderId: string, last4: string): Promise<void> {
+    if (!/^\d{4}$/.test(last4)) return;
+    await this.prisma.order.update({ where: { id: orderId }, data: { cardLast4: last4 } });
+  }
+
   async resendTickets(orderId: string): Promise<{ orderId: string; message: string }> {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Order not found');
