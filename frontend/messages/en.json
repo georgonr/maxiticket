@@ -106,7 +106,8 @@
     "gdpr": "Privacy policy",
     "cookies": "Cookies",
     "forOrganizers": "For organizers",
-    "protect": "TicketAll Protect"
+    "protect": "TicketAll Protect",
+    "protectSubtitle": "Secure ticket purchase"
   },
   "chat": {
     "title": "TicketAll Assistant",

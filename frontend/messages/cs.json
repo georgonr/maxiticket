@@ -106,7 +106,8 @@
     "gdpr": "Ochrana osobních údajů",
     "cookies": "Cookies",
     "forOrganizers": "Pro pořadatele",
-    "protect": "TicketAll Protect"
+    "protect": "TicketAll Protect",
+    "protectSubtitle": "Bezpečný nákup lístků"
   },
   "chat": {
     "title": "Asistent TicketAll",
