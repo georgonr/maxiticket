@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { MessageCircle, X, Send, Download, Loader2 } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getValidToken } from '@/lib/auth';
 import { API_BASE } from '@/lib/api';
@@ -18,16 +19,27 @@ interface ChatMsg {
   attachments?: Attachment[];
 }
 
+// Guest chat-session id (opaque UUID) – reuse počas session cez sessionStorage.
+const GUEST_SID_KEY = 'assistant_guest_sid';
+function getGuestSid(): string {
+  try {
+    let sid = sessionStorage.getItem(GUEST_SID_KEY);
+    if (!sid) { sid = crypto.randomUUID(); sessionStorage.setItem(GUEST_SID_KEY, sid); }
+    return sid;
+  } catch {
+    return 'guest-' + Math.random().toString(36).slice(2, 12);
+  }
+}
+
 export function ChatWidget() {
   const t = useTranslations('chat');
   const locale = useLocale();
-  const quickReplies = [
-    t('quickTicketNotReceived'),
-    t('quickShowQr'),
-    t('quickDownloadPdf'),
-    t('quickResend'),
-  ];
-  const { isAuthenticated, isCustomer, isLoading } = useAuth();
+  const { isAuthenticated, isCustomer } = useAuth();
+  // Guest = ktokoľvek okrem prihláseného zákazníka (infobot); prihlásený customer = plný agent.
+  const guestMode = !(isAuthenticated && isCustomer);
+  const quickReplies = guestMode
+    ? [t('quickGuestEvents'), t('quickGuestRegister'), t('quickGuestHowItWorks'), t('quickGuestRefund')]
+    : [t('quickTicketNotReceived'), t('quickShowQr'), t('quickDownloadPdf'), t('quickResend')];
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
@@ -39,8 +51,7 @@ export function ChatWidget() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, status]);
 
-  // Widget je viditeľný LEN pre prihláseného zákazníka.
-  if (isLoading || !isAuthenticated || !isCustomer) return null;
+  // Widget je viditeľný pre VŠETKÝCH – guest dostane infobota, prihlásený plného agenta.
 
   async function downloadPdf(url: string, orderNumber?: string) {
     const token = await getValidToken();
@@ -68,13 +79,25 @@ export function ChatWidget() {
     setStatus('');
 
     try {
-      const token = await getValidToken();
-      if (!token) throw new Error('Vyžaduje sa prihlásenie.');
-      const res = await fetch(`${API_BASE}/v1/assistant/chat`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history.map((m) => ({ role: m.role, content: m.content })), locale }),
-      });
+      const payloadMsgs = history.map((m) => ({ role: m.role, content: m.content }));
+      let res: Response;
+      if (guestMode) {
+        // Guest → infobot endpoint (bez auth), s chatSessionId.
+        res = await fetch(`${API_BASE}/v1/assistant/guest/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatSessionId: getGuestSid(), messages: payloadMsgs, locale }),
+        });
+      } else {
+        // Prihlásený → plný agent (nezmenené).
+        const token = await getValidToken();
+        if (!token) throw new Error('Vyžaduje sa prihlásenie.');
+        res = await fetch(`${API_BASE}/v1/assistant/chat`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: payloadMsgs, locale }),
+        });
+      }
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
       const reader = res.body.getReader();
@@ -136,7 +159,15 @@ export function ChatWidget() {
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3">
             {messages.length === 0 && (
               <div className="rounded-xl bg-white p-3 text-sm text-slate-600 shadow-sm">
-                {t('welcome')}
+                <p>{guestMode ? t('welcomeGuest') : t('welcome')}</p>
+                {guestMode && (
+                  <Link
+                    href="/account/login"
+                    className="mt-2 inline-block font-medium text-coral hover:text-coral-dark"
+                  >
+                    {t('loginCta')} →
+                  </Link>
+                )}
               </div>
             )}
             {messages.map((m, i) => (

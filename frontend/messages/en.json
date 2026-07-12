@@ -111,7 +111,7 @@
   },
   "chat": {
     "title": "TicketAll Assistant",
-    "welcome": "Hi 👋 I can help you with your orders and tickets. Pick an option below or type your question.",
+    "welcome": "Hi! 👋 I can help with your tickets — resend a ticket, sort out an order, or show you current events.",
     "placeholder": "Type a message…",
     "open": "Open assistant",
     "close": "Close",
@@ -120,7 +120,13 @@
     "quickTicketNotReceived": "My ticket didn't arrive",
     "quickShowQr": "Show my ticket QR code",
     "quickDownloadPdf": "Download ticket PDF",
-    "quickResend": "Resend my tickets"
+    "quickResend": "Resend my tickets",
+    "welcomeGuest": "Hi! 👋 I can explain how TicketAll works (sign-up, buying, refunds) or show you current events. Lost a ticket? Sign in and I will gladly resend it.",
+    "quickGuestEvents": "What events do you have?",
+    "quickGuestRegister": "How do I sign up?",
+    "quickGuestHowItWorks": "How does buying work?",
+    "quickGuestRefund": "How do refunds work?",
+    "loginCta": "Sign in"
   },
   "hero": {
     "buyTickets": "Buy tickets",

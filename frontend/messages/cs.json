@@ -111,7 +111,7 @@
   },
   "chat": {
     "title": "Asistent TicketAll",
-    "welcome": "Dobrý den 👋 Pomohu vám s vašimi objednávkami a vstupenkami. Vyberte níže nebo napište dotaz.",
+    "welcome": "Ahoj! 👋 Pomůžu ti s tvými lístky — pošlu vstupenku znovu, poradím s objednávkou, nebo ukážu aktuální akce.",
     "placeholder": "Napište zprávu…",
     "open": "Otevřít asistenta",
     "close": "Zavřít",
@@ -120,7 +120,13 @@
     "quickTicketNotReceived": "Nepřišel mi lístek",
     "quickShowQr": "Ukaž mi QR kód vstupenky",
     "quickDownloadPdf": "Stáhnout PDF vstupenku",
-    "quickResend": "Znovu mi pošli vstupenky"
+    "quickResend": "Znovu mi pošli vstupenky",
+    "welcomeGuest": "Ahoj! 👋 Poradím ti, jak funguje TicketAll (registrace, nákup, vrácení peněz) nebo ti ukážu aktuální akce. Ztratil jsi lístek? Přihlas se a rád ti ho pošlu znovu.",
+    "quickGuestEvents": "Jaké máte akce?",
+    "quickGuestRegister": "Jak se zaregistruji?",
+    "quickGuestHowItWorks": "Jak funguje nákup?",
+    "quickGuestRefund": "Jak funguje vrácení peněz?",
+    "loginCta": "Přihlásit se"
   },
   "hero": {
     "buyTickets": "Koupit lístky",
