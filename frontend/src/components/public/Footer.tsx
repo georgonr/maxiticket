@@ -81,10 +81,10 @@ export function PublicFooter() {
 
           {/* Brand column */}
           <div className="lg:col-span-1">
-            {/* TicketAll Protect – kompaktný trust prvok nad logom, coral „logo" ikona */}
+            {/* TicketAll Protect – kompaktný trust prvok nad logom; zelený štít ladí s logom (.eu) */}
             <Link href="/protect" className="group mb-6 inline-flex items-center gap-2.5">
-              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-coral to-coral-dark shadow-md shadow-coral/20 transition-transform group-hover:scale-105">
-                <ShieldCheck size={24} className="text-white" strokeWidth={2.5} />
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#10B981] shadow-md shadow-[#10B981]/25 transition-transform group-hover:scale-105">
+                <ShieldCheck size={38} className="text-white" strokeWidth={2.25} />
               </span>
               <span className="leading-tight">
                 <span className="block font-display text-sm font-bold text-white">{t('protect')}</span>
@@ -94,11 +94,11 @@ export function PublicFooter() {
 
             <div className="mb-4">
               <Image
-                src="/logo-horizontal.svg"
+                src="/logo-horizontal-footer.svg"
                 alt="TicketAll"
-                width={120}
-                height={30}
-                className="h-6 w-auto brightness-0 invert"
+                width={132}
+                height={33}
+                className="h-[1.65rem] w-auto"
               />
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">

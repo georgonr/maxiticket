@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 50" fill="none" role="img" aria-label="TicketAll">
+  <!-- Footer variant: biely text "ticketall" (na tmavom footeri), zelená ikona + ".eu" (#10B981) ladí s hlavičkou -->
+  <g transform="translate(2,7) scale(1.5)">
+    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2Z"
+          stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="9"  cy="12" r="1" fill="#10B981"/>
+    <circle cx="12" cy="12" r="1" fill="#10B981"/>
+    <circle cx="15" cy="12" r="1" fill="#10B981"/>
+  </g>
+  <text x="48" y="36"
+        font-family="Geist, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+        font-weight="700"
+        font-size="28"
+        letter-spacing="-0.3">
+    <tspan fill="#FFFFFF">ticketall</tspan><tspan fill="#10B981">.eu</tspan>
+  </text>
+</svg>
