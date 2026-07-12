@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ResolveImageUrlsInterceptor } from './common/interceptors/resolve-image-urls.interceptor';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RedisModule } from './redis/redis.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { CaslModule } from './casl/casl.module';
@@ -42,6 +43,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     ScheduleModule.forRoot(),
+    RedisModule,
     PrismaModule,
     CaslModule,
     AuthModule,

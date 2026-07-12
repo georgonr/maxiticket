@@ -4,6 +4,7 @@ import { OrderStatus, TicketStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrdersQueryService } from '../orders/orders-query.service';
 import { OrdersService } from '../orders/orders.service';
+import { VerifyService } from './verify.service';
 import { LlmToolDef } from './llm/llm.types';
 
 export interface ToolResult {
@@ -23,6 +24,7 @@ export class AssistantToolsService {
     private prisma: PrismaService,
     private ordersQuery: OrdersQueryService,
     private orders: OrdersService,
+    private verify: VerifyService,
   ) {}
 
   /** Definície nástrojov pre LLM (JSON Schema). userId NIE je parameter – dopĺňa ho backend. */
@@ -181,5 +183,171 @@ export class AssistantToolsService {
       summary: { available: true, note: 'Odkaz na PDF bol priložený do chatu.' },
       attachments: [{ type: 'pdf', url, orderNumber: own.orderNumber, label: `Doklad ${own.orderNumber} (PDF)` }],
     };
+  }
+
+  // ─────────────────────── GUEST (neprihlásený) – fáza 2A ───────────────────────
+  // Scoping NIE je userId, ale verifiedOrderId zo server-side Redisu (cez chatSessionId).
+  // Pred overením je povolený LEN verifyIdentity; ostatné nástroje ignorujú akýkoľvek
+  // order-ref z LLM a operujú výhradne na verifiedOrderId.
+
+  /** Definície nástrojov pre GUEST agenta. */
+  guestToolDefs(): LlmToolDef[] {
+    return [
+      {
+        name: 'verifyIdentity',
+        description:
+          'Overí totožnosť zákazníka. Vyžaduje posledné 4 čísla platobnej karty A JEDEN identifikátor: e-mail, číslo objednávky (napr. MT-2026-00001) alebo číslo platby. Musí sa zavolať PRED akoukoľvek inou akciou.',
+        parameters: {
+          type: 'object',
+          properties: {
+            last4: { type: 'string', description: 'Posledné 4 čísla platobnej karty (presne 4 číslice).' },
+            identifier: { type: 'string', description: 'E-mail ALEBO číslo objednávky ALEBO číslo platby z objednávky.' },
+          },
+          required: ['last4', 'identifier'],
+          additionalProperties: false,
+        },
+      },
+      {
+        name: 'getOrderInfo',
+        description: 'Detail overenej objednávky (podujatie, termín, miesto, dátum, stav, lístky). Vyžaduje predošlé overenie.',
+        parameters: { type: 'object', properties: {}, additionalProperties: false },
+      },
+      {
+        name: 'resendTicketToOriginalEmail',
+        description: 'Znova pošle vstupenky NA PÔVODNÝ e-mail z objednávky. Nikdy na iný e-mail. Vyžaduje predošlé overenie.',
+        parameters: { type: 'object', properties: {}, additionalProperties: false },
+      },
+      {
+        name: 'getTicketQR',
+        description: 'Vráti QR kódy platných vstupeniek overenej objednávky (do chatu). Vyžaduje predošlé overenie.',
+        parameters: { type: 'object', properties: {}, additionalProperties: false },
+      },
+      {
+        name: 'escalateToAdmin',
+        description:
+          'Eskaluje na ľudskú podporu (napr. keď zákazník chce lístok na INÝ e-mail, alebo sa nedá overiť kartou). Nepošle nič sám – len informuje podporu.',
+        parameters: {
+          type: 'object',
+          properties: {
+            reason: { type: 'string', description: 'Krátky dôvod eskalácie.' },
+            desiredEmail: { type: 'string', description: 'Voliteľný nový e-mail, ktorý zákazník žiada.' },
+          },
+          required: ['reason'],
+          additionalProperties: false,
+        },
+      },
+    ];
+  }
+
+  async dispatchGuest(name: string, args: Record<string, any>, chatSessionId: string): Promise<ToolResult> {
+    if (name === 'verifyIdentity') {
+      return this.guestVerifyIdentity(args?.last4, args?.identifier, chatSessionId);
+    }
+    // Všetky ostatné nástroje sú gate-nuté na verifiedOrderId z Redisu (nie z LLM).
+    const orderId = await this.verify.getVerifiedOrderId(chatSessionId);
+    if (!orderId) {
+      return { summary: { error: 'Najprv treba overiť totožnosť (posledné 4 čísla karty + e-mail/číslo objednávky/číslo platby).' } };
+    }
+    switch (name) {
+      case 'getOrderInfo':
+        return this.guestOrderInfo(orderId);
+      case 'resendTicketToOriginalEmail':
+        return this.guestResend(orderId);
+      case 'getTicketQR':
+        return this.guestTicketQR(orderId);
+      case 'escalateToAdmin':
+        return this.guestEscalate(orderId, args?.reason, args?.desiredEmail);
+      default:
+        return { summary: { error: `Neznámy nástroj: ${name}` } };
+    }
+  }
+
+  private async guestVerifyIdentity(last4: string, identifier: string, chatSessionId: string): Promise<ToolResult> {
+    const { status } = await this.verify.verify(String(last4 ?? ''), String(identifier ?? ''), chatSessionId);
+    switch (status) {
+      case 'VERIFIED':
+        return { summary: { verified: true } };
+      case 'LOCKED':
+        return { summary: { verified: false, reason: 'LOCKED', message: 'Príliš veľa neúspešných pokusov. Skús to neskôr alebo požiadaj o eskaláciu na podporu.' } };
+      case 'NEEDS_ESCALATION':
+        return { summary: { verified: false, reason: 'NEEDS_ESCALATION', message: 'Túto objednávku sa nedá overiť kartou. Ponúkni eskaláciu na ľudskú podporu (escalateToAdmin).' } };
+      case 'AMBIGUOUS':
+        return { summary: { verified: false, reason: 'AMBIGUOUS', message: 'Nájdených viac objednávok. Vyžiadaj číslo objednávky (MT-…) na jednoznačné overenie.' } };
+      default:
+        return { summary: { verified: false, reason: 'FAILED', message: 'Overenie neúspešné. Skontroluj údaje a skús znova.' } };
+    }
+  }
+
+  private async guestOrderInfo(orderId: string): Promise<ToolResult> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            termin: { include: { show: true, venue: true } },
+            ticketType: true,
+            terminSection: { include: { section: true } },
+          },
+        },
+        tickets: { select: { id: true, status: true } },
+      },
+    });
+    if (!order) return { summary: { error: 'Objednávka sa nenašla.' } };
+    const termin = order.items[0]?.termin;
+    return {
+      summary: {
+        orderNumber: order.orderNumber,
+        status: order.status,
+        sentToEmail: this.maskEmail(order.buyerEmail),
+        show: termin?.show?.name ?? null,
+        startsAt: termin?.startsAt ?? null,
+        venue: termin?.venue?.name ?? null,
+        city: termin?.venue?.city ?? null,
+        totalAmount: Number(order.totalAmount),
+        currency: order.currency,
+        items: order.items.map((i) => ({ name: i.ticketType?.name ?? i.terminSection?.section?.name ?? '—', quantity: i.quantity })),
+        tickets: order.tickets.map((t) => ({ status: t.status })),
+      },
+    };
+  }
+
+  private async guestResend(orderId: string): Promise<ToolResult> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, select: { status: true, buyerEmail: true, orderNumber: true } });
+    if (!order) return { summary: { error: 'Objednávka sa nenašla.' } };
+    if (order.status !== OrderStatus.PAID) {
+      return { summary: { error: `Lístky sa dajú poslať len pre zaplatenú objednávku (stav: ${order.status}).` } };
+    }
+    await this.orders.resendTickets(orderId); // posiela LEN na buyerEmail objednávky
+    return { summary: { ok: true, sentToEmail: this.maskEmail(order.buyerEmail), orderNumber: order.orderNumber } };
+  }
+
+  private async guestTicketQR(orderId: string): Promise<ToolResult> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, select: { orderNumber: true } });
+    const tickets = await this.prisma.ticket.findMany({
+      where: { orderId, status: TicketStatus.VALID },
+      select: { id: true, qrToken: true, seatSection: true, seatRow: true, seatNumber: true },
+      take: 6,
+    });
+    if (tickets.length === 0) return { summary: { error: 'Pre túto objednávku nie sú platné vstupenky.' } };
+    const items = await Promise.all(
+      tickets.map(async (t) => ({
+        ticketId: t.id,
+        label: [t.seatSection, t.seatRow, t.seatNumber].filter(Boolean).join(' ') || '…' + t.id.slice(-4).toUpperCase(),
+        dataUrl: await QRCode.toDataURL(t.qrToken, { width: 240, margin: 2 }),
+      })),
+    );
+    return {
+      summary: { ticketCount: items.length, note: 'QR kódy boli priložené do chatu.' },
+      attachments: [{ type: 'qr', orderNumber: order?.orderNumber, items }],
+    };
+  }
+
+  private async guestEscalate(orderId: string, reason: string, desiredEmail?: string): Promise<ToolResult> {
+    // Fáza 2A: len záznam do logu (plný admin surface = fáza 3). Nikdy neposiela na iný e-mail.
+    this.logger.warn(
+      `[ESKALÁCIA podpora] order=${orderId} reason="${(reason ?? '').slice(0, 200)}"` +
+        (desiredEmail ? ` desiredEmail="${this.maskEmail(String(desiredEmail))}"` : ''),
+    );
+    return { summary: { ok: true, note: 'Požiadavka bola odovzdaná ľudskej podpore. Ozvú sa ti čo najskôr.' } };
   }
 }

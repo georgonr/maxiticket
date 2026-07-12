@@ -33,7 +33,23 @@ Pravidlá:
 - Otázky mimo témy (predaj vstupeniek a jeho objednávky) slušne odmietni a nasmeruj späť k téme.
 - Odpovedaj stručne a priateľsky, v jazyku používateľa (default slovenčina).`;
 
-// Status hlášky (SSE) sú verejne viditeľné v chate → lokalizované per jazyk.
+// Guest (neprihlásený) agent – fáza 2A. VŽDY najprv over totožnosť, pred overením nič neprezraď.
+const GUEST_SYSTEM_PROMPT = `Si zákaznícky asistent platformy TicketAll (predaj vstupeniek). Hovoríš s NEPRIHLÁSENÝM zákazníkom.
+
+KRITICKÉ pravidlá overenia:
+- PRED akoukoľvek akciou (info o objednávke, preposlanie lístka, QR) MUSÍ prebehnúť overenie totožnosti cez nástroj verifyIdentity.
+- Na overenie potrebuješ: posledné 4 čísla platobnej karty A JEDEN identifikátor (e-mail, číslo objednávky MT-…, alebo číslo platby). Slušne si ich vyžiadaj.
+- Ty NEROZHODUJEŠ o úspechu overenia – rozhodne to nástroj. Riaď sa jeho výsledkom (verified true/false).
+- PRED úspešným overením NIKDY neprezraď žiadne údaje o objednávke a nevolaj iné nástroje než verifyIdentity.
+- Ak zákazník chce lístok na INÝ e-mail (nie pôvodný z objednávky): NEPOSIELAJ ho – použi escalateToAdmin (odovzdá to ľudskej podpore).
+- Ak výsledok overenia je NEEDS_ESCALATION (nedá sa overiť kartou) alebo je problém, ponúkni escalateToAdmin.
+
+Po úspešnom overení:
+- getOrderInfo = detail objednávky, resendTicketToOriginalEmail = pošle lístky LEN na pôvodný e-mail, getTicketQR = QR do chatu.
+- Údaje získavaj VÝHRADNE cez nástroje, nikdy si nič nevymýšľaj.
+- Odpovedaj stručne a priateľsky, v jazyku používateľa.`;
+
+// Status hlášky (SSE) sú verejne viditeľné v chate → lokalizované per jazyk (prihlásený aj guest nástroje).
 const STATUS_LABELS: Record<AssistantLocale, Record<string, string>> = {
   sk: {
     findMyOrders: 'Hľadám vaše objednávky…',
@@ -41,6 +57,10 @@ const STATUS_LABELS: Record<AssistantLocale, Record<string, string>> = {
     resendTicketEmail: 'Posielam vstupenky e-mailom…',
     getTicketQR: 'Pripravujem QR kód…',
     getTicketPdfLink: 'Pripravujem PDF…',
+    verifyIdentity: 'Overujem totožnosť…',
+    getOrderInfo: 'Načítavam objednávku…',
+    resendTicketToOriginalEmail: 'Posielam vstupenky e-mailom…',
+    escalateToAdmin: 'Odovzdávam podpore…',
   },
   en: {
     findMyOrders: 'Looking up your orders…',
@@ -48,6 +68,10 @@ const STATUS_LABELS: Record<AssistantLocale, Record<string, string>> = {
     resendTicketEmail: 'Sending tickets by e-mail…',
     getTicketQR: 'Preparing the QR code…',
     getTicketPdfLink: 'Preparing the PDF…',
+    verifyIdentity: 'Verifying identity…',
+    getOrderInfo: 'Loading the order…',
+    resendTicketToOriginalEmail: 'Sending tickets by e-mail…',
+    escalateToAdmin: 'Handing over to support…',
   },
   cs: {
     findMyOrders: 'Hledám vaše objednávky…',
@@ -55,6 +79,10 @@ const STATUS_LABELS: Record<AssistantLocale, Record<string, string>> = {
     resendTicketEmail: 'Posílám vstupenky e-mailem…',
     getTicketQR: 'Připravuji QR kód…',
     getTicketPdfLink: 'Připravuji PDF…',
+    verifyIdentity: 'Ověřuji totožnost…',
+    getOrderInfo: 'Načítám objednávku…',
+    resendTicketToOriginalEmail: 'Posílám vstupenky e-mailem…',
+    escalateToAdmin: 'Předávám podpoře…',
   },
 };
 
@@ -90,13 +118,53 @@ export class AssistantService {
     return this.llm.isConfigured();
   }
 
-  /** Agent loop. userId zo session – nikdy z LLM. Emituje status/delta/attachment/done/error. */
+  /** Agent loop pre PRIHLÁSENÉHO zákazníka. userId zo session – nikdy z LLM. */
   async runChat(
     userId: string,
     history: ChatHistoryMsg[],
     emit: (e: AssistantEvent) => void,
     locale: AssistantLocale = 'sk',
   ): Promise<void> {
+    return this.runLoop({
+      systemPrompt: SYSTEM_PROMPT,
+      history,
+      toolDefs: this.tools.toolDefs(),
+      dispatch: (name, args) => this.tools.dispatch(name, args, userId),
+      emit,
+      locale,
+    });
+  }
+
+  /**
+   * Agent loop pre GUEST (neprihlásený) zákazník. Scoping cez chatSessionId (server-side Redis).
+   * verifiedOrderId sa NIKDY nedostane do LLM kontextu; nástroje si ho čítajú z Redisu sami.
+   */
+  async runGuestChat(
+    chatSessionId: string,
+    history: ChatHistoryMsg[],
+    emit: (e: AssistantEvent) => void,
+    locale: AssistantLocale = 'sk',
+  ): Promise<void> {
+    return this.runLoop({
+      systemPrompt: GUEST_SYSTEM_PROMPT,
+      history,
+      toolDefs: this.tools.guestToolDefs(),
+      dispatch: (name, args) => this.tools.dispatchGuest(name, args, chatSessionId),
+      emit,
+      locale,
+    });
+  }
+
+  /** Zdieľané jadro agent-loopu – líši sa len systémový prompt, tool defs a dispatch. */
+  private async runLoop(params: {
+    systemPrompt: string;
+    history: ChatHistoryMsg[];
+    toolDefs: ReturnType<AssistantToolsService['toolDefs']>;
+    dispatch: (name: string, args: Record<string, any>) => Promise<{ summary: unknown; attachments?: Record<string, unknown>[] }>;
+    emit: (e: AssistantEvent) => void;
+    locale: AssistantLocale;
+  }): Promise<void> {
+    const { systemPrompt, history, toolDefs, dispatch, emit, locale } = params;
     if (!this.llm.isConfigured()) {
       emit({ type: 'error', message: MSG_NOT_CONFIGURED[locale] });
       emit({ type: 'done' });
@@ -104,10 +172,9 @@ export class AssistantService {
     }
 
     const messages: LlmMessage[] = [
-      { role: 'system', content: `${SYSTEM_PROMPT}\n\n${LANG_DIRECTIVE[locale]}` },
+      { role: 'system', content: `${systemPrompt}\n\n${LANG_DIRECTIVE[locale]}` },
       ...history.map((h) => ({ role: h.role, content: h.content })),
     ];
-    const toolDefs = this.tools.toolDefs();
 
     try {
       for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
@@ -118,7 +185,6 @@ export class AssistantService {
           return;
         }
 
-        // zapíš asistentov tool-call turn
         messages.push({
           role: 'assistant',
           content: null,
@@ -127,17 +193,15 @@ export class AssistantService {
           })),
         });
 
-        // vykonaj nástroje (scoped na userId) + priklad attachments
         for (const tc of result.toolCalls) {
           emit({ type: 'status', text: STATUS_LABELS[locale][tc.name] ?? MSG_WORKING[locale] });
           let args: Record<string, any> = {};
           try { args = JSON.parse(tc.arguments || '{}'); } catch { /* ignore */ }
-          const res = await this.tools.dispatch(tc.name, args, userId);
+          const res = await dispatch(tc.name, args);
           if (res.attachments) for (const a of res.attachments) emit({ type: 'attachment', attachment: a });
           messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(res.summary) });
         }
       }
-      // poistka proti slučke
       emit({ type: 'delta', text: MSG_REFINE[locale] });
       emit({ type: 'done' });
     } catch (e: any) {
