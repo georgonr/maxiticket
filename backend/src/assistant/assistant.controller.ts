@@ -8,6 +8,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../casl/casl-ability.factory';
+import { sseCorsHeaders } from '../common/cors';
 
 // Krok 28: chat asistent pre PRIHLÁSENÉHO zákazníka. userId zo session, nikdy z tela/LLM.
 @Controller('assistant')
@@ -19,6 +20,8 @@ export class AssistantController {
   @Post('chat')
   async chat(@Body() dto: ChatDto, @CurrentUser() user: JwtPayload, @Res() reply: FastifyReply) {
     // SSE – streamujeme priamo do raw odpovede (Fastify nemá riadiť telo).
+    // hijack() obchádza @fastify/cors hook → CORS hlavičky pre SSE doplníme ručne.
+    const origin = reply.request.headers.origin as string | undefined;
     reply.hijack();
     const raw = reply.raw;
     raw.writeHead(200, {
@@ -26,6 +29,7 @@ export class AssistantController {
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
+      ...sseCorsHeaders(origin),
     });
 
     const emit = (ev: unknown) => raw.write(`data: ${JSON.stringify(ev)}\n\n`);

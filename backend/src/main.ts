@@ -3,6 +3,7 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import fastifyMultipart from '@fastify/multipart';
 import { Transform } from 'stream';
 import { AppModule } from './app.module';
+import { CORS_ORIGINS } from './common/cors';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -49,13 +50,7 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: [
-      'https://ticketall.eu',
-      'https://www.ticketall.eu',
-      // admin.ticketall.eu removed (Úloha 11/3): už nesservíruje frontend, len 301 redirect na apex
-      'https://skener.ticketall.eu',
-      'http://localhost:3000',
-    ],
+    origin: CORS_ORIGINS,
     credentials: true,
   });
 
