@@ -5,19 +5,22 @@ import { GuestAssistantController } from './guest-assistant.controller';
 import { AssistantService } from './assistant.service';
 import { AssistantToolsService } from './assistant-tools.service';
 import { VerifyService } from './verify.service';
+import { ConversationCloserService } from './conversation-closer.service';
 import { OpenAiProvider } from './llm/openai.provider';
 import { AnthropicProvider } from './llm/anthropic.provider';
 import { ASSISTANT_LLM } from './llm/llm.types';
 import { OrdersModule } from '../orders/orders.module';
 import { PublicModule } from '../public/public.module';
+import { TelegramModule } from '../telegram/telegram.module';
 
 @Module({
-  imports: [ConfigModule, OrdersModule, PublicModule],
+  imports: [ConfigModule, OrdersModule, PublicModule, TelegramModule],
   controllers: [AssistantController, GuestAssistantController],
   providers: [
     AssistantService,
     AssistantToolsService,
     VerifyService,
+    ConversationCloserService,
     OpenAiProvider,
     AnthropicProvider,
     // ASSISTANT_PROVIDER=anthropic (default) | openai. OpenAI provider ostáva v kóde pre fallback.
