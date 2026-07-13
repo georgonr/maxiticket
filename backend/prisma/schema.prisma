@@ -1118,3 +1118,47 @@ model EkasaDevice {
 
   @@index([organizerId])
 }
+
+// ─────────────────────────────────────────────
+// AI ASISTENT – perzistencia konverzácií (krok AI-KONV-1)
+// ─────────────────────────────────────────────
+
+enum ConversationChannel {
+  GUEST
+  CUSTOMER
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+}
+
+model Conversation {
+  id            String              @id @default(cuid())
+  channel       ConversationChannel
+  sessionKey    String              // chatSessionId (guest) alebo userId (customer)
+  userId        String?             // plain FK-less ref na User.id (DB FK ON DELETE SET NULL)
+  locale        String
+  status        ConversationStatus  @default(OPEN)
+  summary       String?             @db.Text
+  escalated     Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  lastMessageAt DateTime            @default(now())
+  closedAt      DateTime?
+
+  messages      Message[]
+
+  @@index([status, lastMessageAt])
+  @@index([sessionKey])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // 'user' | 'assistant'
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}

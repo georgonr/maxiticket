@@ -1,8 +1,17 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ASSISTANT_LLM, AssistantLlmProvider, LlmMessage } from './llm/llm.types';
 import { AssistantToolsService } from './assistant-tools.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 export type ChatHistoryMsg = { role: 'user' | 'assistant'; content: string };
+
+// Identita konverzácie pre perzistenciu (krok AI-KONV-1). Guest keyovaný chatSessionId, customer userId.
+type ConversationCtx = {
+  channel: 'GUEST' | 'CUSTOMER';
+  sessionKey: string;
+  userId: string | null;
+  locale: AssistantLocale;
+};
 export type AssistantEvent =
   | { type: 'status'; text: string }
   | { type: 'delta'; text: string }
@@ -125,6 +134,7 @@ export class AssistantService {
   constructor(
     @Inject(ASSISTANT_LLM) private readonly llm: AssistantLlmProvider,
     private readonly tools: AssistantToolsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   isConfigured(): boolean {
@@ -145,6 +155,7 @@ export class AssistantService {
       dispatch: (name, args) => this.tools.dispatch(name, args, userId),
       emit,
       locale,
+      conversation: { channel: 'CUSTOMER', sessionKey: userId, userId, locale },
     });
   }
 
@@ -165,6 +176,7 @@ export class AssistantService {
       dispatch: (name, args) => this.tools.dispatchGuest(name, args, chatSessionId),
       emit,
       locale,
+      conversation: { channel: 'GUEST', sessionKey: chatSessionId, userId: null, locale },
     });
   }
 
@@ -176,8 +188,9 @@ export class AssistantService {
     dispatch: (name: string, args: Record<string, any>) => Promise<{ summary: unknown; attachments?: Record<string, unknown>[] }>;
     emit: (e: AssistantEvent) => void;
     locale: AssistantLocale;
+    conversation?: ConversationCtx;
   }): Promise<void> {
-    const { systemPrompt, history, toolDefs, dispatch, emit, locale } = params;
+    const { systemPrompt, history, toolDefs, dispatch, emit, locale, conversation } = params;
     if (!this.llm.isConfigured()) {
       emit({ type: 'error', message: MSG_NOT_CONFIGURED[locale] });
       emit({ type: 'done' });
@@ -189,9 +202,12 @@ export class AssistantService {
       ...history.map((h) => ({ role: h.role, content: h.content })),
     ];
 
+    // Akumuluj plný text asistenta naprieč iteráciami → 1 zápis po dokončení streamu.
+    let assistantText = '';
+
     try {
       for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-        const result = await this.llm.streamChat(messages, toolDefs, (d) => emit({ type: 'delta', text: d }));
+        const result = await this.llm.streamChat(messages, toolDefs, (d) => { assistantText += d; emit({ type: 'delta', text: d }); });
 
         if (result.toolCalls.length === 0) {
           emit({ type: 'done' });
@@ -215,12 +231,59 @@ export class AssistantService {
           messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(res.summary) });
         }
       }
+      assistantText += MSG_REFINE[locale];
       emit({ type: 'delta', text: MSG_REFINE[locale] });
       emit({ type: 'done' });
     } catch (e: any) {
       this.logger.error(`Assistant chat failed: ${e.message}`);
       emit({ type: 'error', message: MSG_ERROR[locale] });
       emit({ type: 'done' });
+    } finally {
+      // Best-effort perzistencia – zlyhanie DB nesmie ovplyvniť už odoslaný SSE stream.
+      if (conversation) {
+        const lastUser = history[history.length - 1];
+        const userText = lastUser?.role === 'user' ? lastUser.content : '';
+        await this.persistExchange(conversation, userText, assistantText.trim());
+      }
+    }
+  }
+
+  /**
+   * Uloží jednu výmenu (user + assistant) do DB. Konverzácia sa priradí podľa sessionKey
+   * (guest=chatSessionId, customer=userId) – existujúca OPEN sa reuse-ne, inak sa vytvorí nová.
+   * Best-effort: chyby sa len zalogujú.
+   */
+  private async persistExchange(conv: ConversationCtx, userText: string, assistantText: string): Promise<void> {
+    try {
+      const now = new Date();
+      const existing = await this.prisma.conversation.findFirst({
+        where: { sessionKey: conv.sessionKey, status: 'OPEN' },
+        orderBy: { lastMessageAt: 'desc' },
+        select: { id: true },
+      });
+      let conversationId: string;
+      if (existing) {
+        conversationId = existing.id;
+        await this.prisma.conversation.update({ where: { id: conversationId }, data: { lastMessageAt: now } });
+      } else {
+        const created = await this.prisma.conversation.create({
+          data: {
+            channel: conv.channel,
+            sessionKey: conv.sessionKey,
+            userId: conv.userId,
+            locale: conv.locale,
+            lastMessageAt: now,
+          },
+          select: { id: true },
+        });
+        conversationId = created.id;
+      }
+      const data: { conversationId: string; role: string; content: string }[] = [];
+      if (userText) data.push({ conversationId, role: 'user', content: userText });
+      if (assistantText) data.push({ conversationId, role: 'assistant', content: assistantText });
+      if (data.length) await this.prisma.message.createMany({ data });
+    } catch (e: any) {
+      this.logger.warn(`persistExchange failed: ${e.message}`);
     }
   }
 }
