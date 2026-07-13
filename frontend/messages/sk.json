@@ -589,7 +589,9 @@
       "closeMenu": "Zavrieť menu",
       "langLabel": "Jazyk",
       "organizers": "Organizátori",
-      "billing": "Fakturácia"
+      "billing": "Fakturácia",
+      "aiConversations": "AI konverzácie",
+      "telegram": "Telegram"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1876,6 +1878,49 @@
         "refundFeePerTicket": "Poplatok za refundovaný lístok (€)",
         "refundFeeHint": "Prázdne = platformový default 0,40 €."
       }
+    },
+    "aiConv": {
+      "title": "AI konverzácie",
+      "subtitle": "Prehľad konverzácií zákazníckeho AI asistenta.",
+      "allStatuses": "Všetky stavy",
+      "statusOpen": "Otvorená",
+      "statusClosed": "Uzavretá",
+      "allChannels": "Všetky kanály",
+      "channelGuest": "Neprihlásený",
+      "channelCustomer": "Prihlásený",
+      "onlyEscalated": "Len eskalované",
+      "colChannel": "Kanál",
+      "colStatus": "Stav",
+      "colSummary": "Zhrnutie",
+      "colMessages": "Správ",
+      "colTime": "Čas",
+      "loading": "Načítavam…",
+      "empty": "Žiadne konverzácie.",
+      "escalated": "Vyžaduje pozornosť",
+      "backToList": "Späť na zoznam",
+      "summary": "Zhrnutie",
+      "roleUser": "Zákazník",
+      "roleAssistant": "Asistent"
+    },
+    "telegram": {
+      "title": "Telegram notifikácie",
+      "subtitle": "Notifikácie o zákazníckych konverzáciách do Telegramu.",
+      "loading": "Načítavam…",
+      "tokenStatus": "Bot token",
+      "tokenSet": "nastavený",
+      "tokenMissing": "chýba",
+      "tokenHint": "Bot token nastav na serveri v .env (TELEGRAM_BOT_TOKEN) a reštartuj backend. Cez toto rozhranie sa token nenastavuje.",
+      "chatId": "Chat ID",
+      "chatIdPlaceholder": "napr. -1001234567890",
+      "chatIdHint": "ID chatu/skupiny, kam sa posielajú notifikácie.",
+      "enabled": "Zapnúť notifikácie",
+      "save": "Uložiť",
+      "sendTest": "Poslať test",
+      "saved": "Uložené.",
+      "saveFailed": "Uloženie zlyhalo.",
+      "testSent": "Testovacia správa odoslaná ✅",
+      "testNoOp": "Neodoslané (skontroluj token, chat ID a či je zapnuté).",
+      "testFailed": "Test zlyhal."
     }
   },
   "seatPicker": {

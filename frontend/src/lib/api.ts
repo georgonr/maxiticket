@@ -845,3 +845,64 @@ export const platformInfoApi = {
   update: (body: UpdatePlatformInfoBody, token: string) =>
     apiFetch<PlatformInfo>('/v1/admin/platform-info', { method: 'PATCH', body: JSON.stringify(body), token }),
 };
+
+// ── AI konverzácie + Telegram (SUPERADMIN, krok AI-KONV-4) ──
+export interface AiConversationListItem {
+  id: string;
+  channel: 'GUEST' | 'CUSTOMER';
+  locale: string;
+  status: 'OPEN' | 'CLOSED';
+  escalated: boolean;
+  summary: string | null;
+  messageCount: number;
+  email: string | null;
+  lastMessageAt: string;
+  createdAt: string;
+  closedAt: string | null;
+}
+export interface AiConversationList {
+  items: AiConversationListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+export interface AiConversationMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+}
+export interface AiConversationDetail extends Omit<AiConversationListItem, 'messageCount'> {
+  sessionKey: string;
+  messages: AiConversationMessage[];
+}
+
+export const aiConversationsApi = {
+  list: (
+    params: { status?: string; escalated?: string; channel?: string; page?: number },
+    token: string,
+  ) => {
+    const q = new URLSearchParams();
+    if (params.status) q.set('status', params.status);
+    if (params.escalated) q.set('escalated', params.escalated);
+    if (params.channel) q.set('channel', params.channel);
+    if (params.page) q.set('page', String(params.page));
+    const qs = q.toString();
+    return apiFetch<AiConversationList>(`/v1/admin/ai-conversations${qs ? '?' + qs : ''}`, { token });
+  },
+  get: (id: string, token: string) =>
+    apiFetch<AiConversationDetail>(`/v1/admin/ai-conversations/${id}`, { token }),
+};
+
+export interface TelegramConfig {
+  chatId: string | null;
+  enabled: boolean;
+  tokenSet: boolean;
+}
+export const telegramApi = {
+  getConfig: (token: string) => apiFetch<TelegramConfig>('/v1/admin/telegram/config', { token }),
+  setConfig: (body: { chatId?: string; enabled?: boolean }, token: string) =>
+    apiFetch<TelegramConfig>('/v1/admin/telegram/config', { method: 'PATCH', body: JSON.stringify(body), token }),
+  test: (token: string) =>
+    apiFetch<{ sent: boolean }>('/v1/admin/telegram/test', { method: 'POST', body: JSON.stringify({}), token }),
+};

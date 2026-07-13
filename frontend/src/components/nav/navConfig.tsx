@@ -61,6 +61,8 @@ export function buildNavGroups(role: string): NavGroup[] {
         { labelKey: 'heroSlider', href: '/admin/hero', roles: ['SUPERADMIN'] },
         { labelKey: 'platformInfo', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
         { labelKey: 'paymentGateways', href: '/admin/payment-gateways', roles: ['SUPERADMIN', 'STAFF'] },
+        { labelKey: 'aiConversations', href: '/admin/ai-conversations', roles: ['SUPERADMIN'] },
+        { labelKey: 'telegram', href: '/admin/telegram-settings', roles: ['SUPERADMIN'] },
       ],
     },
     {

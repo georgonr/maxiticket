@@ -589,7 +589,9 @@
       "closeMenu": "Close menu",
       "langLabel": "Language",
       "organizers": "Organizers",
-      "billing": "Billing"
+      "billing": "Billing",
+      "aiConversations": "AI conversations",
+      "telegram": "Telegram"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1876,6 +1878,49 @@
         "refundFeePerTicket": "Fee per refunded ticket (€)",
         "refundFeeHint": "Empty = platform default €0.40."
       }
+    },
+    "aiConv": {
+      "title": "AI conversations",
+      "subtitle": "Overview of customer AI assistant conversations.",
+      "allStatuses": "All statuses",
+      "statusOpen": "Open",
+      "statusClosed": "Closed",
+      "allChannels": "All channels",
+      "channelGuest": "Guest",
+      "channelCustomer": "Logged-in",
+      "onlyEscalated": "Escalated only",
+      "colChannel": "Channel",
+      "colStatus": "Status",
+      "colSummary": "Summary",
+      "colMessages": "Msgs",
+      "colTime": "Time",
+      "loading": "Loading…",
+      "empty": "No conversations.",
+      "escalated": "Needs attention",
+      "backToList": "Back to list",
+      "summary": "Summary",
+      "roleUser": "Customer",
+      "roleAssistant": "Assistant"
+    },
+    "telegram": {
+      "title": "Telegram notifications",
+      "subtitle": "Notifications about customer conversations to Telegram.",
+      "loading": "Loading…",
+      "tokenStatus": "Bot token",
+      "tokenSet": "set",
+      "tokenMissing": "missing",
+      "tokenHint": "Set the bot token on the server in .env (TELEGRAM_BOT_TOKEN) and restart the backend. The token is not set through this UI.",
+      "chatId": "Chat ID",
+      "chatIdPlaceholder": "e.g. -1001234567890",
+      "chatIdHint": "ID of the chat/group to send notifications to.",
+      "enabled": "Enable notifications",
+      "save": "Save",
+      "sendTest": "Send test",
+      "saved": "Saved.",
+      "saveFailed": "Save failed.",
+      "testSent": "Test message sent ✅",
+      "testNoOp": "Not sent (check token, chat ID and whether enabled).",
+      "testFailed": "Test failed."
     }
   },
   "seatPicker": {
