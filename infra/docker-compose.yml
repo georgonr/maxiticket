@@ -68,6 +68,8 @@ services:
       ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-anthropic}
       ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-sonnet-5}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # AI konverzácie – Telegram notifikácie (token je secret; chatId/enabled v DB).
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       # Fakturačný systém (krok 13b) – DODÁVATEĽ na faktúre. Placeholdery – účtovník vyplní.
       PLATFORM_LEGAL_NAME: ${PLATFORM_LEGAL_NAME:-}
       PLATFORM_ICO: ${PLATFORM_ICO:-}

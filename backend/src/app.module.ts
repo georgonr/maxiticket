@@ -23,6 +23,7 @@ import { MailModule } from './mail/mail.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AssistantModule } from './assistant/assistant.module';
+import { TelegramModule } from './telegram/telegram.module';
 import { HeroBannersModule } from './hero-banners/hero-banners.module';
 import { ScanModule } from './scan/scan.module';
 import { PlatformInfoModule } from './platform-info/platform-info.module';
@@ -72,6 +73,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     RefundsModule,
     SeatmapsModule,
     AssistantModule,
+    TelegramModule,
     EkasaModule,
   ],
   controllers: [HealthController],

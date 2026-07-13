@@ -1162,3 +1162,17 @@ model Message {
 
   @@index([conversationId])
 }
+
+// ─────────────────────────────────────────────
+// TELEGRAM notifikácie – config (krok AI-KONV-2). Token je v .env, NIE v DB.
+// Singleton (jeden riadok) ako PaymentGatewayConfig.
+// ─────────────────────────────────────────────
+
+model TelegramConfig {
+  id          String   @id @default(cuid())
+  chatId      String?  // cieľový Telegram chat/skupina pre notifikácie
+  enabled     Boolean  @default(false)
+  updatedById String?  // audit – kto naposledy zmenil (plain field, bez FK)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
