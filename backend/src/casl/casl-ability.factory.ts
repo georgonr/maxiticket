@@ -45,6 +45,24 @@ export class CaslAbilityFactory {
         can('manage', 'User');
         break;
 
+      // Platformový admin – správa používateľov nižších rolí + prehľad platformy.
+      // Zámerne NIE superadmin veci (žiadny 'manage all', žiadna správa organizerov nad rámec čítania).
+      case UserRole.PLATFORM_ADMIN:
+        can('manage', 'User');
+        can('read', 'Organizer');
+        can('read', 'Show');
+        can('read', 'Order');
+        can('read', 'Ticket');
+        can('read', 'ScanLog');
+        break;
+
+      // Účtovník – len prehľad fakturácie (billing endpointy chránené @Roles).
+      // Konzervatívne: čítanie organizátorov + objednávok pre kontext, nič viac.
+      case UserRole.ACCOUNTANT:
+        can('read', 'Organizer');
+        can('read', 'Order');
+        break;
+
       case UserRole.ORGANIZER_OWNER:
         can('manage', 'Organizer');
         can('manage', 'Show');

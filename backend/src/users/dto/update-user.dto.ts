@@ -5,7 +5,11 @@ export class UpdateUserDto {
   @IsOptional() @IsString() firstName?: string;
   @IsOptional() @IsString() lastName?: string;
   @IsOptional() @IsString() phone?: string;
-  @IsOptional() @IsBoolean() isActive?: boolean;
+  // isActive sa mení výhradne cez guarded endpoint /users/:id/active (canManageTarget strop).
+}
+
+export class SetActiveDto {
+  @IsBoolean() isActive: boolean;
 }
 
 export class UpdateUserRoleDto {

@@ -54,6 +54,7 @@ export class AdminBillingController {
   }
 
   @Get('invoices')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ACCOUNTANT)
   listInvoices(@Query('organizerId') organizerId?: string, @Query('status') status?: string) {
     const valid = ['DRAFT', 'FINALIZED', 'SENT', 'PAID'];
     const st = status && valid.includes(status) ? (status as InvoiceStatus) : undefined;
@@ -61,6 +62,7 @@ export class AdminBillingController {
   }
 
   @Get('invoices/:invId')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ACCOUNTANT)
   getInvoice(@Param('invId') invId: string) {
     return this.invoices.get(invId);
   }
@@ -111,6 +113,7 @@ export class AdminBillingController {
   }
 
   @Get('invoices/:invId/pdf')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ACCOUNTANT)
   async invoicePdf(@Param('invId') invId: string, @Res() reply: FastifyReply) {
     const { pdf, filename } = await this.invoices.invoicePdf(invId);
     reply.header('Content-Type', 'application/pdf');
@@ -119,16 +122,19 @@ export class AdminBillingController {
   }
 
   @Get('organizers')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ACCOUNTANT)
   organizers() {
     return this.svc.organizersOverview();
   }
 
   @Get('organizers/:id/past-termins')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ACCOUNTANT)
   pastTermins(@Param('id') id: string) {
     return this.svc.pastTermins(id);
   }
 
   @Get('organizers/:id/statement')
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ACCOUNTANT)
   statement(
     @Param('id') id: string,
     @Query('occurrenceId') occurrenceId?: string,
