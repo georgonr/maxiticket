@@ -3,7 +3,16 @@ import { Ticket } from 'lucide-react';
 
 // Krok 31c1: i18n – role + nav labely sa prekladajú v Sidebare cez useTranslations
 // (namespace organizer.roles.* / organizer.nav.*). Tu sú už len kľúče.
-export const ROLE_KEYS = ['SUPERADMIN', 'STAFF', 'ORGANIZER_OWNER', 'ORGANIZER_MEMBER', 'SCANNER', 'CUSTOMER'];
+export const ROLE_KEYS = [
+  'SUPERADMIN',
+  'PLATFORM_ADMIN',
+  'ACCOUNTANT',
+  'STAFF',
+  'ORGANIZER_OWNER',
+  'ORGANIZER_MEMBER',
+  'SCANNER',
+  'CUSTOMER',
+];
 
 export interface NavItem {
   /** kľúč do organizer.nav.* */
@@ -29,7 +38,11 @@ export function buildNavGroups(role: string): NavGroup[] {
   const groups: NavGroup[] = [
     {
       titleKey: null,
-      items: [{ labelKey: 'platformOverview', href: '/admin/dashboard', roles: ['SUPERADMIN'] }],
+      items: [
+        // Krok D: správa používateľov je prvá položka admin menu.
+        { labelKey: 'users', href: '/admin/users', roles: ['SUPERADMIN', 'PLATFORM_ADMIN'] },
+        { labelKey: 'platformOverview', href: '/admin/dashboard', roles: ['SUPERADMIN'] },
+      ],
     },
     {
       titleKey: 'groupEvents',
@@ -57,7 +70,7 @@ export function buildNavGroups(role: string): NavGroup[] {
       titleKey: 'groupPlatform',
       items: [
         { labelKey: 'organizers', href: '/admin/organizers', roles: ['SUPERADMIN', 'STAFF'] },
-        { labelKey: 'billing', href: '/admin/billing', roles: ['SUPERADMIN', 'STAFF'] },
+        { labelKey: 'billing', href: '/admin/billing', roles: ['SUPERADMIN', 'STAFF', 'ACCOUNTANT'] },
         { labelKey: 'heroSlider', href: '/admin/hero', roles: ['SUPERADMIN'] },
         { labelKey: 'platformInfo', href: '/admin/platform-info', roles: ['SUPERADMIN'] },
         { labelKey: 'paymentGateways', href: '/admin/payment-gateways', roles: ['SUPERADMIN', 'STAFF'] },

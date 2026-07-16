@@ -565,6 +565,7 @@
   },
   "organizer": {
     "nav": {
+      "users": "Uživatelé",
       "groupEvents": "Akce",
       "groupSales": "Prodej",
       "groupTeam": "Tým",

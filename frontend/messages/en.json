@@ -565,6 +565,7 @@
   },
   "organizer": {
     "nav": {
+      "users": "Users",
       "groupEvents": "Events",
       "groupSales": "Sales",
       "groupTeam": "Team",
