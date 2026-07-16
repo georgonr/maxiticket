@@ -599,7 +599,9 @@
       "ORGANIZER_OWNER": "Organizátor (vlastník)",
       "ORGANIZER_MEMBER": "Organizátor (člen)",
       "SCANNER": "Skener",
-      "CUSTOMER": "Zákazník"
+      "CUSTOMER": "Zákazník",
+      "PLATFORM_ADMIN": "Platform admin",
+      "ACCOUNTANT": "Účtovník"
     },
     "orderStatus": {
       "PAID": "Zaplatené",
@@ -1921,6 +1923,67 @@
       "testSent": "Testovacia správa odoslaná ✅",
       "testNoOp": "Neodoslané (skontroluj token, chat ID a či je zapnuté).",
       "testFailed": "Test zlyhal."
+    },
+    "users": {
+      "title": "Používatelia",
+      "subtitle": "Správa používateľov platformy a ich rolí.",
+      "addUser": "Pridať používateľa",
+      "listTitle": "Používatelia",
+      "empty": "Žiadni používatelia.",
+      "footerNote": "Noví používatelia dostanú e-mailom pozvánku na nastavenie hesla.",
+      "noPermission": "Nemáte oprávnenie zobraziť túto stránku.",
+      "createTitle": "Nový používateľ",
+      "close": "Zavrieť",
+      "emailLabel": "E-mail *",
+      "emailPlaceholder": "meno@email.sk",
+      "roleLabel": "Rola *",
+      "nameLabel": "Meno (voliteľné)",
+      "namePlaceholder": "Meno a priezvisko",
+      "organizerLabel": "Organizátor *",
+      "organizerSelect": "— vyberte organizátora —",
+      "organizerIdPlaceholder": "ID organizátora",
+      "createHint": "Používateľ dostane e-mail s odkazom na nastavenie hesla (platnosť 7 dní).",
+      "cancel": "Zrušiť",
+      "sendInvite": "Odoslať pozvánku",
+      "invalidEmail": "Zadajte platný e-mail.",
+      "organizerRequired": "Vyberte organizátora.",
+      "loginRequired": "Vyžaduje sa prihlásenie.",
+      "createFailed": "Používateľa sa nepodarilo vytvoriť.",
+      "confirmRemove": "Naozaj deaktivovať používateľa {email}?",
+      "toast": {
+        "invited": "Pozvánka odoslaná na {email}",
+        "activated": "Používateľ aktivovaný",
+        "deactivated": "Používateľ deaktivovaný",
+        "removed": "Používateľ {email} deaktivovaný"
+      },
+      "filter": {
+        "allRoles": "Všetky role",
+        "allStatuses": "Všetky stavy"
+      },
+      "status": {
+        "active": "Aktívny",
+        "inactive": "Neaktívny"
+      },
+      "col": {
+        "email": "E-mail",
+        "name": "Meno",
+        "role": "Rola",
+        "status": "Stav",
+        "created": "Vytvorený",
+        "lastLogin": "Posledné prihlásenie",
+        "actions": "Akcie"
+      },
+      "action": {
+        "activate": "Aktivovať",
+        "deactivate": "Deaktivovať",
+        "remove": "Zmazať (deaktivovať)"
+      },
+      "error": {
+        "forbidden": "Nemáte oprávnenie na túto akciu.",
+        "server": "Chyba servera. Skúste znova.",
+        "generic": "Niečo sa pokazilo.",
+        "network": "Chyba siete."
+      }
     }
   },
   "seatPicker": {

@@ -599,7 +599,9 @@
       "ORGANIZER_OWNER": "Organizer (owner)",
       "ORGANIZER_MEMBER": "Organizer (member)",
       "SCANNER": "Scanner",
-      "CUSTOMER": "Customer"
+      "CUSTOMER": "Customer",
+      "PLATFORM_ADMIN": "Platform admin",
+      "ACCOUNTANT": "Accountant"
     },
     "orderStatus": {
       "PAID": "Paid",
@@ -1921,6 +1923,67 @@
       "testSent": "Test message sent ✅",
       "testNoOp": "Not sent (check token, chat ID and whether enabled).",
       "testFailed": "Test failed."
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "Manage platform users and their roles.",
+      "addUser": "Add user",
+      "listTitle": "Users",
+      "empty": "No users.",
+      "footerNote": "New users receive an email invitation to set their password.",
+      "noPermission": "You don't have permission to view this page.",
+      "createTitle": "New user",
+      "close": "Close",
+      "emailLabel": "Email *",
+      "emailPlaceholder": "name@email.com",
+      "roleLabel": "Role *",
+      "nameLabel": "Name (optional)",
+      "namePlaceholder": "Full name",
+      "organizerLabel": "Organizer *",
+      "organizerSelect": "— select organizer —",
+      "organizerIdPlaceholder": "Organizer ID",
+      "createHint": "The user will receive an email with a link to set their password (valid 7 days).",
+      "cancel": "Cancel",
+      "sendInvite": "Send invitation",
+      "invalidEmail": "Enter a valid email.",
+      "organizerRequired": "Select an organizer.",
+      "loginRequired": "Login required.",
+      "createFailed": "Failed to create user.",
+      "confirmRemove": "Really deactivate user {email}?",
+      "toast": {
+        "invited": "Invitation sent to {email}",
+        "activated": "User activated",
+        "deactivated": "User deactivated",
+        "removed": "User {email} deactivated"
+      },
+      "filter": {
+        "allRoles": "All roles",
+        "allStatuses": "All statuses"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "col": {
+        "email": "Email",
+        "name": "Name",
+        "role": "Role",
+        "status": "Status",
+        "created": "Created",
+        "lastLogin": "Last login",
+        "actions": "Actions"
+      },
+      "action": {
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "remove": "Delete (deactivate)"
+      },
+      "error": {
+        "forbidden": "You don't have permission for this action.",
+        "server": "Server error. Try again.",
+        "generic": "Something went wrong.",
+        "network": "Network error."
+      }
     }
   },
   "seatPicker": {

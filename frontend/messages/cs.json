@@ -599,7 +599,9 @@
       "ORGANIZER_OWNER": "Pořadatel (vlastník)",
       "ORGANIZER_MEMBER": "Pořadatel (člen)",
       "SCANNER": "Skener",
-      "CUSTOMER": "Zákazník"
+      "CUSTOMER": "Zákazník",
+      "PLATFORM_ADMIN": "Platform admin",
+      "ACCOUNTANT": "Účetní"
     },
     "orderStatus": {
       "PAID": "Zaplaceno",
@@ -1921,6 +1923,67 @@
       "testSent": "Testovací zpráva odeslána ✅",
       "testNoOp": "Neodesláno (zkontroluj token, chat ID a zda je zapnuto).",
       "testFailed": "Test selhal."
+    },
+    "users": {
+      "title": "Uživatelé",
+      "subtitle": "Správa uživatelů platformy a jejich rolí.",
+      "addUser": "Přidat uživatele",
+      "listTitle": "Uživatelé",
+      "empty": "Žádní uživatelé.",
+      "footerNote": "Noví uživatelé obdrží e-mailem pozvánku k nastavení hesla.",
+      "noPermission": "Nemáte oprávnění zobrazit tuto stránku.",
+      "createTitle": "Nový uživatel",
+      "close": "Zavřít",
+      "emailLabel": "E-mail *",
+      "emailPlaceholder": "jmeno@email.cz",
+      "roleLabel": "Role *",
+      "nameLabel": "Jméno (nepovinné)",
+      "namePlaceholder": "Jméno a příjmení",
+      "organizerLabel": "Pořadatel *",
+      "organizerSelect": "— vyberte pořadatele —",
+      "organizerIdPlaceholder": "ID pořadatele",
+      "createHint": "Uživatel obdrží e-mail s odkazem pro nastavení hesla (platnost 7 dní).",
+      "cancel": "Zrušit",
+      "sendInvite": "Odeslat pozvánku",
+      "invalidEmail": "Zadejte platný e-mail.",
+      "organizerRequired": "Vyberte pořadatele.",
+      "loginRequired": "Vyžaduje se přihlášení.",
+      "createFailed": "Uživatele se nepodařilo vytvořit.",
+      "confirmRemove": "Opravdu deaktivovat uživatele {email}?",
+      "toast": {
+        "invited": "Pozvánka odeslána na {email}",
+        "activated": "Uživatel aktivován",
+        "deactivated": "Uživatel deaktivován",
+        "removed": "Uživatel {email} deaktivován"
+      },
+      "filter": {
+        "allRoles": "Všechny role",
+        "allStatuses": "Všechny stavy"
+      },
+      "status": {
+        "active": "Aktivní",
+        "inactive": "Neaktivní"
+      },
+      "col": {
+        "email": "E-mail",
+        "name": "Jméno",
+        "role": "Role",
+        "status": "Stav",
+        "created": "Vytvořen",
+        "lastLogin": "Poslední přihlášení",
+        "actions": "Akce"
+      },
+      "action": {
+        "activate": "Aktivovat",
+        "deactivate": "Deaktivovat",
+        "remove": "Smazat (deaktivovat)"
+      },
+      "error": {
+        "forbidden": "Nemáte oprávnění k této akci.",
+        "server": "Chyba serveru. Zkuste to znovu.",
+        "generic": "Něco se pokazilo.",
+        "network": "Chyba sítě."
+      }
     }
   },
   "seatPicker": {
