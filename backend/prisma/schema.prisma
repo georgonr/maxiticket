@@ -15,6 +15,8 @@ enum UserRole {
   // Platform-level (no organizerId)
   SUPERADMIN        // full platform access
   STAFF             // internal operator – creates events for clients, support
+  PLATFORM_ADMIN    // platform admin – manages organizers + customers (not superadmins)
+  ACCOUNTANT        // platform-level billing/accounting access
 
   // Tenant-scoped (organizerId required)
   ORGANIZER_OWNER   // tenant owner – full control over org + events + billing
