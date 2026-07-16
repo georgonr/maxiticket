@@ -897,11 +897,13 @@ export const aiConversationsApi = {
 export interface TelegramConfig {
   chatId: string | null;
   enabled: boolean;
+  /** true = do Telegramu idú len eskalované konverzácie (filter proti spamu). */
+  escalationOnly: boolean;
   tokenSet: boolean;
 }
 export const telegramApi = {
   getConfig: (token: string) => apiFetch<TelegramConfig>('/v1/admin/telegram/config', { token }),
-  setConfig: (body: { chatId?: string; enabled?: boolean }, token: string) =>
+  setConfig: (body: { chatId?: string; enabled?: boolean; escalationOnly?: boolean }, token: string) =>
     apiFetch<TelegramConfig>('/v1/admin/telegram/config', { method: 'PATCH', body: JSON.stringify(body), token }),
   test: (token: string) =>
     apiFetch<{ sent: boolean }>('/v1/admin/telegram/test', { method: 'POST', body: JSON.stringify({}), token }),

@@ -12,6 +12,7 @@ export default function TelegramSettingsPage() {
   const [cfg, setCfg] = useState<TelegramConfig | null>(null);
   const [chatId, setChatId] = useState('');
   const [enabled, setEnabled] = useState(false);
+  const [escalationOnly, setEscalationOnly] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -23,7 +24,7 @@ export default function TelegramSettingsPage() {
         const token = await getValidToken();
         if (!token) return;
         const c = await telegramApi.getConfig(token);
-        setCfg(c); setChatId(c.chatId ?? ''); setEnabled(c.enabled);
+        setCfg(c); setChatId(c.chatId ?? ''); setEnabled(c.enabled); setEscalationOnly(c.escalationOnly);
       } finally { setLoading(false); }
     })();
   }, []);
@@ -39,7 +40,7 @@ export default function TelegramSettingsPage() {
     try {
       const token = await getValidToken();
       if (!token) return;
-      const c = await telegramApi.setConfig({ chatId: chatId.trim(), enabled }, token);
+      const c = await telegramApi.setConfig({ chatId: chatId.trim(), enabled, escalationOnly }, token);
       setCfg(c); setToast({ msg: t('saved'), ok: true });
     } catch {
       setToast({ msg: t('saveFailed'), ok: false });
@@ -95,6 +96,21 @@ export default function TelegramSettingsPage() {
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4 accent-coral" />
           <span className="text-sm text-slate-700">{t('enabled')}</span>
         </label>
+
+        {/* escalationOnly – filter proti spamu */}
+        <div>
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={escalationOnly}
+              onChange={(e) => setEscalationOnly(e.target.checked)}
+              disabled={!enabled}
+              className="h-4 w-4 accent-coral disabled:opacity-40"
+            />
+            <span className={`text-sm ${enabled ? 'text-slate-700' : 'text-slate-400'}`}>{t('escalationOnly')}</span>
+          </label>
+          <p className="mt-1 ml-7 text-xs text-slate-400">{t('escalationOnlyHint')}</p>
+        </div>
 
         <div className="flex items-center gap-2 pt-1">
           <Button onClick={save} loading={saving}>{t('save')}</Button>

@@ -1917,6 +1917,8 @@
       "chatIdPlaceholder": "např. -1001234567890",
       "chatIdHint": "ID chatu/skupiny, kam se posílají notifikace.",
       "enabled": "Zapnout notifikace",
+      "escalationOnly": "Posílat do Telegramu jen eskalace",
+      "escalationOnlyHint": "Doporučeno. Notifikace přijde jen u konverzace označené jako eskalovaná. Konverzace se ukládají vždy, filtr se týká jen Telegramu.",
       "save": "Uložit",
       "sendTest": "Poslat test",
       "saved": "Uloženo.",

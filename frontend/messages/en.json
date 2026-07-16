@@ -1917,6 +1917,8 @@
       "chatIdPlaceholder": "e.g. -1001234567890",
       "chatIdHint": "ID of the chat/group to send notifications to.",
       "enabled": "Enable notifications",
+      "escalationOnly": "Send only escalations to Telegram",
+      "escalationOnlyHint": "Recommended. A notification is sent only for conversations flagged as escalated. Conversations are always stored; the filter only affects Telegram.",
       "save": "Save",
       "sendTest": "Send test",
       "saved": "Saved.",

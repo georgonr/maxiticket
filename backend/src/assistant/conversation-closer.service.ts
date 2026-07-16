@@ -68,7 +68,8 @@ export class ConversationCloserService {
     }
     await this.prisma.conversation.update({ where: { id }, data: { summary, escalated } });
 
-    if (conv.messages.length > 0) {
+    // Konverzácia je uložená vždy; escalationOnly riadi len Telegram notifikáciu (krok 4).
+    if (conv.messages.length > 0 && (await this.telegram.shouldNotifySummary(escalated))) {
       await this.notify(conv, summary, escalated).catch((e) => this.logger.warn(`notify ${id} failed: ${e.message}`));
     }
   }

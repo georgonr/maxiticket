@@ -1174,6 +1174,9 @@ model TelegramConfig {
   id          String   @id @default(cuid())
   chatId      String?  // cieľový Telegram chat/skupina pre notifikácie
   enabled     Boolean  @default(false)
+  // true = do Telegramu idú len eskalované konverzácie (default, menej spamu).
+  // Netýka sa ukladania konverzácií (tie sa ukladajú vždy) ani test správy.
+  escalationOnly Boolean @default(true)
   updatedById String?  // audit – kto naposledy zmenil (plain field, bez FK)
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())

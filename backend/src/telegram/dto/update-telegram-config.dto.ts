@@ -9,4 +9,9 @@ export class UpdateTelegramConfigDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  /** true = notifikovať len eskalované konverzácie (filter proti spamu). */
+  @IsOptional()
+  @IsBoolean()
+  escalationOnly?: boolean;
 }
