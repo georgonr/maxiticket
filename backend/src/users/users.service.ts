@@ -30,7 +30,14 @@ export class UsersService {
   ) {}
 
   async findAll(user: JwtPayload) {
-    if (user.role === UserRole.SUPERADMIN || user.role === UserRole.STAFF) {
+    // PLATFORM_ADMIN spravuje používateľov naprieč platformou, ale nemá organizerId –
+    // bez tejto vetvy by spadol do tenant vetvy nižšie a dostal 403 (krok E).
+    // Vidí celý zoznam; čo z toho smie zmeniť, rieši canManageTarget pri zápise.
+    if (
+      user.role === UserRole.SUPERADMIN ||
+      user.role === UserRole.STAFF ||
+      user.role === UserRole.PLATFORM_ADMIN
+    ) {
       return this.prisma.user.findMany({
         orderBy: { createdAt: 'desc' },
         select: this.safeSelect(),
