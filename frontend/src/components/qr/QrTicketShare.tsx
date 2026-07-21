@@ -1,11 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import QRCode from 'qrcode';
 import { QrCode, Mail, MessageCircle, Link2, ImageIcon, Download, Check, X } from 'lucide-react';
 
 const QR_BASE = 'https://ticketall.eu/q';
+
+/**
+ * QR musí byť VŽDY čisto čierny na čisto bielom – farbenie QR znižuje kontrast
+ * a tým spoľahlivosť skenovania. margin: 4 = štandardná quiet zone (4 moduly).
+ */
+const QR_DARK = '#000000';
+const QR_LIGHT = '#FFFFFF';
+const QR_MARGIN = 4;
+/** Zobrazená veľkosť QR (−30 % oproti pôvodným 220 px). */
+const QR_DISPLAY = 154;
 
 /**
  * QR v2 – zákaznícke zdieľanie rýchleho nákupu pri konkrétnom GA lístku.
@@ -20,15 +31,32 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
   const t = useTranslations('qrCheckout');
   const [open, setOpen] = useState(false);
   const [dataUrl, setDataUrl] = useState<string>('');
+  const [displayUrl, setDisplayUrl] = useState<string>('');
   const [copied, setCopied] = useState<'' | 'link' | 'img'>('');
+  const [mounted, setMounted] = useState(false);
 
   const url = `${QR_BASE}/${ticketTypeId}`;
   const shareText = `${showName} – ${ticketTypeName}`;
 
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
-    QRCode.toDataURL(url, { width: 1024, margin: 2, color: { dark: '#0f172a', light: '#ffffff' } })
+    const color = { dark: QR_DARK, light: QR_LIGHT };
+    // Vysoké rozlíšenie pre stiahnutie/kopírovanie obrázka.
+    QRCode.toDataURL(url, { width: 1024, margin: QR_MARGIN, color })
       .then(setDataUrl).catch(() => {});
+    // Samostatný render presne pre zobrazenie (3× pre retina) – downscale z 1024 px
+    // by rozmazal moduly a zhoršil skenovanie.
+    QRCode.toDataURL(url, { width: QR_DISPLAY * 3, margin: QR_MARGIN, color })
+      .then(setDisplayUrl).catch(() => {});
   }, [url]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
 
   function emailShare() {
     window.location.href = `mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(`${t('shareBody')}\n${url}`)}`;
@@ -53,7 +81,7 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
     document.body.appendChild(a); a.click(); a.remove();
   }
 
-  const action = 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors';
+  const action = 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-coral/10 hover:text-coral transition-colors';
 
   return (
     <div className="flex-shrink-0">
@@ -61,39 +89,60 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
         onClick={() => setOpen(true)}
         title={`${t('shareTitle')} — ${t('clickToEnlarge')}`}
         aria-label={`${t('shareTitle')} — ${t('clickToEnlarge')}`}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-purple-700 hover:border-purple-300 hover:bg-purple-50 dark:border-gray-700 dark:text-purple-300 dark:hover:bg-gray-800 transition-colors"
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-coral hover:border-coral/40 hover:bg-coral/10 transition-colors"
       >
         <QrCode size={18} />
       </button>
 
-      {/* KLIK → modal (overlay); zatvorenie len X alebo klik na backdrop. */}
-      {open && (
+      {/*
+        KLIK → modal cez PORTÁL do document.body. Portál je kritický: riadok typu
+        lístka na detaile podujatia môže mať `opacity-60` (vypredané / mimo predaja)
+        a CSS opacity sa dedí na VŠETKÝCH potomkov vrátane position:fixed – modal
+        aj QR by boli polopriehľadné (a teda nenaskenovateľné). Portál to obchádza.
+        Zatvorenie: X, klik na backdrop, Esc.
+      */}
+      {open && mounted && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
           onClick={() => setOpen(false)}
           role="dialog"
           aria-modal="true"
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl"
+            className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-start justify-between gap-2">
-              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{t('shareTitle')}</h3>
+              <h3 className="text-base font-bold text-plum">{t('shareTitle')}</h3>
               <button
                 onClick={() => setOpen(false)}
                 aria-label={t('close')}
-                className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-800"
+                className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
               >
                 <X size={18} />
               </button>
             </div>
 
             <div className="flex flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {dataUrl && <img src={dataUrl} alt="QR" width={220} height={220} style={{ width: 220, height: 220, display: 'block', imageRendering: 'pixelated' }} className="aspect-square rounded-lg border border-gray-200 dark:border-gray-700 object-contain" />}
-              <p className="mt-2 text-center text-sm font-medium text-gray-800 dark:text-gray-100">{shareText}</p>
-              <p className="mb-3 text-center text-xs text-gray-500 dark:text-gray-400">{t('shareScan')}</p>
+              {/*
+                QR box je vždy plne nepriehľadne biely (bg-white, žiadna opacity)
+                a má vlastný biely padding = quiet zone navyše k margin-u v QR.
+                Rámik je coral (branding), samotný QR ostáva čierno-biely.
+              */}
+              <div className="rounded-xl border-2 border-coral/30 bg-white p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {displayUrl && (
+                  <img
+                    src={displayUrl}
+                    alt="QR"
+                    width={QR_DISPLAY}
+                    height={QR_DISPLAY}
+                    style={{ width: QR_DISPLAY, height: QR_DISPLAY, display: 'block', backgroundColor: '#FFFFFF' }}
+                  />
+                )}
+              </div>
+              <p className="mt-2.5 text-center text-sm font-medium text-plum">{shareText}</p>
+              <p className="mb-3 text-center text-xs text-muted">{t('shareScan')}</p>
             </div>
 
             <div className="space-y-0.5">
@@ -104,7 +153,8 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
               <button onClick={download} className={action}><Download size={16} /> {t('shareDownload')}</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
