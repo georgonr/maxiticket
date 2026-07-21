@@ -856,7 +856,11 @@
       "cancelFailed": "Zrušení selhalo.",
       "editAction": "Upravit",
       "quantityLabel": "Počet kusů",
-      "unlimitedPlaceholder": "neomezeno"
+      "unlimitedPlaceholder": "neomezeno",
+      "errCapacityBelowSold": "Kapacita nesmí klesnout pod počet již prodaných lístků ({count}).",
+      "errSaleWindowInvalid": "Prodej musí končit po svém začátku (Prodej od < Prodej do).",
+      "errSaleEndsAfterEvent": "Prodej nemůže končit po začátku akce.",
+      "errEditGeneric": "Nepodařilo se uložit změny."
     },
     "coupon": {
       "title": "Kupóny",

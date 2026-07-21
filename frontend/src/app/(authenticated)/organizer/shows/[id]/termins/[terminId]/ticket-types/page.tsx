@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useTranslations, useFormatter } from 'next-intl';
 import { QrCode } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
-import { ticketTypesApi, terminsApi, TicketType, CreateTicketTypeBody, TerminSectionRow } from '@/lib/api';
+import { ticketTypesApi, terminsApi, TicketType, CreateTicketTypeBody, TerminSectionRow, ApiError } from '@/lib/api';
 import { seatmapsApi, SeatMapSummary } from '@/lib/api/seatmaps';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,23 +45,47 @@ export default function TicketTypesPage() {
   // Inline editor typu lístka
   const [editId, setEditId] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', price: '', totalQuantity: '', maxPerOrder: '', isActive: true });
+  const [editError, setEditError] = useState('');
+  const [editForm, setEditForm] = useState({ name: '', price: '', totalQuantity: '', maxPerOrder: '', isActive: true, saleStartsAt: '', saleEndsAt: '' });
 
   function startEdit(tt: TicketType) {
     setEditId(tt.id);
+    setEditError('');
     setEditForm({
       name: tt.name,
       price: String(tt.price),
       totalQuantity: tt.totalQuantity != null ? String(tt.totalQuantity) : '',
       maxPerOrder: String(tt.maxPerOrder),
       isActive: tt.isActive,
+      saleStartsAt: tt.saleStartsAt ? toLocalDT(tt.saleStartsAt) : '',
+      saleEndsAt: tt.saleEndsAt ? toLocalDT(tt.saleEndsAt) : '',
     });
   }
-  function cancelEdit() { setEditId(null); }
+  function cancelEdit() { setEditId(null); setEditError(''); }
+
+  // Backend guard (kapacita/okno predaja) → lokalizovaná hláška podľa errorCode.
+  // AllExceptionsFilter balí telo výnimky pod `message`, preto čítame aj vnorený tvar.
+  function editErrorMessage(err: unknown): string {
+    if (err instanceof ApiError) {
+      type Payload = { errorCode?: string; soldCount?: number; message?: string };
+      const body = err.body as Payload & { message?: string | Payload };
+      const p: Payload =
+        body && typeof body.message === 'object' && body.message !== null
+          ? (body.message as Payload)
+          : (body as Payload);
+
+      if (p?.errorCode === 'CAPACITY_BELOW_SOLD') return t('errCapacityBelowSold', { count: p.soldCount ?? 0 });
+      if (p?.errorCode === 'SALE_WINDOW_INVALID') return t('errSaleWindowInvalid');
+      if (p?.errorCode === 'SALE_ENDS_AFTER_EVENT') return t('errSaleEndsAfterEvent');
+      if (typeof p?.message === 'string') return p.message;
+    }
+    return t('errEditGeneric');
+  }
 
   async function saveEdit() {
     if (!editId) return;
     setEditSaving(true);
+    setEditError('');
     try {
       const token = await getValidToken();
       if (!token) return;
@@ -70,14 +94,17 @@ export default function TicketTypesPage() {
         price: Number(editForm.price),
         maxPerOrder: Number(editForm.maxPerOrder) || 10,
         isActive: editForm.isActive,
+        saleStartsAt: editForm.saleStartsAt || undefined,
+        saleEndsAt: editForm.saleEndsAt || undefined,
       };
       const tqVal = editForm.totalQuantity.trim();
       if (tqVal !== '') body.totalQuantity = Number(tqVal);
       const updated = await ticketTypesApi.update(terminId, editId, body, token);
       setTicketTypes((prev) => prev.map((x) => (x.id === editId ? updated : x)));
       setEditId(null);
-    } catch {
-      /* ponechaj editor otvorený */
+    } catch (err) {
+      // Ponechaj editor otvorený a zobraz konkrétnu hlášku z guardu.
+      setEditError(editErrorMessage(err));
     } finally {
       setEditSaving(false);
     }
@@ -385,10 +412,27 @@ export default function TicketTypesPage() {
                         <Input type="number" min={1} value={editForm.totalQuantity} onChange={(e) => setEditForm((f) => ({ ...f, totalQuantity: e.target.value }))} placeholder={t('unlimitedPlaceholder')} /></label>
                       <label className="block"><span className="mb-1 block text-xs text-gray-500">{t('maxPerOrderLabel')}</span>
                         <Input type="number" min={1} value={editForm.maxPerOrder} onChange={(e) => setEditForm((f) => ({ ...f, maxPerOrder: e.target.value }))} /></label>
+                      <div className="sm:col-span-2">
+                        <DateTimePicker
+                          id={`edit-saleStartsAt-${tt.id}`} label={t('saleFromLabel')} showQuickButtons
+                          value={editForm.saleStartsAt}
+                          onChange={(v) => setEditForm((f) => ({ ...f, saleStartsAt: v }))}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <DateTimePicker
+                          id={`edit-saleEndsAt-${tt.id}`} label={t('saleToLabel')} showQuickButtons
+                          value={editForm.saleEndsAt}
+                          onChange={(v) => setEditForm((f) => ({ ...f, saleEndsAt: v }))}
+                        />
+                      </div>
                       <label className="flex items-center gap-2 sm:col-span-2">
                         <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm((f) => ({ ...f, isActive: e.target.checked }))} className="rounded border-gray-300 dark:border-gray-700 text-brand focus:ring-brand" />
                         <span className="text-sm">{t('activeForSale')}</span>
                       </label>
+                      {editError && (
+                        <div className="sm:col-span-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{editError}</div>
+                      )}
                       <div className="flex justify-end gap-2 sm:col-span-2">
                         <Button variant="outline" size="sm" onClick={cancelEdit}>{t('cancel')}</Button>
                         <Button size="sm" loading={editSaving} onClick={saveEdit}>{t('save')}</Button>

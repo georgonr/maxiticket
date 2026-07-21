@@ -856,7 +856,11 @@
       "cancelFailed": "Cancellation failed.",
       "editAction": "Edit",
       "quantityLabel": "Total quantity",
-      "unlimitedPlaceholder": "unlimited"
+      "unlimitedPlaceholder": "unlimited",
+      "errCapacityBelowSold": "Capacity cannot drop below the number of tickets already sold ({count}).",
+      "errSaleWindowInvalid": "Sale must end after it starts (Sale from < Sale to).",
+      "errSaleEndsAfterEvent": "Sale cannot end after the event starts.",
+      "errEditGeneric": "Failed to save changes."
     },
     "coupon": {
       "title": "Coupons",

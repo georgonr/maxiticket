@@ -856,7 +856,11 @@
       "cancelFailed": "Zrušenie zlyhalo.",
       "editAction": "Editovať",
       "quantityLabel": "Počet kusov",
-      "unlimitedPlaceholder": "neobmedzené"
+      "unlimitedPlaceholder": "neobmedzené",
+      "errCapacityBelowSold": "Kapacita nesmie klesnúť pod počet už predaných lístkov ({count}).",
+      "errSaleWindowInvalid": "Predaj musí končiť po jeho začiatku (Predaj od < Predaj do).",
+      "errSaleEndsAfterEvent": "Predaj nemôže končiť po začiatku podujatia.",
+      "errEditGeneric": "Nepodarilo sa uložiť zmeny."
     },
     "coupon": {
       "title": "Kupóny",
