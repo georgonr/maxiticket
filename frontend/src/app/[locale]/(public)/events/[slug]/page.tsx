@@ -480,11 +480,18 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                         <div
                           key={tt.id}
                           className={`rounded-xl border bg-white p-3.5 transition-all ${
-                            disabled ? 'border-slate-100 opacity-60' : 'border-slate-200 hover:border-slate-300'
+                            disabled ? 'border-slate-100' : 'border-slate-200 hover:border-slate-300'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
+                            {/*
+                              Stlmenie (opacity) sa aplikuje LEN na textový obsah lístka,
+                              nie na celý riadok – QR akcia vpravo musí ostať plne
+                              kontrastná aj pri lístku mimo predaja, inak je QR
+                              nenaskenovateľný. CSS opacity sa dedí na celý podstrom
+                              a potomok ju nevie zrušiť (opacity-100 na ikone nepomôže).
+                            */}
+                            <div className={`min-w-0 ${disabled ? 'opacity-60' : ''}`}>
                               <p className="font-semibold text-slate-900 text-sm">{tt.name}</p>
                               <p className="text-base font-bold text-coral mt-0.5">
                                 {format.number(tt.price, { style: 'currency', currency: tt.currency })}

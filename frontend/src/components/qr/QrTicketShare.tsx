@@ -5,16 +5,10 @@ import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import QRCode from 'qrcode';
 import { QrCode, Mail, MessageCircle, Link2, ImageIcon, Download, Check, X } from 'lucide-react';
+import { QrCodeBox, QR_DARK, QR_LIGHT, QR_MARGIN } from './QrCodeBox';
 
 const QR_BASE = 'https://ticketall.eu/q';
 
-/**
- * QR musí byť VŽDY čisto čierny na čisto bielom – farbenie QR znižuje kontrast
- * a tým spoľahlivosť skenovania. margin: 4 = štandardná quiet zone (4 moduly).
- */
-const QR_DARK = '#000000';
-const QR_LIGHT = '#FFFFFF';
-const QR_MARGIN = 4;
 /** Zobrazená veľkosť QR (−30 % oproti pôvodným 220 px). */
 const QR_DISPLAY = 154;
 
@@ -31,7 +25,6 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
   const t = useTranslations('qrCheckout');
   const [open, setOpen] = useState(false);
   const [dataUrl, setDataUrl] = useState<string>('');
-  const [displayUrl, setDisplayUrl] = useState<string>('');
   const [copied, setCopied] = useState<'' | 'link' | 'img'>('');
   const [mounted, setMounted] = useState(false);
 
@@ -41,14 +34,10 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    const color = { dark: QR_DARK, light: QR_LIGHT };
-    // Vysoké rozlíšenie pre stiahnutie/kopírovanie obrázka.
-    QRCode.toDataURL(url, { width: 1024, margin: QR_MARGIN, color })
+    // Vysoké rozlíšenie len pre stiahnutie/kopírovanie obrázka;
+    // zobrazenie si rieši QrCodeBox vlastným renderom v presnej veľkosti.
+    QRCode.toDataURL(url, { width: 1024, margin: QR_MARGIN, color: { dark: QR_DARK, light: QR_LIGHT } })
       .then(setDataUrl).catch(() => {});
-    // Samostatný render presne pre zobrazenie (3× pre retina) – downscale z 1024 px
-    // by rozmazal moduly a zhoršil skenovanie.
-    QRCode.toDataURL(url, { width: QR_DISPLAY * 3, margin: QR_MARGIN, color })
-      .then(setDisplayUrl).catch(() => {});
   }, [url]);
 
   useEffect(() => {
@@ -124,23 +113,7 @@ export function QrTicketShare({ ticketTypeId, ticketTypeName, showName }: {
             </div>
 
             <div className="flex flex-col items-center">
-              {/*
-                QR box je vždy plne nepriehľadne biely (bg-white, žiadna opacity)
-                a má vlastný biely padding = quiet zone navyše k margin-u v QR.
-                Rámik je coral (branding), samotný QR ostáva čierno-biely.
-              */}
-              <div className="rounded-xl border-2 border-coral/30 bg-white p-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {displayUrl && (
-                  <img
-                    src={displayUrl}
-                    alt="QR"
-                    width={QR_DISPLAY}
-                    height={QR_DISPLAY}
-                    style={{ width: QR_DISPLAY, height: QR_DISPLAY, display: 'block', backgroundColor: '#FFFFFF' }}
-                  />
-                )}
-              </div>
+              <QrCodeBox value={url} size={QR_DISPLAY} />
               <p className="mt-2.5 text-center text-sm font-medium text-plum">{shareText}</p>
               <p className="mb-3 text-center text-xs text-muted">{t('shareScan')}</p>
             </div>

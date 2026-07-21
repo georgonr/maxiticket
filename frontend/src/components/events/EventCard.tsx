@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations, useFormatter } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
@@ -9,6 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { PublicShow, PublicTermin } from '@/lib/api';
+import { QrCodeBox } from '@/components/qr/QrCodeBox';
 
 /**
  * Zjednotená karta podujatia (C3 blok 1A) – jeden zdroj pre homepage
@@ -222,19 +224,9 @@ export function EventCardSkeleton() {
 
 function QrModal({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
   const t = useTranslations('events');
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    import('qrcode').then((QRCode) => {
-      if (canvasRef.current) {
-        QRCode.toCanvas(canvasRef.current, url, {
-          width: 240, margin: 2,
-          color: { dark: '#211A2B', light: '#FFFFFF' },
-        });
-      }
-    });
-  }, [url]);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     function handle(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
@@ -242,10 +234,21 @@ function QrModal({ url, name, onClose }: { url: string; name: string; onClose: (
     return () => document.removeEventListener('keydown', handle);
   }, [onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  /*
+    Render cez PORTÁL do document.body – rovnaký bezpečný vzor ako QrTicketShare.
+    Karta podujatia je potomkom kontajnerov, ktoré môžu mať opacity/transform;
+    CSS opacity sa dedí na celý podstrom vrátane position:fixed, čím by sa QR
+    stal polopriehľadným a nenaskenovateľným. Portál to obchádza.
+    Pozn.: backdrop-blur na overlay je OK – QrCodeBox je nepriehľadne biely.
+  */
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
       <div
         className="relative w-full max-w-xs rounded-2xl bg-white p-6 shadow-2xl animate-slide-up"
@@ -257,10 +260,11 @@ function QrModal({ url, name, onClose }: { url: string; name: string; onClose: (
         <h3 className="pr-6 text-sm font-semibold text-plum line-clamp-2 leading-snug">{name}</h3>
         <p className="mt-0.5 text-xs text-muted">{t('qrScanHint')}</p>
         <div className="mt-4 flex justify-center">
-          <canvas ref={canvasRef} className="rounded-xl" />
+          <QrCodeBox value={url} size={200} />
         </div>
         <p className="mt-3 break-all text-center text-[10px] text-slate-400">{url}</p>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
