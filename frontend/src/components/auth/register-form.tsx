@@ -17,10 +17,7 @@ const schema = z.object({
   email: z.string().email('Neplatný e-mail'),
   password: z.string().min(8, 'Min 8 znakov'),
   organizerName: z.string().min(2, 'Min 2 znaky'),
-  organizerSlug: z
-    .string()
-    .min(2)
-    .regex(/^[a-z0-9-]+$/, 'Len malé písmená, číslice a pomlčky'),
+  // URL slug sa nezadáva – backend ho auto-generuje z názvu organizátora.
   acceptTerms: z.literal(true, { errorMap: () => ({ message: 'Musíte prijať podmienky' }) }),
 });
 
@@ -66,10 +63,6 @@ export function RegisterForm() {
         error={errors.password?.message} {...register('password')}
       />
       <Input id="organizerName" label="Názov organizátora" error={errors.organizerName?.message} {...register('organizerName')} />
-      <Input
-        id="organizerSlug" label="URL slug (napr. moj-festival)"
-        error={errors.organizerSlug?.message} {...register('organizerSlug')}
-      />
       <label className="flex items-start gap-2 text-sm text-gray-700">
         <input type="checkbox" className="mt-0.5 accent-brand" {...register('acceptTerms')} />
         <span>

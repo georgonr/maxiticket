@@ -20,9 +20,14 @@ export class RegisterOrganizerDto {
   @MinLength(2)
   organizerName: string;
 
+  /**
+   * DEPRECATED – slug sa už nezadáva, backend ho auto-generuje z organizerName.
+   * Pole tu ostáva len preto, že ValidationPipe má forbidNonWhitelisted: true:
+   * starý klient s nacachovaným JS by inak dostal 400. Hodnota sa IGNORUJE.
+   */
+  @IsOptional()
   @IsString()
-  @MinLength(2)
-  organizerSlug: string;
+  organizerSlug?: string;
 
   @IsOptional()
   @IsString()

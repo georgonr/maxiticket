@@ -1,6 +1,5 @@
 import {
   Injectable,
-  ConflictException,
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
@@ -10,11 +9,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegisterOrganizerDto } from './dto/register.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { LoginDto } from './dto/login.dto';
-import { UserRole, TermsType } from '@prisma/client';
+import { UserRole, TermsType, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomUUID, randomBytes, createHash } from 'crypto';
 import { MailService } from '../mail/mail.service';
 import { codedConflict } from '../common/errors/coded-exception';
+import { slugify } from '../common/slugify';
 
 /**
  * Rola-aware konflikt e-mailu pri registrácii (neodhaľuje žiadne ďalšie údaje).
@@ -24,6 +24,23 @@ function emailExistsConflict(role: UserRole) {
   return role === UserRole.CUSTOMER
     ? codedConflict('EMAIL_EXISTS_CUSTOMER', 'Účet s týmto e-mailom už existuje. Prihláste sa, prípadne obnovte heslo.')
     : codedConflict('EMAIL_EXISTS_STAFF', 'Tento e-mail je už registrovaný ako účet skenera/zamestnanca. Použite prosím iný e-mail.');
+}
+
+/** Prefix slugu, keď z názvu organizátora nezostane nič použiteľné ("!!!", nelatinka). */
+const SLUG_FALLBACK_PREFIX = 'organizator';
+/** Strop pre hľadanie voľného slugu aj pre retry na kolízii – zabraňuje nekonečnému cyklu. */
+const SLUG_MAX_ATTEMPTS = 50;
+
+/**
+ * Je to unique violation práve na Organizer.slug? Kolízia e-mailu sa NESMIE
+ * retryovať – musí vybublať ako konflikt. Postgres cez Prisma hlási target
+ * raz ako pole stĺpcov, inokedy ako názov indexu (Organizer_slug_key).
+ */
+function isSlugUniqueViolation(e: unknown): boolean {
+  if (!(e instanceof Prisma.PrismaClientKnownRequestError) || e.code !== 'P2002') return false;
+  const target = e.meta?.target;
+  const asText = Array.isArray(target) ? target.join(',') : String(target ?? '');
+  return asText.includes('slug');
 }
 
 const BCRYPT_ROUNDS = 12;
@@ -43,9 +60,6 @@ export class AuthService {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email }, select: { role: true } });
     if (existing) throw emailExistsConflict(existing.role);
 
-    const slugExists = await this.prisma.organizer.findUnique({ where: { slug: dto.organizerSlug } });
-    if (slugExists) throw new ConflictException('Organizer slug already taken');
-
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
     // Find active platform-wide organizer registration terms
@@ -54,43 +68,75 @@ export class AuthService {
       orderBy: { publishedAt: 'desc' },
     });
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      const organizer = await tx.organizer.create({
-        data: {
-          name: dto.organizerName,
-          slug: dto.organizerSlug,
-          email: dto.email,
-          phone: dto.phone,
-        },
-      });
+    // Slug sa auto-generuje z názvu (dto.organizerSlug sa ignoruje – viď DTO).
+    const base = slugify(dto.organizerName) || `${SLUG_FALLBACK_PREFIX}-${randomBytes(4).toString('hex')}`;
 
-      const user = await tx.user.create({
-        data: {
-          email: dto.email,
-          passwordHash,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          phone: dto.phone,
-          role: UserRole.ORGANIZER_OWNER,
-          organizerId: organizer.id,
-        },
-      });
+    // Pre-check nájde pekný slug (base, base-2, …), ale sám o sebe nestačí:
+    // medzi checkom a insertom môže druhá registrácia to isté meno zabrať.
+    // O skutočnú unikátnosť sa stará @unique index a retry na P2002 nižšie.
+    let result: { organizer: { id: string }; user: { id: string; email: string; role: UserRole; organizerId: string | null } };
+    for (let attempt = 0; ; attempt++) {
+      const slug = attempt === 0
+        ? await this.findFreeSlug(base)
+        : `${base}-${randomBytes(3).toString('hex')}`;
+      try {
+        result = await this.prisma.$transaction(async (tx) => {
+          const organizer = await tx.organizer.create({
+            data: {
+              name: dto.organizerName,
+              slug,
+              email: dto.email,
+              phone: dto.phone,
+            },
+          });
 
-      if (activeTerms) {
-        await tx.termsAcceptance.create({
-          data: {
-            termsVersionId: activeTerms.id,
-            userId: user.id,
-            ipAddress,
-            userAgent,
-          },
+          const user = await tx.user.create({
+            data: {
+              email: dto.email,
+              passwordHash,
+              firstName: dto.firstName,
+              lastName: dto.lastName,
+              phone: dto.phone,
+              role: UserRole.ORGANIZER_OWNER,
+              organizerId: organizer.id,
+            },
+          });
+
+          if (activeTerms) {
+            await tx.termsAcceptance.create({
+              data: {
+                termsVersionId: activeTerms.id,
+                userId: user.id,
+                ipAddress,
+                userAgent,
+              },
+            });
+          }
+
+          return { organizer, user };
         });
+        break;
+      } catch (e) {
+        // Retry LEN pri kolízii slugu – kolízia e-mailu musí vybublať ako konflikt.
+        if (attempt < SLUG_MAX_ATTEMPTS && isSlugUniqueViolation(e)) continue;
+        throw e;
       }
-
-      return { organizer, user };
-    });
+    }
 
     return this.issueTokenPair(result.user.id, result.user.email, result.user.role, result.user.organizerId);
+  }
+
+  /** Prvý voľný slug v poradí base, base-2, base-3, … */
+  private async findFreeSlug(base: string): Promise<string> {
+    for (let i = 1; i <= SLUG_MAX_ATTEMPTS; i++) {
+      const candidate = i === 1 ? base : `${base}-${i}`;
+      const taken = await this.prisma.organizer.findUnique({
+        where: { slug: candidate },
+        select: { id: true },
+      });
+      if (!taken) return candidate;
+    }
+    return `${base}-${randomBytes(3).toString('hex')}`;
   }
 
   async login(dto: LoginDto) {

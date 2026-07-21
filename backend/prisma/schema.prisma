@@ -146,7 +146,7 @@ enum CouponScope {
 model Organizer {
   id               String          @id @default(cuid())
   name             String
-  slug             String          @unique  // used in URLs
+  slug             String          @unique  // auto-generated from name at registration; reserved for a future public organizer profile (not used in any URL today)
   email            String          @unique
   phone            String?
 

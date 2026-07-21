@@ -97,7 +97,6 @@ export interface RegisterOrganizerPayload {
   firstName: string;
   lastName: string;
   organizerName: string;
-  organizerSlug: string;
   phone?: string;
   acceptTerms: true;
 }
