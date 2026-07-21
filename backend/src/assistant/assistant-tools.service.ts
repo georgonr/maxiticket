@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as QRCode from 'qrcode';
 import { OrderStatus, TicketStatus } from '@prisma/client';
+import { qrOptions } from '../common/qr.constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { OrdersQueryService } from '../orders/orders-query.service';
@@ -168,7 +169,7 @@ export class AssistantToolsService {
       tickets.map(async (t) => ({
         ticketId: t.id,
         label: [t.seatSection, t.seatRow, t.seatNumber].filter(Boolean).join(' ') || '…' + t.id.slice(-4).toUpperCase(),
-        dataUrl: await QRCode.toDataURL(t.qrToken, { width: 240, margin: 2 }),
+        dataUrl: await QRCode.toDataURL(t.qrToken, qrOptions(240)),
       })),
     );
     return {
