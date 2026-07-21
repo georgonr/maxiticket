@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
-import { qrOptions } from '../common/qr.constants';
+import { qrOptions, QR_PRINT_WIDTH } from '../common/qr.constants';
 import {
   MailLocale, normalizeMailLocale, mailMessages, mailFormatDate, mailFormatPrice, mailFormatDateShort,
 } from './mail-i18n';
@@ -99,7 +99,7 @@ export class MailService {
     const ticketHtmlParts: string[] = [];
 
     for (const ticket of data.tickets) {
-      const qrPng = await QRCode.toBuffer(ticket.qrToken, qrOptions(300));
+      const qrPng = await QRCode.toBuffer(ticket.qrToken, qrOptions(QR_PRINT_WIDTH));
       const cidKey = `qr_${ticket.id}`;
 
       attachments.push({ filename: `qr_${ticket.id}.png`, content: qrPng, cid: cidKey });
@@ -247,7 +247,7 @@ export class MailService {
   async renderTicketPdf(data: TicketEmailData, ticketId: string): Promise<Buffer> {
     const ticket = data.tickets.find((t) => t.id === ticketId);
     if (!ticket) throw new NotFoundException('Ticket not found');
-    const qrPng = await QRCode.toBuffer(ticket.qrToken, qrOptions(300));
+    const qrPng = await QRCode.toBuffer(ticket.qrToken, qrOptions(QR_PRINT_WIDTH));
     const locale = normalizeMailLocale(data.locale);
     return this.generateTicketPdf({ ...data, ticket, qrPng }, locale);
   }

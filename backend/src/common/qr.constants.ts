@@ -15,8 +15,17 @@ export const QR_LIGHT = '#FFFFFF';
 export const QR_MARGIN = 4;
 
 /**
+ * Zdrojové rozlíšenie QR pre e-mail a PDF lístok.
+ *
+ * PDF kreslí QR na fixných 130 bodov (~45,9 mm) cez doc.image(), takže `width`
+ * neovplyvňuje fyzickú veľkosť – len rozlíšenie. 600 px na 130 bodoch vychádza
+ * na ~332 ppi, teda nad tlačovým ideálom 300 ppi (pri 300 px to bolo ~166 ppi).
+ */
+export const QR_PRINT_WIDTH = 600;
+
+/**
  * Options pre QRCode.toBuffer / toDataURL. `width` sa líši podľa použitia
- * (mail/PDF 300, AI chat 240), zvyšok je spoločný.
+ * (mail/PDF QR_PRINT_WIDTH, AI chat 240), zvyšok je spoločný.
  */
 export function qrOptions(width: number) {
   return {
