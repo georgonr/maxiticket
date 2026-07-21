@@ -6,6 +6,7 @@ import { useTranslations, useFormatter } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { publicApi, PublicShow } from '@/lib/api';
+import { SHOW_CATEGORIES } from '@/lib/show-categories';
 import { HeroSlider } from '@/components/public/HeroSlider';
 import { EventCard, EventCardSkeleton } from '@/components/events/EventCard';
 import {
@@ -24,15 +25,22 @@ const DATE_CHIPS = [
   { value: 'weekend', labelKey: 'dateWeekend' },
 ];
 
-// `value` is the API filter value (do NOT translate); `labelKey` is the UI label key.
+// Ikony k pevným kategóriám. Zoznam samotný žije v @/lib/show-categories
+// (jeden zdroj pre filter aj pre formuláre tvorby/editácie podujatia).
+const CATEGORY_ICONS: Record<string, typeof Music> = {
+  'Koncerty': Music,
+  'Festivaly': Users,
+  'Šport': Dumbbell,
+  'Konferencie': Briefcase,
+  'Divadlo': Drama,
+  'Ostatné': Sparkles,
+};
+
+// `value` je hodnota pre API filter (NEPREKLADÁ sa); `labelKey` je kľúč UI labelu.
+// Pseudo-položka "Všetko" (value '') existuje len vo filtri, nie pri tvorbe podujatia.
 const FIXED_CATEGORIES = [
-  { value: '',            labelKey: 'cat.all',         Icon: Star },
-  { value: 'Koncerty',    labelKey: 'cat.concerts',    Icon: Music },
-  { value: 'Festivaly',   labelKey: 'cat.festivals',   Icon: Users },
-  { value: 'Šport',       labelKey: 'cat.sport',       Icon: Dumbbell },
-  { value: 'Konferencie', labelKey: 'cat.conferences', Icon: Briefcase },
-  { value: 'Divadlo',     labelKey: 'cat.theatre',     Icon: Drama },
-  { value: 'Ostatné',     labelKey: 'cat.other',       Icon: Sparkles },
+  { value: '', labelKey: 'cat.all', Icon: Star },
+  ...SHOW_CATEGORIES.map(({ value, labelKey }) => ({ value, labelKey, Icon: CATEGORY_ICONS[value] })),
 ];
 
 function toDateStr(iso: string) {
@@ -56,7 +64,6 @@ function EventsPageInner() {
   const [shows, setShows]           = useState<PublicShow[]>([]);
   const [loading, setLoading]       = useState(true);
   const [cities, setCities]         = useState<string[]>([]);
-  const [extraCats, setExtraCats]   = useState<string[]>([]);
   // Filtre sa inicializujú z URL query (zdieľateľné/refreshnuteľné, handoff z homepage heró).
   const [filterCat, setFilterCat]   = useState(() => sp.get('category') ?? '');
   const [filterDate, setFilterDate] = useState(() => sp.get('date') ?? '');
@@ -66,10 +73,10 @@ function EventsPageInner() {
   const [view, setView]             = useState<'grid' | 'calendar'>('grid');
 
   useEffect(() => {
+    // Kategórie z facetov už nečítame – filter ukazuje len pevný zoznam.
+    // Voľné hodnoty sú zmigrované a backend ich cez @IsIn viac neprijme.
     publicApi.getFilters().then((f) => {
       setCities(f.cities ?? []);
-      const fixedVals = FIXED_CATEGORIES.map((c) => c.value).filter(Boolean);
-      setExtraCats((f.categories ?? []).filter((c) => !fixedVals.includes(c)));
     }).catch(() => {});
   }, []);
 
@@ -105,11 +112,11 @@ function EventsPageInner() {
     window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
   }, [filterQ, filterCat, filterCity, filterDate]);
 
-  const allCategories = [
-    // Fixed categories: translate label via labelKey. Extra (DB) categories: keep raw value as label.
-    ...FIXED_CATEGORIES.map(({ value, labelKey, Icon }) => ({ value, label: t(labelKey), Icon })),
-    ...extraCats.map((c) => ({ value: c, label: c, Icon: Sparkles })),
-  ];
+  const allCategories = FIXED_CATEGORIES.map(({ value, labelKey, Icon }) => ({
+    value,
+    label: t(labelKey),
+    Icon,
+  }));
 
   return (
     <div className="-mx-4 sm:-mx-6">

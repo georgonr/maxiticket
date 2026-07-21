@@ -8,6 +8,7 @@ import { getValidToken } from '@/lib/auth';
 import { showsApi, CreateShowBody } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CategorySelect } from '@/components/shows/CategorySelect';
 import { Textarea } from '@/components/ui/textarea';
 
 function toSlug(value: string): string {
@@ -78,10 +79,12 @@ export default function NewShowPage() {
             value={form.slug} onChange={handleSlugChange}
             placeholder={t('placeholderSlug')}
           />
-          <Input
-            id="category" label={t('labelCategory')}
-            value={form.category ?? ''} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+          <CategorySelect
+            label={t('labelCategory')}
             placeholder={t('placeholderCategory')}
+            invalidSuffix={t('categoryInvalid')}
+            value={form.category}
+            onChange={(v) => setForm((f) => ({ ...f, category: v }))}
           />
           <Textarea
             id="description" label={t('labelDescription')}
