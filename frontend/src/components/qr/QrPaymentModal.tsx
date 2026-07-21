@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import QRCode from 'qrcode';
 import { X, Download, Printer, Copy, Check, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { QrCodeBox, QR_DARK, QR_LIGHT, QR_MARGIN } from './QrCodeBox';
 
 const QR_BASE = 'https://ticketall.eu/q';
 const MAX_QTY = 10;
+/** Zobrazená veľkosť QR – POS QR skenujú zákazníci z displeja, drž ho veľký. */
+const QR_DISPLAY = 260;
 
 /**
  * Modal s QR kódom pre rýchly nákup (scan-to-buy) daného GA typu lístka.
@@ -22,20 +26,19 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, initialQty, showQ
   onClose: () => void;
 }) {
   const t = useTranslations('qrCheckout');
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [qty, setQty] = useState(Math.min(MAX_QTY, Math.max(1, initialQty ?? 1)));
+  const [mounted, setMounted] = useState(false);
 
   const url = `${QR_BASE}/${ticketTypeId}${qty > 1 ? `?qty=${qty}` : ''}`;
 
-  useEffect(() => {
-    if (canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, url, { width: 260, margin: 2, color: { dark: '#111827', light: '#ffffff' } }).catch(() => {});
-    }
-  }, [url]);
+  useEffect(() => setMounted(true), []);
+
+  /** Farby držíme explicitne (nie defaulty knižnice) – rovnaký kontrakt ako QrCodeBox. */
+  const exportOpts = { width: 1024, margin: QR_MARGIN, color: { dark: QR_DARK, light: QR_LIGHT } };
 
   async function download() {
-    const dataUrl = await QRCode.toDataURL(url, { width: 1024, margin: 2 });
+    const dataUrl = await QRCode.toDataURL(url, exportOpts);
     const a = document.createElement('a');
     a.href = dataUrl;
     a.download = `qr-${ticketTypeName.replace(/\s+/g, '-').toLowerCase()}${qty > 1 ? `-${qty}x` : ''}.png`;
@@ -43,7 +46,7 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, initialQty, showQ
   }
 
   async function print() {
-    const dataUrl = await QRCode.toDataURL(url, { width: 1024, margin: 2 });
+    const dataUrl = await QRCode.toDataURL(url, exportOpts);
     const w = window.open('', '_blank');
     if (!w) return;
     w.document.write(`<html><head><title>QR – ${ticketTypeName}</title></head>
@@ -60,8 +63,16 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, initialQty, showQ
     navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+  if (!mounted) return null;
+
+  /*
+    Render cez PORTÁL do document.body – rovnaký bezpečný vzor ako QrTicketShare
+    a EventCard QrModal. CSS opacity/filter/transform na ktoromkoľvek predkovi
+    (POS zoznam lístkov, vypredané dlaždice) sa dedí na celý podstrom vrátane
+    position:fixed a spravil by QR polopriehľadným, teda nenaskenovateľným.
+  */
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true">
       <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('modalTitle')}</h3>
@@ -83,8 +94,9 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, initialQty, showQ
           </div>
         )}
 
+        {/* QR ostáva čisto čierno-biely a nepriehľadný aj keď je panel v dark režime. */}
         <div className="flex justify-center">
-          <canvas ref={canvasRef} className="rounded-lg border border-gray-200 dark:border-gray-700" />
+          <QrCodeBox value={url} size={QR_DISPLAY} />
         </div>
 
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
@@ -97,6 +109,7 @@ export function QrPaymentModal({ ticketTypeId, ticketTypeName, initialQty, showQ
           <Button variant="outline" onClick={print}><Printer size={15} className="mr-1.5" /> {t('print')}</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
