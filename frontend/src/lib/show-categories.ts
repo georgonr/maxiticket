@@ -27,3 +27,12 @@ export const SHOW_CATEGORY_VALUES: readonly string[] = SHOW_CATEGORIES.map((c) =
 export function isFixedCategory(value: string | null | undefined): boolean {
   return !!value && SHOW_CATEGORY_VALUES.includes(value);
 }
+
+/**
+ * i18n kľúč (namespace `events`) pre hodnotu kategórie z DB, alebo null ak
+ * hodnota nie je v pevnom zozname. Volajúci v takom prípade zobrazí surovú
+ * hodnotu – po migrácii by to nemalo nastať, ale badge nikdy nemá zmiznúť.
+ */
+export function categoryLabelKey(value: string | null | undefined): string | null {
+  return SHOW_CATEGORIES.find((c) => c.value === value)?.labelKey ?? null;
+}

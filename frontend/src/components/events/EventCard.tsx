@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { PublicShow, PublicTermin } from '@/lib/api';
 import { QrCodeBox } from '@/components/qr/QrCodeBox';
+import { categoryLabelKey } from '@/lib/show-categories';
 
 /**
  * Zjednotená karta podujatia (C3 blok 1A) – jeden zdroj pre homepage
@@ -30,6 +31,11 @@ export function EventCard({ show }: { show: PublicShow }) {
   const [copied, setCopied]       = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const termin: PublicTermin | undefined = show.termins[0];
+
+  // Kategória sa v DB drží ako kanonický SK string – zobrazujeme lokalizovaný
+  // label. Fallback na surovú hodnotu, aby badge nezmizol pri hodnote mimo zoznamu.
+  const categoryKey = categoryLabelKey(show.category);
+  const categoryLabel = categoryKey ? t(categoryKey) : show.category;
 
   const eventUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/events/${show.slug}`
@@ -90,7 +96,7 @@ export function EventCard({ show }: { show: PublicShow }) {
 
           {show.category && (
             <span className="pointer-events-none absolute top-3 left-3 z-10 rounded-full bg-black/50 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-              {show.category}
+              {categoryLabel}
             </span>
           )}
 

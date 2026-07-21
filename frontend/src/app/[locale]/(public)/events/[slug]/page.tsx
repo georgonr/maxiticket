@@ -8,6 +8,7 @@ import { publicApi, PublicShowDetail, PublicTerminDetail, PublicSeatSection } fr
 import { setCart, Cart, CartItem } from '@/lib/cart';
 import { SeatPicker } from '@/components/seatmaps/SeatPicker';
 import { QrTicketShare } from '@/components/qr/QrTicketShare';
+import { categoryLabelKey } from '@/lib/show-categories';
 import { ProtectBadge } from '@/components/public/ProtectBadge';
 import {
   Calendar, MapPin, Clock, Loader2, Plus, Minus, ShoppingCart,
@@ -19,6 +20,8 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
   const { slug } = params;
   const router = useRouter();
   const t = useTranslations('eventDetail');
+  // cat.* kľúče žijú v namespace `events` (zdieľané s filtrom na /events).
+  const tc = useTranslations('events');
   const format = useFormatter();
 
   const [show, setShow]                   = useState<PublicShowDetail | null>(null);
@@ -294,7 +297,8 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                   {show.category && (
                     <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-coral/15 px-2.5 py-0.5 text-xs font-medium text-coral">
                       <Tag size={11} />
-                      {show.category}
+                      {/* Lokalizovaný label; fallback na surovú hodnotu mimo pevného zoznamu. */}
+                      {categoryLabelKey(show.category) ? tc(categoryLabelKey(show.category)!) : show.category}
                     </span>
                   )}
                   <h1 className="text-2xl font-bold text-slate-900 leading-tight">{show.name}</h1>
