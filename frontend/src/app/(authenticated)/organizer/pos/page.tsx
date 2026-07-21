@@ -12,7 +12,7 @@ import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
 import { localizeApiError } from '@/lib/api-error';
 import { posApi, PosTermin, PosOrderResult, PosSummary } from '@/lib/api/pos';
-import { QrCanvas } from '@/components/pos/QrCanvas';
+import { QrCodeBox } from '@/components/qr/QrCodeBox';
 import { QrPaymentModal } from '@/components/qr/QrPaymentModal';
 
 type Step = 'termin' | 'tickets' | 'payment' | 'done';
@@ -347,7 +347,7 @@ export default function PosPage() {
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {result.tickets.map((t, i) => (
                   <div key={t.ticketId} className="flex flex-col items-center gap-1">
-                    <QrCanvas value={t.qrToken} size={150} />
+                    <QrCodeBox value={t.qrToken} size={150} />
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t.ticketTypeName}</span>
                     <span className="font-mono text-[10px] text-gray-400 dark:text-gray-500">…{t.ticketId.slice(-4).toUpperCase()}</span>
                   </div>
@@ -384,7 +384,7 @@ export default function PosPage() {
         <div className="hidden print:block">
           {result.tickets.map((t) => (
             <div key={`print-${t.ticketId}`} className="flex break-inside-avoid items-center gap-6 border-b border-gray-300 dark:border-gray-700 p-6">
-              <QrCanvas value={t.qrToken} size={180} />
+              <QrCodeBox value={t.qrToken} size={180} />
               <div className="space-y-1">
                 <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{selected.showName}</div>
                 <div className="text-gray-700 dark:text-gray-200">{fmtDate(selected.startsAt)}</div>

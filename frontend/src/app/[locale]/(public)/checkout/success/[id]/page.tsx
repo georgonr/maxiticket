@@ -7,7 +7,7 @@ import { ordersApi, publicApi, Order, GuestTickets } from '@/lib/api';
 import { getValidToken } from '@/lib/auth';
 import { CheckCircle2, Ticket, Mail, Loader2, Clock, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { QrCanvas } from '@/components/pos/QrCanvas';
+import { QrCodeBox } from '@/components/qr/QrCodeBox';
 
 const POLL_INTERVAL_MS = 2500;
 const POLL_MAX_ATTEMPTS = 40; // ~100 s
@@ -163,7 +163,7 @@ export default function SuccessPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="flex flex-col items-center px-5 py-6">
                   <div className="rounded-xl bg-gray-50 p-3 shadow-inner">
-                    <QrCanvas value={tk.qrToken} size={220} />
+                    <QrCodeBox value={tk.qrToken} size={220} />
                   </div>
                   <p className="mt-3 font-mono text-xs text-gray-400">{tk.id.slice(-12).toUpperCase()}</p>
                   <p className="mt-1 text-xs text-gray-400">{t('showQrAtEntry')}</p>

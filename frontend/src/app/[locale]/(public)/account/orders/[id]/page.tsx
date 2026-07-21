@@ -10,7 +10,7 @@ import { getValidToken } from '@/lib/auth';
 import { localizeApiError } from '@/lib/api-error';
 import { usePublicAuth } from '@/lib/public-auth';
 import { accountApi, AccountOrderDetail } from '@/lib/api/account';
-import { QrCanvas } from '@/components/pos/QrCanvas';
+import { QrCodeBox } from '@/components/qr/QrCodeBox';
 
 const STATUS_CLS: Record<string, string> = {
   PAID: 'bg-emerald-50 text-emerald-700',
@@ -237,7 +237,7 @@ export default function AccountOrderDetailPage() {
               const tsCls = TICKET_STATUS_CLS[tk.status] ?? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
               return (
                 <div key={tk.ticketId} className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
-                  <QrCanvas value={tk.qrToken} size={140} />
+                  <QrCodeBox value={tk.qrToken} size={140} />
                   <span className="font-mono text-xs text-slate-400 dark:text-slate-500">{tk.maskedCode}</span>
                   <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-medium', tsCls)}>{tsLabel}</span>
                 </div>

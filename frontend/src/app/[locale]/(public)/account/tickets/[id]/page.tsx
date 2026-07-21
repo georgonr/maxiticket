@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useFormatter } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -8,7 +8,7 @@ import { myApi, MyTicket } from '@/lib/api';
 import { getValidToken } from '@/lib/auth';
 import { usePublicAuth } from '@/lib/public-auth';
 import { Calendar, MapPin, ArrowLeft, Loader2, Clock } from 'lucide-react';
-import QRCode from 'qrcode';
+import { QrCodeBox } from '@/components/qr/QrCodeBox';
 
 export default function TicketPage({ params }: { params: { id: string } }) {
   const t = useTranslations('account');
@@ -18,7 +18,6 @@ export default function TicketPage({ params }: { params: { id: string } }) {
   const { isLoggedIn, isLoading } = usePublicAuth();
   const [ticket, setTicket] = useState<MyTicket | null>(null);
   const [loading, setLoading] = useState(true);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -35,16 +34,6 @@ export default function TicketPage({ params }: { params: { id: string } }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id, isLoggedIn]);
-
-  // Render QR code to canvas
-  useEffect(() => {
-    if (!ticket || !canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, ticket.qrToken, {
-      width: 280,
-      margin: 2,
-      color: { dark: '#111827', light: '#ffffff' },
-    }).catch(console.error);
-  }, [ticket]);
 
   if (isLoading || loading) {
     return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-indigo-600" size={32} /></div>;
@@ -90,10 +79,16 @@ export default function TicketPage({ params }: { params: { id: string } }) {
 
         {/* QR Code */}
         <div className="flex flex-col items-center px-5 py-6">
+          {/*
+            QR sa reálne skenuje pri vstupe – QrCodeBox drží čiernu na bielej
+            s vlastnou bielou quiet zone, takže rámovanie podľa statusu (ani
+            dark téma) nezasahuje do skenovateľnosti. opacity-60 pri už
+            použitom lístku je zámerné (nemá sa dať naskenovať znova).
+          */}
           <div className={`rounded-xl p-3 shadow-inner ${
             ticket.status === 'VALID' ? 'bg-gray-50 dark:bg-gray-900' : 'bg-red-50 opacity-60'
           }`}>
-            <canvas ref={canvasRef} className="block" />
+            <QrCodeBox value={ticket.qrToken} size={280} />
           </div>
           {ticket.status !== 'VALID' && (
             <p className="mt-3 text-sm font-medium text-red-600">{t('ticketUsed')}</p>
