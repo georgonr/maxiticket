@@ -121,6 +121,14 @@ interface MailStrings {
     intro: string; numberLabel: string; totalLabel: string; dueLabel: string;
     body: string; footer: string;
   };
+  // Krok 32: helpdeskové odpovede. Predmet si stavia volajúci (helpdeskSubject),
+  // tu sú len texty okolo tela správy.
+  helpdesk: {
+    replyHint: string;
+    keepSubject: string;
+    ticketLabel: string;
+    linkLabel: string;
+  };
 }
 
 export const mailMessages: Record<MailLocale, MailStrings> = {
@@ -264,6 +272,12 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       body: 'Faktúru nájdete ako PDF prílohu tohto e-mailu. Pri úhrade uveďte číslo faktúry ako variabilný symbol.',
       footer: 'Tento e-mail je určený organizátorovi. V prípade otázok nás kontaktujte.',
     },
+    helpdesk: {
+      replyHint: 'Odpovedzte na tento e-mail a vaša správa sa pridá k požiadavke.',
+      keepSubject: 'Prosíme, nemeňte predmet e-mailu.',
+      ticketLabel: 'Tiket',
+      linkLabel: 'ticketall.eu',
+    },
   },
   en: {
     tickets: {
@@ -405,6 +419,12 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       body: 'The invoice is attached as a PDF. When paying, please use the invoice number as the payment reference.',
       footer: 'This e-mail is intended for the organizer. Contact us if you have any questions.',
     },
+    helpdesk: {
+      replyHint: 'Reply to this e-mail and your message will be added to the request.',
+      keepSubject: 'Please do not change the e-mail subject.',
+      ticketLabel: 'Ticket',
+      linkLabel: 'ticketall.eu',
+    },
   },
   cs: {
     tickets: {
@@ -545,6 +565,12 @@ export const mailMessages: Record<MailLocale, MailStrings> = {
       dueLabel: 'Splatnost:',
       body: 'Fakturu najdete jako PDF přílohu tohoto e-mailu. Při úhradě uveďte číslo faktury jako variabilní symbol.',
       footer: 'Tento e-mail je určen pořadateli. V případě dotazů nás kontaktujte.',
+    },
+    helpdesk: {
+      replyHint: 'Odpovězte na tento e-mail a vaše zpráva se přidá k požadavku.',
+      keepSubject: 'Prosíme, neměňte předmět e-mailu.',
+      ticketLabel: 'Tiket',
+      linkLabel: 'ticketall.eu',
     },
   },
 };

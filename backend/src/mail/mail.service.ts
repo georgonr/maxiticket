@@ -5,6 +5,7 @@ import * as QRCode from 'qrcode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { qrOptions, QR_PRINT_WIDTH } from '../common/qr.constants';
+import { renderEmailLayout, textToHtml, escapeHtmlForMail } from './email-layout.helper';
 import {
   MailLocale, normalizeMailLocale, mailMessages, mailFormatDate, mailFormatPrice, mailFormatDateShort,
 } from './mail-i18n';
@@ -748,20 +749,44 @@ export class MailService {
     to: string;
     subject: string;
     text: string;
+    /** Jazyk tiketu – texty okolo tela sa berú z mailMessages[locale].helpdesk. */
+    locale?: string;
+    /** Číslo tiketu do pätičky (HD-00001). */
+    ticketNumber?: string;
     messageId?: string;
     inReplyTo?: string;
     references?: string | string[];
   }): Promise<{ ok: boolean; messageId?: string; error?: string }> {
     const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
-    const replyHint = 'Odpovedzte na tento e-mail a vaša správa sa pridá k požiadavke.';
+    const locale = normalizeMailLocale(data.locale);
+    const m = mailMessages[locale].helpdesk;
+    const baseUrl = this.config.get('EMAIL_BASE_URL') ?? 'https://ticketall.eu';
+    const ticketLine = data.ticketNumber ? `${m.ticketLabel}: ${data.ticketNumber}` : null;
 
-    const text = `${data.text}\n\n---\n${replyHint}\n\nTicketAll\n`;
-    const html = `
-<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-  <div style="white-space:pre-wrap;color:#374151;font-size:15px;line-height:1.6;">${this.escapeHtml(data.text)}</div>
-  <p style="color:#6b7280;font-size:13px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">${replyHint}</p>
-  <p style="color:#9ca3af;font-size:11px;margin-top:12px;">TicketAll</p>
-</body></html>`;
+    // text/plain musí niesť to isté čo HTML – klienti bez HTML nesmú prísť
+    // o výzvu odpovedať ani o upozornenie na predmet.
+    const text = [
+      data.text,
+      '',
+      '---',
+      m.replyHint,
+      m.keepSubject,
+      ...(ticketLine ? [ticketLine] : []),
+      '',
+      `TicketAll · ${baseUrl}`,
+      '',
+    ].join('\n');
+
+    const html = renderEmailLayout({
+      bodyHtml: textToHtml(data.text),
+      noteHtml: `${escapeHtmlForMail(m.replyHint)}<br/><strong>${escapeHtmlForMail(m.keepSubject)}</strong>`,
+      footerLines: [
+        ...(ticketLine ? [escapeHtmlForMail(ticketLine)] : []),
+        'TicketAll',
+      ],
+      linkUrl: baseUrl,
+      linkLabel: m.linkLabel,
+    });
 
     try {
       const info = await this.transporter.sendMail({
@@ -782,11 +807,4 @@ export class MailService {
     }
   }
 
-  private escapeHtml(s: string): string {
-    return s
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
 }

@@ -148,6 +148,8 @@ export class HelpdeskService {
       to: ticket.customerEmail,
       subject: helpdeskSubject(ticket.ticketNumber, ticket.subject),
       text: body,
+      locale: ticket.locale,
+      ticketNumber: ticket.ticketNumber,
       inReplyTo,
       references: references.length > 0 ? references : undefined,
     });
