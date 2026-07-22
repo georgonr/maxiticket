@@ -778,6 +778,7 @@ export class MailService {
     ].join('\n');
 
     const html = renderEmailLayout({
+      baseUrl,
       bodyHtml: textToHtml(data.text),
       noteHtml: `${escapeHtmlForMail(m.replyHint)}<br/><strong>${escapeHtmlForMail(m.keepSubject)}</strong>`,
       footerLines: [

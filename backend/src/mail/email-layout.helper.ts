@@ -1,7 +1,7 @@
 /**
  * Zdieľaný HTML layout pre e-maily (krok 32).
  *
- * Farby a hlavička sú prevzaté z existujúcich šablón sendTickets/sendInvoice,
+ * Farebná paleta je prevzatá z existujúcich šablón sendTickets/sendInvoice,
  * aby helpdesk nezaviedol druhý vizuálny štýl. Nič sa nevymýšľalo nanovo.
  *
  * PRAVIDLÁ E-MAILOVÉHO HTML (nie je to web):
@@ -10,11 +10,10 @@
  *  - šírka 600 px, vycentrované, s tabuľkou na 100 % ako pozadím
  *  - font-family so systémovým fallbackom
  *
- * HLAVIČKA JE TEXTOVÝ WORDMARK, NIE OBRÁZOK – zámerne. Vo frontend/public
- * neexistuje žiadny použiteľný PNG s logom (všetky logá sú SVG, ktoré Gmail
- * nezobrazí, a icons/icon-*.png sú 69-bajtové placeholdery).
- * Až keď pribudne skutočný PNG, stačí sem doplniť <img> s absolútnou URL,
- * pevnou šírkou a alt textom.
+ * LOGO je PNG cez absolútnu URL (frontend/public/logo-email.png, 360×79,
+ * zobrazené na 180 px = 2× pre retina). Zámerne NIE SVG – Gmail ho nezobrazí.
+ * Má alt text s názvom značky, pevnú šírku a display:block, aby sa layout
+ * nerozsypal, keď klient obrázky blokuje.
  */
 
 /** Farby zhodné s sendTickets/sendInvoice. */
@@ -42,6 +41,8 @@ export function textToHtml(s: string): string {
 }
 
 export interface EmailLayoutOptions {
+  /** Základná URL webu – z nej sa skladá absolútna adresa loga. */
+  baseUrl: string;
   /** Hlavný obsah – už hotové HTML (volajúci si ho escapuje sám). */
   bodyHtml: string;
   /** Zvýraznená poznámka nad pätičkou (napr. výzva odpovedať). */
@@ -78,9 +79,7 @@ export function renderEmailLayout(o: EmailLayoutOptions): string {
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="border-collapse:collapse;width:600px;max-width:600px;background-color:#ffffff;border:1px solid ${MAIL_BORDER};border-radius:12px;">
 
       <tr><td align="center" style="padding:28px 32px 20px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-          <tr><td style="background-color:${MAIL_TEAL};border-radius:8px;padding:8px 16px;font-family:${FONT};font-size:18px;font-weight:700;color:#ffffff;">TicketAll</td></tr>
-        </table>
+        <img src="${o.baseUrl.replace(/\/$/, '')}/logo-email.png" width="180" alt="TicketAll" style="display:block;border:0;outline:none;text-decoration:none;width:180px;max-width:180px;height:auto;"/>
       </td></tr>
 
       <tr><td style="padding:0 32px 20px;font-family:${FONT};font-size:15px;line-height:23px;color:${MAIL_TEXT};">
