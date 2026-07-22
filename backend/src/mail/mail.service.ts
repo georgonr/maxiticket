@@ -727,4 +727,64 @@ export class MailService {
     });
     this.logger.log(`Refund rejected email sent to ${data.to} (order ${data.orderNumber})`);
   }
+
+  /**
+   * Helpdesk (krok 28) – jediná generická metóda, ktorá berie hotový predmet
+   * a e-mailové hlavičky. Ostatné metódy si predmet skladajú samy z mailMessages
+   * a threading neriešia; tu ho potrebujeme, lebo odpoveď zákazníka musíme
+   * spárovať späť s tiketom.
+   *
+   * Predmet stavia volajúci cez helpdeskSubject() (helpdesk-number.service.ts),
+   * vrátane značky [HD-00001]. Tu sa zámerne needituje – KROK 3 parsuje presne
+   * to, čo odtiaľto odišlo.
+   *
+   * NEHÁDŽE. Odoslanie odpovede nesmie zhodiť request, ktorý ju vyvolal; chybu
+   * vracia volajúcemu, nech sa rozhodne (retry, príznak v DB, upozornenie
+   * operátorovi). Toto je vedomý rozdiel oproti sendTickets a spol.
+   */
+  async sendHelpdeskReply(data: {
+    to: string;
+    subject: string;
+    text: string;
+    messageId?: string;
+    inReplyTo?: string;
+    references?: string | string[];
+  }): Promise<{ ok: boolean; messageId?: string; error?: string }> {
+    const from = this.config.get('MAIL_FROM', 'TicketAll <noreply@ticketall.eu>');
+    const replyHint = 'Odpovedzte na tento e-mail a vaša správa sa pridá k požiadavke.';
+
+    const text = `${data.text}\n\n---\n${replyHint}\n\nTicketAll\n`;
+    const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"/></head><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+  <div style="white-space:pre-wrap;color:#374151;font-size:15px;line-height:1.6;">${this.escapeHtml(data.text)}</div>
+  <p style="color:#6b7280;font-size:13px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;">${replyHint}</p>
+  <p style="color:#9ca3af;font-size:11px;margin-top:12px;">TicketAll</p>
+</body></html>`;
+
+    try {
+      const info = await this.transporter.sendMail({
+        from,
+        to: data.to,
+        subject: data.subject,
+        text,
+        html,
+        ...(data.messageId && { messageId: data.messageId }),
+        ...(data.inReplyTo && { inReplyTo: data.inReplyTo }),
+        ...(data.references && { references: data.references }),
+      });
+      this.logger.log(`Helpdesk reply sent to ${data.to} (${data.subject})`);
+      return { ok: true, messageId: info.messageId };
+    } catch (e: any) {
+      this.logger.error(`Helpdesk reply to ${data.to} failed: ${e.message}`);
+      return { ok: false, error: e.message };
+    }
+  }
+
+  private escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 }

@@ -1199,7 +1199,7 @@ model TelegramConfig {
 // ticketNumber (HD-00001) sa NEodvodzuje z count() ako orderNumber – po zmazaní
 // riadku by sa číslo recyklovalo a to isté číslo by dostali dvaja zákazníci do
 // e-mailu, čo rozbije aj párovanie odpovedí podľa [HD-…] v predmete.
-// Zdrojom je Postgres sekvencia ticket_number_seq.
+// Zdrojom je Postgres sekvencia helpdesk_ticket_number_seq.
 // ─────────────────────────────────────────────
 
 enum HelpdeskStatus {
