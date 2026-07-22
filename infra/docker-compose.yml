@@ -70,6 +70,13 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # AI konverzácie – Telegram notifikácie (token je secret; chatId/enabled v DB).
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      # Helpdesk IMAP poller (krok 29). Bez HELPDESK_ENABLED=true sa vôbec nespustí.
+      HELPDESK_ENABLED: ${HELPDESK_ENABLED:-false}
+      HELPDESK_IMAP_HOST: ${HELPDESK_IMAP_HOST:-}
+      HELPDESK_IMAP_PORT: ${HELPDESK_IMAP_PORT:-993}
+      HELPDESK_IMAP_USER: ${HELPDESK_IMAP_USER:-}
+      HELPDESK_IMAP_PASS: ${HELPDESK_IMAP_PASS:-}
+      HELPDESK_IMAP_POLL_SEC: ${HELPDESK_IMAP_POLL_SEC:-60}
       # Fakturačný systém (krok 13b) – DODÁVATEĽ na faktúre. Placeholdery – účtovník vyplní.
       PLATFORM_LEGAL_NAME: ${PLATFORM_LEGAL_NAME:-}
       PLATFORM_ICO: ${PLATFORM_ICO:-}

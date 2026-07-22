@@ -24,6 +24,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AssistantModule } from './assistant/assistant.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { HelpdeskModule } from './helpdesk/helpdesk.module';
 import { HeroBannersModule } from './hero-banners/hero-banners.module';
 import { ScanModule } from './scan/scan.module';
 import { PlatformInfoModule } from './platform-info/platform-info.module';
@@ -74,6 +75,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     SeatmapsModule,
     AssistantModule,
     TelegramModule,
+    HelpdeskModule,
     EkasaModule,
   ],
   controllers: [HealthController],

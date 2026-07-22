@@ -1269,3 +1269,16 @@ model HelpdeskMessage {
   @@index([ticketId, createdAt])
   @@index([emailInReplyTo])
 }
+
+/// UID kurzor IMAP pollera (krok 29). Jeden riadok na mailbox.
+/// Schránka info@ticketall.eu je bežná firemná pošta, nie vyhradený helpdesk –
+/// poller ju otvára READ-ONLY a NIKDY nemení (žiadne MOVE/DELETE/\Seen).
+/// Posun teda nedrží stav správ, ale výhradne tento kurzor.
+/// uidValidity strážime preto, lebo pri jeho zmene server prečísluje UID a
+/// starý lastUid by ukazoval na úplne iné správy.
+model HelpdeskMailState {
+  mailbox     String   @id            // napr. "INBOX"
+  lastUid     Int      @default(0)
+  uidValidity BigInt?                 // IMAP UIDVALIDITY, mimo rozsah Int
+  updatedAt   DateTime @updatedAt
+}
