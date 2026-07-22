@@ -6,6 +6,7 @@ import { simpleParser, ParsedMail } from 'mailparser';
 import { PrismaService } from '../prisma/prisma.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { TICKET_NUMBER_RE } from './helpdesk-number.service';
+import { adminUrl } from '../common/admin-url';
 
 const MAILBOX = 'INBOX';
 const INTERVAL_NAME = 'helpdesk-imap-poll';
@@ -356,7 +357,7 @@ export class HelpdeskMailService implements OnModuleInit, OnModuleDestroy {
    * Vzor je prevzatý z conversation-closer.notify(): emoji + <b>titulok</b>,
    * riadky s kontextom, prázdny riadok, na konci <a href>Otvoriť v admin</a>,
    * odosielané s parseMode HTML a vypnutým náhľadom odkazu. Základ URL je
-   * ADMIN_BASE_URL, rovnako ako pri konverzáciách – žiadny druhý formát.
+   * APP_BASE_URL cez adminUrl(), rovnako ako pri konverzáciách – žiadny druhý formát.
    *
    * Verejné a parametrizované titulkom preto, aby KROK 5 (eskalácia z chatu)
    * poslal notifikáciu o NOVOM tikete v presne rovnakom tvare.
@@ -368,11 +369,7 @@ export class HelpdeskMailService implements OnModuleInit, OnModuleDestroy {
     customerEmail: string;
     snippet: string;
   }): string {
-    // POZOR: NIE ADMIN_BASE_URL. admin.ticketall.eu už frontend neservíruje –
-    // Caddy tam má fallback `redir https://ticketall.eu/ 301`, takže odkaz by
-    // skončil na verejnej homepage. Admin app beží na APP_BASE_URL/admin/*.
-    const base = this.config.get<string>('APP_BASE_URL') ?? 'https://ticketall.eu';
-    const link = `${base.replace(/\/$/, '')}/admin/helpdesk/${params.ticketId}`;
+    const link = adminUrl(this.config.get<string>('APP_BASE_URL'), `helpdesk/${params.ticketId}`);
     const snippet =
       params.snippet.length > TELEGRAM_SNIPPET
         ? `${params.snippet.slice(0, TELEGRAM_SNIPPET)}…`

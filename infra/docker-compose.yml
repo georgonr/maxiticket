@@ -53,7 +53,6 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-noreply@ticketall.eu}
       APP_BASE_URL: ${APP_BASE_URL:-https://ticketall.eu}
-      ADMIN_BASE_URL: ${ADMIN_BASE_URL:-https://admin.ticketall.eu}
       QR_HMAC_SECRET: ${QR_HMAC_SECRET:-${JWT_SECRET}}
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}

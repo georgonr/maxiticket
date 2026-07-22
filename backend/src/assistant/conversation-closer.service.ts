@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { ASSISTANT_LLM, AssistantLlmProvider, LlmMessage } from './llm/llm.types';
 import { TelegramService } from '../telegram/telegram.service';
+import { adminUrl } from '../common/admin-url';
 
 const IDLE_MINUTES = 10; // prah nečinnosti → konverzácia sa považuje za skončenú
 const BATCH = 20; // max konverzácií na jeden beh (aby LLM volania nezahltili)
@@ -110,10 +111,7 @@ export class ConversationCloserService {
       }
       who = `prihlásený${email ? ` (${this.escapeHtml(email)})` : ''}`;
     }
-    // Krok 35: bolo ADMIN_BASE_URL, ale admin.ticketall.eu už frontend neservíruje
-    // (Caddy fallback → verejná homepage), takže odkaz nikdy neviedol na detail.
-    const base = this.config.get<string>('APP_BASE_URL') ?? 'https://ticketall.eu';
-    const link = `${base.replace(/\/$/, '')}/admin/ai-conversations/${conv.id}`;
+    const link = adminUrl(this.config.get<string>('APP_BASE_URL'), `ai-conversations/${conv.id}`);
     const when = (conv.closedAt ?? new Date()).toISOString().slice(0, 16).replace('T', ' ');
     const title = escalated ? '⚠️ <b>Konverzácia — TREBA ODPOVEDAŤ</b>' : '🎫 <b>Nová konverzácia (zhrnutie)</b>';
 
