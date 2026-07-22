@@ -110,8 +110,10 @@ export class ConversationCloserService {
       }
       who = `prihlásený${email ? ` (${this.escapeHtml(email)})` : ''}`;
     }
-    const adminBase = this.config.get<string>('ADMIN_BASE_URL') ?? 'https://admin.ticketall.eu';
-    const link = `${adminBase}/admin/ai-conversations/${conv.id}`;
+    // Krok 35: bolo ADMIN_BASE_URL, ale admin.ticketall.eu už frontend neservíruje
+    // (Caddy fallback → verejná homepage), takže odkaz nikdy neviedol na detail.
+    const base = this.config.get<string>('APP_BASE_URL') ?? 'https://ticketall.eu';
+    const link = `${base.replace(/\/$/, '')}/admin/ai-conversations/${conv.id}`;
     const when = (conv.closedAt ?? new Date()).toISOString().slice(0, 16).replace('T', ' ');
     const title = escalated ? '⚠️ <b>Konverzácia — TREBA ODPOVEDAŤ</b>' : '🎫 <b>Nová konverzácia (zhrnutie)</b>';
 

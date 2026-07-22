@@ -272,7 +272,13 @@ export class HelpdeskMailService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.logger.log(`UID ${uid}: pripojený k tiketu ${ticket.ticketNumber}.`);
-    await this.notifyTelegram(ticket.ticketNumber, body);
+    await this.notifyTelegram({
+      title: '📩 <b>Odpoveď zákazníka na tiket</b>',
+      ticketNumber: ticket.ticketNumber,
+      ticketId: ticket.id,
+      customerEmail: ticket.customerEmail,
+      snippet: body,
+    });
     return true;
   }
 
@@ -313,7 +319,7 @@ export class HelpdeskMailService implements OnModuleInit, OnModuleDestroy {
    * Značka je spoľahlivejšia – prežije aj klienta, ktorý In-Reply-To nepošle.
    */
   private async matchTicket(mail: ParsedMail) {
-    const select = { id: true, ticketNumber: true };
+    const select = { id: true, ticketNumber: true, customerEmail: true };
 
     const tag = (mail.subject ?? '').match(TICKET_NUMBER_RE);
     if (tag) {
@@ -341,15 +347,60 @@ export class HelpdeskMailService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Telegram notifikácia. Zámerne NIE cez shouldNotifySummary() – ten flag
-   * (escalationOnly) sa týka zhrnutí AI konverzácií, nie helpdesku.
-   * Nikdy nehádže: výpadok Telegramu nesmie zahodiť už uloženú správu.
+   * POZOR: zámerne NIE cez shouldNotifySummary() – flag escalationOnly sa týka
+   * zhrnutí AI konverzácií, nie helpdesku.
    */
-  private async notifyTelegram(ticketNumber: string, body: string): Promise<void> {
-    const snippet = body.slice(0, TELEGRAM_SNIPPET) + (body.length > TELEGRAM_SNIPPET ? '…' : '');
-    const text = `📩 <b>Odpoveď na tiket ${ticketNumber}</b>\n${this.escapeHtml(snippet)}`;
+  /**
+   * Jednotný text helpdeskovej Telegram notifikácie (krok 35).
+   *
+   * Vzor je prevzatý z conversation-closer.notify(): emoji + <b>titulok</b>,
+   * riadky s kontextom, prázdny riadok, na konci <a href>Otvoriť v admin</a>,
+   * odosielané s parseMode HTML a vypnutým náhľadom odkazu. Základ URL je
+   * ADMIN_BASE_URL, rovnako ako pri konverzáciách – žiadny druhý formát.
+   *
+   * Verejné a parametrizované titulkom preto, aby KROK 5 (eskalácia z chatu)
+   * poslal notifikáciu o NOVOM tikete v presne rovnakom tvare.
+   */
+  buildTicketNotification(params: {
+    title: string;
+    ticketNumber: string;
+    ticketId: string;
+    customerEmail: string;
+    snippet: string;
+  }): string {
+    // POZOR: NIE ADMIN_BASE_URL. admin.ticketall.eu už frontend neservíruje –
+    // Caddy tam má fallback `redir https://ticketall.eu/ 301`, takže odkaz by
+    // skončil na verejnej homepage. Admin app beží na APP_BASE_URL/admin/*.
+    const base = this.config.get<string>('APP_BASE_URL') ?? 'https://ticketall.eu';
+    const link = `${base.replace(/\/$/, '')}/admin/helpdesk/${params.ticketId}`;
+    const snippet =
+      params.snippet.length > TELEGRAM_SNIPPET
+        ? `${params.snippet.slice(0, TELEGRAM_SNIPPET)}…`
+        : params.snippet;
+
+    return [
+      params.title,
+      `Tiket: ${this.escapeHtml(params.ticketNumber)} · ${this.escapeHtml(params.customerEmail)}`,
+      '',
+      this.escapeHtml(snippet),
+      '',
+      `<a href="${link}">Otvoriť v admin</a>`,
+    ].join('\n');
+  }
+
+  /** Nikdy nehádže – výpadok Telegramu nesmie zahodiť už uloženú správu. */
+  async notifyTelegram(params: {
+    title: string;
+    ticketNumber: string;
+    ticketId: string;
+    customerEmail: string;
+    snippet: string;
+  }): Promise<void> {
     await this.telegram
-      .sendMessage(text, { parseMode: 'HTML', disableWebPagePreview: true })
+      .sendMessage(this.buildTicketNotification(params), {
+        parseMode: 'HTML',
+        disableWebPagePreview: true,
+      })
       .catch((e: any) => this.logger.warn(`Telegram notifikácia zlyhala: ${e.message}`));
   }
 
