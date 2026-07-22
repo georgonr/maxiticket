@@ -77,13 +77,8 @@ services:
       HELPDESK_IMAP_USER: ${HELPDESK_IMAP_USER:-}
       HELPDESK_IMAP_PASS: ${HELPDESK_IMAP_PASS:-}
       HELPDESK_IMAP_POLL_SEC: ${HELPDESK_IMAP_POLL_SEC:-60}
-      # Fakturačný systém (krok 13b) – DODÁVATEĽ na faktúre. Placeholdery – účtovník vyplní.
-      PLATFORM_LEGAL_NAME: ${PLATFORM_LEGAL_NAME:-}
-      PLATFORM_ICO: ${PLATFORM_ICO:-}
-      PLATFORM_DIC: ${PLATFORM_DIC:-}
-      PLATFORM_IC_DPH: ${PLATFORM_IC_DPH:-}
-      PLATFORM_ADDRESS: ${PLATFORM_ADDRESS:-}
-      PLATFORM_IBAN: ${PLATFORM_IBAN:-}
+      # Fakturačný systém. Údaje DODÁVATEĽA na faktúre už NIE sú v ENV (krok 30) –
+      # jediný zdroj je tabuľka PlatformInfo, edituje sa v /admin/platform-info.
       # Krok 13c: true → cron po vytvorení draftu aj finalizuje + odošle. Default false (manuálne).
       BILLING_AUTO_SEND: ${BILLING_AUTO_SEND:-false}
       # eKasa fiškalizácia POS (krok eKasa-F1): true → POS predaj registruje doklad na eKase. Default false.

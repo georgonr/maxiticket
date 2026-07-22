@@ -436,8 +436,7 @@
     "title": "Personal Data Protection",
     "controller": {
       "heading": "Controller",
-      "intro": "The controller of personal data is the company",
-      "intro2": ", with its registered office in Slovakia (exact address to be added).",
+      "intro": "The controller of personal data is the company:",
       "contact": "Contact:"
     },
     "collected": {
@@ -521,7 +520,7 @@
     },
     "operator": {
       "title": "Operator",
-      "body": "MaceT s.r.o. is the operator of the TicketAll platform and is responsible for processing personal data in compliance with the GDPR."
+      "body": "The operator of the TicketAll platform, responsible for processing personal data in compliance with the GDPR, is:"
     }
   },
   "forOrganizers": {
@@ -1768,7 +1767,14 @@
       "vatRates": "Default VAT rates",
       "vatRateSk": "SK rate (%)",
       "vatRateCz": "CZ rate (%)",
-      "save": "Save"
+      "save": "Save",
+      "legalNamePlaceholder": "e.g. Acme s. r. o.",
+      "dic": "Tax ID (DIČ)",
+      "registrationNote": "Commercial register entry",
+      "registrationNotePlaceholder": "Registered in the Commercial Register of the District Court …, section: Sro, insert no. …",
+      "iban": "IBAN",
+      "contactEmail": "Contact e-mail",
+      "contactPhone": "Contact phone"
     },
     "paymentGateways": {
       "title": "Payment gateways",

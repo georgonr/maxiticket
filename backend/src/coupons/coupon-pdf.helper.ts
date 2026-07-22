@@ -13,7 +13,7 @@ export interface CouponPdfData {
   scopeLabel: string;
   validityLabel: string;
   codes: string[];
-  platformName: string;
+  platformName: string | null;
 }
 
 // nest-cli kopíruje src/assets/** → dist/assets/**; __dirname = dist/coupons
@@ -125,7 +125,7 @@ export async function generateCouponBatchPdf(data: CouponPdfData): Promise<Buffe
       .font('Geist')
       .fontSize(8)
       .text(
-        `${data.platformName} · ticketall.eu · ${m.footerSuffix}`,
+        [data.platformName, 'ticketall.eu', m.footerSuffix].filter(Boolean).join(' · '),
         left,
         footerY,
         { width: contentW, align: 'center' },

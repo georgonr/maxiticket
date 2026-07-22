@@ -3,6 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { FastifyReply } from 'fastify';
 import { ConfigService } from '@nestjs/config';
 import { PublicService } from './public.service';
+import { PlatformInfoService } from '../platform-info/platform-info.service';
 import { ContactDto } from './contact.dto';
 import { QrCheckoutDto } from './qr-checkout.dto';
 import { OrdersService } from '../orders/orders.service';
@@ -19,7 +20,18 @@ export class PublicController {
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
     private readonly config: ConfigService,
+    private readonly platformInfo: PlatformInfoService,
   ) {}
+
+  /**
+   * Identifikačné údaje prevádzkovateľa pre /gdpr a /kontakt. Len na čítanie,
+   * bez autentifikácie – sú to údaje, ktoré musia byť na webe zverejnené.
+   * Zdroj je PlatformInfo, aby web, faktúry aj vstupenky hovorili to isté.
+   */
+  @Get('platform-info')
+  platformInfoPublic() {
+    return this.platformInfo.getPublic();
+  }
 
   // Guest ticket: token → orderId (410 ak neplatný/expirovaný).
   private orderIdFromToken(token: string): string {

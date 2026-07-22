@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Mail, MapPin, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { publicApi, type PlatformInfoPublic } from '@/lib/api';
+import { OperatorDetails } from '@/components/public/OperatorDetails';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 
@@ -12,6 +14,10 @@ export default function KontaktPage() {
   const t = useTranslations('contact');
   const locale = useLocale();
   const [form, setForm] = useState({ meno: '', email: '', predmet: '', sprava: '' });
+  const [operator, setOperator] = useState<PlatformInfoPublic | null>(null);
+  useEffect(() => {
+    publicApi.platformInfo().then(setOperator).catch(() => setOperator(null));
+  }, []);
   const [status, setStatus] = useState<Status>('idle');
   const [errMsg, setErrMsg] = useState('');
 
@@ -174,16 +180,18 @@ export default function KontaktPage() {
                 <Mail size={16} className="mt-0.5 flex-shrink-0 text-purple-500" />
                 <div>
                   <p className="text-xs font-medium text-slate-500">{t('details.emailLabel')}</p>
-                  <a href="mailto:info@ticketall.eu" className="text-sm text-slate-800 hover:text-purple-600 transition-colors">
-                    info@ticketall.eu
-                  </a>
+                  {operator?.contactEmail && (
+                    <a href={`mailto:${operator.contactEmail}`} className="text-sm text-slate-800 hover:text-purple-600 transition-colors">
+                      {operator.contactEmail}
+                    </a>
+                  )}
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <MapPin size={16} className="mt-0.5 flex-shrink-0 text-purple-500" />
                 <div>
                   <p className="text-xs font-medium text-slate-500">{t('details.addressLabel')}</p>
-                  <p className="text-sm text-slate-800">MaceT s.r.o.<br />{t('details.country')}</p>
+                  <OperatorDetails info={operator} />
                 </div>
               </div>
             </div>
@@ -194,6 +202,9 @@ export default function KontaktPage() {
             <p className="text-sm text-slate-600 leading-relaxed">
               {t('operator.body')}
             </p>
+            <div className="mt-3">
+              <OperatorDetails info={operator} />
+            </div>
           </div>
         </div>
       </div>

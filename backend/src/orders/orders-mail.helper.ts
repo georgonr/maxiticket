@@ -91,9 +91,10 @@ export async function buildTicketEmailData(
           vatRate: org.vatPayer ? effectiveVat : null,
         }
       : undefined,
+    // Bez fallbacku: keď údaj chýba, riadok sa na vstupenke vynechá (krok 30).
     platform: platform
       ? { legalName: platform.legalName, ico: platform.ico }
-      : { legalName: 'TicketAll s.r.o.' },
+      : undefined,
     tickets: order.tickets.map((t) => ({
       id: t.id,
       typeName: t.ticketType?.name ?? 'Vstupenka',

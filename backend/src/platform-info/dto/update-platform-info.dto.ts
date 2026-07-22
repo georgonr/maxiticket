@@ -11,6 +11,10 @@ export class UpdatePlatformInfoDto {
 
   @IsOptional()
   @IsString()
+  dic?: string;
+
+  @IsOptional()
+  @IsString()
   icDph?: string;
 
   @IsOptional()
@@ -28,6 +32,23 @@ export class UpdatePlatformInfoDto {
   @IsOptional()
   @IsString()
   addressCountry?: string;
+
+  /** Zápis v obchodnom registri – súd, oddiel, vložka. */
+  @IsOptional()
+  @IsString()
+  registrationNote?: string;
+
+  @IsOptional()
+  @IsString()
+  iban?: string;
+
+  @IsOptional()
+  @IsString()
+  contactEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
 
   @IsOptional()
   @IsDecimal({ decimal_digits: '0,2' })

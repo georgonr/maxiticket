@@ -430,7 +430,7 @@ export class OrdersQueryService {
       // SPOLU = cena lístkov (po zľave) + zákaznícky poplatok = čo zákazník reálne zaplatil.
       total: Number(o.totalAmount) + customerFeeAmount,
       platform: {
-        legalName: platform?.legalName ?? 'TicketAll s.r.o.',
+        legalName: platform?.legalName ?? null,
         ico: platform?.ico ?? null,
         icDph: platform?.icDph ?? null,
         addressStreet: platform?.addressStreet ?? null,

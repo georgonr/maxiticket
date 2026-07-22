@@ -490,7 +490,24 @@ export type HeroSlideType =
   | { type: 'banner'; id: string; title: string; subtitle: string | null; imageUrl: string; ctaLabel: string | null; ctaUrl: string | null }
   | { type: 'show'; id: string; slug: string; name: string; imageUrl: string | null; startsAt: string; timezone: string; city: string | null; venueName: string | null; ctaUrl: string };
 
+export interface PlatformInfoPublic {
+  legalName: string | null;
+  ico: string | null;
+  dic: string | null;
+  icDph: string | null;
+  addressStreet: string | null;
+  addressCity: string | null;
+  addressZip: string | null;
+  addressCountry: string | null;
+  registrationNote: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+}
+
 export const publicApi = {
+  /** Identifikačné údaje prevádzkovateľa (jediný zdroj = PlatformInfo v DB). */
+  platformInfo: () => apiFetch<PlatformInfoPublic>('/v1/public/platform-info'),
+
   listShows: (params?: { category?: string; date?: string; city?: string; q?: string }) => {
     const q = new URLSearchParams();
     if (params?.category) q.set('category', params.category);
@@ -815,13 +832,18 @@ export const organizerBusinessApi = {
 
 export interface PlatformInfo {
   id: string;
-  legalName: string;
+  legalName: string | null;
   ico: string | null;
+  dic: string | null;
   icDph: string | null;
   addressStreet: string | null;
   addressCity: string | null;
   addressZip: string | null;
   addressCountry: string | null;
+  registrationNote: string | null;
+  iban: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
   defaultVatRateSk: string;
   defaultVatRateCz: string;
 }
@@ -829,11 +851,16 @@ export interface PlatformInfo {
 export type UpdatePlatformInfoBody = Partial<{
   legalName: string;
   ico: string;
+  dic: string;
   icDph: string;
   addressStreet: string;
   addressCity: string;
   addressZip: string;
   addressCountry: string;
+  registrationNote: string;
+  iban: string;
+  contactEmail: string;
+  contactPhone: string;
   defaultVatRateSk: string;
   defaultVatRateCz: string;
 }>;

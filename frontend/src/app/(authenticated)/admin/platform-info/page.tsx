@@ -27,7 +27,12 @@ function parseJwt(token: string): JwtClaims | null {
 type FormState = {
   legalName: string;
   ico: string;
+  dic: string;
   icDph: string;
+  registrationNote: string;
+  iban: string;
+  contactEmail: string;
+  contactPhone: string;
   addressStreet: string;
   addressCity: string;
   addressZip: string;
@@ -37,7 +42,8 @@ type FormState = {
 };
 
 const EMPTY: FormState = {
-  legalName: '', ico: '', icDph: '', addressStreet: '', addressCity: '',
+  legalName: '', ico: '', dic: '', icDph: '', registrationNote: '', iban: '',
+  contactEmail: '', contactPhone: '', addressStreet: '', addressCity: '',
   addressZip: '', addressCountry: 'SK', defaultVatRateSk: '', defaultVatRateCz: '',
 };
 
@@ -72,7 +78,12 @@ export default function PlatformInfoPage() {
         setForm({
           legalName: data.legalName ?? '',
           ico: data.ico ?? '',
+          dic: data.dic ?? '',
           icDph: data.icDph ?? '',
+          registrationNote: data.registrationNote ?? '',
+          iban: data.iban ?? '',
+          contactEmail: data.contactEmail ?? '',
+          contactPhone: data.contactPhone ?? '',
           addressStreet: data.addressStreet ?? '',
           addressCity: data.addressCity ?? '',
           addressZip: data.addressZip ?? '',
@@ -105,7 +116,12 @@ export default function PlatformInfoPage() {
       const body: UpdatePlatformInfoBody = {
         legalName: form.legalName || undefined,
         ico: form.ico || undefined,
+        dic: form.dic || undefined,
         icDph: form.icDph || undefined,
+        registrationNote: form.registrationNote || undefined,
+        iban: form.iban || undefined,
+        contactEmail: form.contactEmail || undefined,
+        contactPhone: form.contactPhone || undefined,
         addressStreet: form.addressStreet || undefined,
         addressCity: form.addressCity || undefined,
         addressZip: form.addressZip || undefined,
@@ -166,15 +182,30 @@ export default function PlatformInfoPage() {
         <div className="space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
           <Input
             id="legalName" label={t('platformInfo.legalName')}
-            placeholder="TicketAll s.r.o."
+            placeholder={t('platformInfo.legalNamePlaceholder')}
             value={form.legalName} onChange={(e) => set('legalName', e.target.value)}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input id="ico" label={t('platformInfo.ico')} placeholder={t('platformInfo.icoPlaceholder')}
               value={form.ico} onChange={(e) => set('ico', e.target.value)} />
-            <Input id="icDph" label={t('platformInfo.icDph')} placeholder="SK1234567890"
+            <Input id="dic" label={t('platformInfo.dic')} placeholder="2020202020"
+              value={form.dic} onChange={(e) => set('dic', e.target.value)} />
+            <Input id="icDph" label={t('platformInfo.icDph')} placeholder="SK2020202020"
               value={form.icDph} onChange={(e) => set('icDph', e.target.value)} />
+          </div>
+
+          <Input id="registrationNote" label={t('platformInfo.registrationNote')}
+            placeholder={t('platformInfo.registrationNotePlaceholder')}
+            value={form.registrationNote} onChange={(e) => set('registrationNote', e.target.value)} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input id="iban" label={t('platformInfo.iban')} placeholder="SK00 0000 0000 0000 0000 0000"
+              value={form.iban} onChange={(e) => set('iban', e.target.value)} />
+            <Input id="contactEmail" label={t('platformInfo.contactEmail')} placeholder="info@ticketall.eu"
+              value={form.contactEmail} onChange={(e) => set('contactEmail', e.target.value)} />
+            <Input id="contactPhone" label={t('platformInfo.contactPhone')} placeholder="+421 900 000 000"
+              value={form.contactPhone} onChange={(e) => set('contactPhone', e.target.value)} />
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
@@ -196,7 +227,7 @@ export default function PlatformInfoPage() {
           <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">{t('platformInfo.vatRates')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input id="defaultVatRateSk" label={t('platformInfo.vatRateSk')} type="number" step="0.01" placeholder="20.00"
+              <Input id="defaultVatRateSk" label={t('platformInfo.vatRateSk')} type="number" step="0.01" placeholder="23.00"
                 value={form.defaultVatRateSk} onChange={(e) => set('defaultVatRateSk', e.target.value)} />
               <Input id="defaultVatRateCz" label={t('platformInfo.vatRateCz')} type="number" step="0.01" placeholder="21.00"
                 value={form.defaultVatRateCz} onChange={(e) => set('defaultVatRateCz', e.target.value)} />

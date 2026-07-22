@@ -12,11 +12,14 @@ const GRAY = '#6B7280';
 const LGRAY = '#9CA3AF';
 
 export interface InvoiceParty {
-  name: string;
+  /** Môže chýbať – vtedy sa riadok vynechá, nedopĺňa sa žiadne náhradné meno. */
+  name?: string | null;
   ico?: string | null;
   dic?: string | null;
   icDph?: string | null;
   address?: string | null;
+  /** Zápis v obchodnom registri (súd, oddiel, vložka) – povinná náležitosť faktúry. */
+  registrationNote?: string | null;
   iban?: string | null;
 }
 
@@ -88,21 +91,33 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     doc.moveTo(left, 92).lineTo(right, 92).strokeColor('#E5E7EB').lineWidth(1).stroke();
 
     // ── Strany ───────────────────────────────────────────────────────────────
-    const party = (title: string, p: InvoiceParty, x: number) => {
+    const colW = width / 2 - 10;
+    const party = (title: string, p: InvoiceParty, x: number): number => {
       let y = 104;
       doc.fillColor(LGRAY).font('GeistBold').fontSize(8).text(title.toUpperCase(), x, y); y += 14;
-      doc.fillColor(BLACK).font('GeistBold').fontSize(11).text(p.name, x, y, { width: width / 2 - 10 }); y += 16;
+      if (p.name) {
+        doc.fillColor(BLACK).font('GeistBold').fontSize(11).text(p.name, x, y, { width: colW });
+        y += 16;
+      }
       doc.fillColor(GRAY).font('Geist').fontSize(9);
-      if (p.address) { doc.text(p.address, x, y, { width: width / 2 - 10 }); y += 12; }
+      if (p.address) { doc.text(p.address, x, y, { width: colW }); y += 12; }
       if (p.ico) { doc.text(`IČO: ${p.ico}`, x, y); y += 12; }
       if (p.dic) { doc.text(`DIČ: ${p.dic}`, x, y); y += 12; }
+      // Bez IČ DPH nie je faktúra s DPH platný daňový doklad – preto ho tlačíme vždy, keď je známe.
       if (p.icDph) { doc.text(`IČ DPH: ${p.icDph}`, x, y); y += 12; }
+      if (p.registrationNote) {
+        doc.fontSize(7.5).text(p.registrationNote, x, y, { width: colW });
+        y += doc.heightOfString(p.registrationNote, { width: colW }) + 2;
+        doc.fontSize(9);
+      }
+      return y;
     };
-    party('Dodávateľ', data.supplier, left);
-    party('Odberateľ', data.buyer, left + width / 2);
+    const supplierBottom = party('Dodávateľ', data.supplier, left);
+    const buyerBottom = party('Odberateľ', data.buyer, left + width / 2);
 
     // ── Meta ─────────────────────────────────────────────────────────────────
-    let y = 200;
+    // Zápis v OR je viacriadkový, takže blok strán môže pretiecť pod pôvodných 200 pt.
+    let y = Math.max(200, supplierBottom, buyerBottom) + 8;
     const meta: [string, string][] = [
       ['Dátum vystavenia', d(data.issueDate)],
       ['Dátum dodania (DUZP)', d(data.taxDate)],

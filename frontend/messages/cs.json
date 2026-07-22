@@ -436,8 +436,7 @@
     "title": "Ochrana osobních údajů",
     "controller": {
       "heading": "Provozovatel",
-      "intro": "Provozovatelem osobních údajů je společnost",
-      "intro2": ", se sídlem na Slovensku (přesná adresa bude doplněna).",
+      "intro": "Provozovatelem osobních údajů je společnost:",
       "contact": "Kontakt:"
     },
     "collected": {
@@ -521,7 +520,7 @@
     },
     "operator": {
       "title": "Provozovatel",
-      "body": "MaceT s.r.o. je provozovatelem platformy TicketAll a je odpovědný za zpracování osobních údajů v souladu s nařízením GDPR."
+      "body": "Provozovatelem platformy TicketAll a odpovědným za zpracování osobních údajů v souladu s nařízením GDPR je:"
     }
   },
   "forOrganizers": {
@@ -1768,7 +1767,14 @@
       "vatRates": "Výchozí sazby DPH",
       "vatRateSk": "SK sazba (%)",
       "vatRateCz": "CZ sazba (%)",
-      "save": "Uložit"
+      "save": "Uložit",
+      "legalNamePlaceholder": "Např. Acme s. r. o.",
+      "dic": "DIČ",
+      "registrationNote": "Zápis v obchodním rejstříku",
+      "registrationNotePlaceholder": "Zapsaná v Obchodním rejstříku Okresního soudu …, oddíl: Sro, vložka č. …",
+      "iban": "IBAN",
+      "contactEmail": "Kontaktní e-mail",
+      "contactPhone": "Kontaktní telefon"
     },
     "paymentGateways": {
       "title": "Platební brány",

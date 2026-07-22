@@ -1,7 +1,16 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { publicApi, type PlatformInfoPublic } from '@/lib/api';
+import { OperatorDetails } from '@/components/public/OperatorDetails';
 
 export default function GdprPage() {
   const t = useTranslations('gdpr');
+  const [operator, setOperator] = useState<PlatformInfoPublic | null>(null);
+  useEffect(() => {
+    publicApi.platformInfo().then(setOperator).catch(() => setOperator(null));
+  }, []);
   const collected = t.raw('collected.items') as string[];
   const purposes = t.raw('purpose.items') as string[];
   const rights = t.raw('rights.items') as string[];
@@ -15,10 +24,8 @@ export default function GdprPage() {
 
         <section>
           <h2 className="mb-2 text-lg font-semibold text-slate-800">{t('controller.heading')}</h2>
-          <p>
-            {t('controller.intro')} <strong>MaceT s.r.o.</strong>{t('controller.intro2')}{' '}
-            {t('controller.contact')} <a href="mailto:info@ticketall.eu" className="text-purple-600 hover:underline">info@ticketall.eu</a>.
-          </p>
+          <p className="mb-3">{t('controller.intro')}</p>
+          <OperatorDetails info={operator} />
         </section>
 
         <section>

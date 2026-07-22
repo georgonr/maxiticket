@@ -24,7 +24,7 @@ export interface OrganizerPdfInfo {
 }
 
 export interface PlatformPdfInfo {
-  legalName: string;
+  legalName: string | null;
   ico?: string | null;
 }
 
@@ -612,7 +612,9 @@ export class MailService {
   private computeVatRate(org?: OrganizerPdfInfo | null): number {
     if (!org || !org.vatPayer) return 0;
     if (org.vatRate != null) return org.vatRate;
-    return 20; // SK default – platform default not available here (used pre-computed value)
+    // SK základná sadzba od 1. 1. 2025. Bežne sem netreba – volajúci posiela
+    // už dopočítanú vatRate z PlatformInfo.defaultVatRateSk.
+    return 23;
   }
 
   // ─────────────────────── REFUND (Úloha 20) ───────────────────────

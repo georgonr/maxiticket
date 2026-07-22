@@ -25,7 +25,7 @@ export interface ReceiptPdfData {
   customerFeeAmount?: number;
   total: number;
   platform: {
-    legalName: string;
+    legalName: string | null;
     ico: string | null;
     icDph: string | null;
     addressStreet: string | null;

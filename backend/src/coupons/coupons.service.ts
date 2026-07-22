@@ -222,7 +222,7 @@ export class CouponsService {
       scopeLabel: this.scopeLabel(dto.scope, locale),
       validityLabel: this.validityLabel(dto.validFrom, dto.validUntil, locale),
       codes,
-      platformName: platform?.legalName ?? 'TicketAll s.r.o.',
+      platformName: platform?.legalName ?? null,
     };
 
     try {

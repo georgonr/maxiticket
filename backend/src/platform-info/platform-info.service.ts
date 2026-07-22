@@ -16,9 +16,31 @@ export class PlatformInfoService {
   async getCurrent() {
     const existing = await this.prisma.platformInfo.findFirst();
     if (existing) return existing;
-    return this.prisma.platformInfo.create({
-      data: { legalName: 'TicketAll s.r.o.' },
-    });
+    // Prázdny riadok zámerne – firemné údaje vypĺňa superadmin v /admin/platform-info.
+    // Predvyplnené meno by sa tichom dostalo na faktúry aj vstupenky.
+    return this.prisma.platformInfo.create({ data: {} });
+  }
+
+  /**
+   * Verejný podmnožinový pohľad pre /gdpr a /kontakt – identifikačné údaje
+   * prevádzkovateľa, ktoré musia byť na webe zverejnené. Zámerne NEobsahuje
+   * IBAN ani sadzby DPH: tie sú interné a na verejný web nepatria.
+   */
+  async getPublic() {
+    const p = await this.getCurrent();
+    return {
+      legalName: p.legalName,
+      ico: p.ico,
+      dic: p.dic,
+      icDph: p.icDph,
+      addressStreet: p.addressStreet,
+      addressCity: p.addressCity,
+      addressZip: p.addressZip,
+      addressCountry: p.addressCountry,
+      registrationNote: p.registrationNote,
+      contactEmail: p.contactEmail,
+      contactPhone: p.contactPhone,
+    };
   }
 
   async updateCurrent(dto: UpdatePlatformInfoDto) {

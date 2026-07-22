@@ -806,16 +806,30 @@ model TermsAcceptance {
 // PLATFORM INFO (singleton – 1 row only)
 // ─────────────────────────────────────────────
 
+/// JEDINÝ zdroj firemných údajov prevádzkovateľa platformy (krok 30).
+/// Predtým boli rozdvojené: faktúry čítali ENV PLATFORM_*, vstupenky túto tabuľku,
+/// a obe mali iný hardcode fallback – na faktúre svietilo iné meno než na lístku.
+/// ENV PLATFORM_* boli zrušené.
+///
+/// legalName je NULLABLE a bez defaultu zámerne: keď údaj nie je vyplnený, má sa
+/// na doklade vynechať, nie nahradiť vymysleným menom.
 model PlatformInfo {
   id                  String   @id @default(cuid())
-  legalName           String   @default("TicketAll s.r.o.")
+  legalName           String?
   ico                 String?
+  dic                 String?
   icDph               String?
   addressStreet       String?
   addressCity         String?
   addressZip          String?
   addressCountry      String?  @default("SK")
-  defaultVatRateSk    Decimal  @default(20.00) @db.Decimal(5, 2)
+  /// Zápis v obchodnom registri – jedno voľné textové pole (súd, oddiel, vložka).
+  registrationNote    String?
+  iban                String?
+  contactEmail        String?
+  contactPhone        String?
+  /// SK základná sadzba je od 1. 1. 2025 23 %.
+  defaultVatRateSk    Decimal  @default(23.00) @db.Decimal(5, 2)
   defaultVatRateCz    Decimal  @default(21.00) @db.Decimal(5, 2)
   updatedAt           DateTime @updatedAt
   createdAt           DateTime @default(now())

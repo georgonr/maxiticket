@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Prisma, InvoiceStatus, InvoiceLineType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BillingService, BillingScope } from './billing.service';
@@ -13,19 +12,30 @@ export class InvoiceService {
   constructor(
     private prisma: PrismaService,
     private billing: BillingService,
-    private config: ConfigService,
     private mail: MailService,
   ) {}
 
-  /** DODÁVATEĽ (platforma) z ENV – placeholdery pred ostrým použitím vyplní účtovník. */
-  private platformSupplier() {
+  /**
+   * DODÁVATEĽ (platforma) z PlatformInfo – jediný zdroj firemných údajov.
+   * Predtým sa čítalo z ENV PLATFORM_*, takže faktúra a vstupenka mohli niesť
+   * dve rôzne mená. ŽIADNY fallback: keď údaj chýba, na faktúre sa vynechá.
+   */
+  private async platformSupplier() {
+    const p = await this.prisma.platformInfo.findFirst();
+    const address = [
+      p?.addressStreet,
+      [p?.addressZip, p?.addressCity].filter(Boolean).join(' ') || null,
+    ]
+      .filter(Boolean)
+      .join(', ');
     return {
-      name: this.config.get<string>('PLATFORM_LEGAL_NAME') || 'MaceT s.r.o.',
-      ico: this.config.get<string>('PLATFORM_ICO') || null,
-      dic: this.config.get<string>('PLATFORM_DIC') || null,
-      icDph: this.config.get<string>('PLATFORM_IC_DPH') || null,
-      address: this.config.get<string>('PLATFORM_ADDRESS') || null,
-      iban: this.config.get<string>('PLATFORM_IBAN') || null,
+      name: p?.legalName ?? null,
+      ico: p?.ico ?? null,
+      dic: p?.dic ?? null,
+      icDph: p?.icDph ?? null,
+      address: address || null,
+      registrationNote: p?.registrationNote ?? null,
+      iban: p?.iban ?? null,
     };
   }
 
@@ -39,7 +49,7 @@ export class InvoiceService {
       taxDate: inv.taxDate,
       dueDate: inv.dueDate,
       currency: inv.currency,
-      supplier: this.platformSupplier(),
+      supplier: await this.platformSupplier(),
       buyer: {
         name: inv.buyerCompany || inv.buyerName || '—',
         ico: inv.buyerIco, dic: inv.buyerDic, icDph: inv.buyerIcDph,
