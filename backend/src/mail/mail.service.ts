@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { qrOptions, QR_PRINT_WIDTH } from '../common/qr.constants';
 import {
   MailLocale, normalizeMailLocale, mailMessages, mailFormatDate, mailFormatPrice, mailFormatDateShort,
@@ -88,6 +89,31 @@ export class MailService {
     }
 
     this.logger.log(`Mail transport: ${transport} (${this.config.get('SMTP_HOST')}:${this.config.get('SMTP_PORT')})`);
+    this.checkFontAssets();
+  }
+
+  /**
+   * Fonty pre PDF lístkov musia byť v dist/assets/fonts (kopíruje ich nest-cli).
+   * Keď chýbajú, generateTicketPdf padne na ENOENT až pri prvej objednávke a
+   * e-mail s lístkami sa neodošle – volajúci v orders.service je fire-and-forget,
+   * takže zákazník o tom nevie. Preto to hlásime hlasno hneď pri štarte.
+   */
+  private checkFontAssets(): void {
+    const required = ['BebasNeue-Regular.ttf', 'Geist-Regular.ttf', 'Geist-Bold.ttf'];
+    const missing = required.filter((f) => {
+      try {
+        return fs.statSync(path.join(this.fontPath, f)).size === 0;
+      } catch {
+        return true;
+      }
+    });
+    if (missing.length > 0) {
+      this.logger.error(
+        `CHÝBAJÚ FONTY pre PDF lístkov v ${this.fontPath}: ${missing.join(', ')}. ` +
+          `PDF sa nevygeneruje a e-maily s lístkami NEODÍDU. ` +
+          `Príčina býva build bez skopírovaných nest-cli assets – prebuildni image bez cache.`,
+      );
+    }
   }
 
   async sendTickets(data: TicketEmailData): Promise<void> {

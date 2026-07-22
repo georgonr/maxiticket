@@ -14,6 +14,19 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
+# Assety (fonty pre PDF lístkov/kupónov, logo pre faktúry) kopíruje do dist nest-cli
+# podľa nest-cli.json. Keď sa to nestane, build prejde a appka sa naštartuje, ale
+# generovanie PDF padne až pri prvej objednávke na ENOENT – a e-mail s lístkami
+# sa ticho neodošle. Radšej zhoď build tu.
+RUN set -e; \
+    for f in dist/assets/fonts/BebasNeue-Regular.ttf \
+             dist/assets/fonts/Geist-Regular.ttf \
+             dist/assets/fonts/Geist-Bold.ttf \
+             dist/assets/brand/logo-icon.png; do \
+      test -s "$f" || { echo "BUILD FAIL: chýba runtime asset $f (nest-cli assets sa neskopírovali do dist)"; exit 1; }; \
+    done; \
+    echo "assets OK: $(find dist/assets -type f | wc -l) súborov v dist/assets"
+
 # Runtime
 FROM base AS runner
 ENV NODE_ENV=production
