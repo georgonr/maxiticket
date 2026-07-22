@@ -591,7 +591,8 @@
       "organizers": "Organizers",
       "billing": "Billing",
       "aiConversations": "AI conversations",
-      "telegram": "Telegram"
+      "telegram": "Telegram",
+      "helpdesk": "Helpdesk"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1998,6 +1999,46 @@
         "generic": "Something went wrong.",
         "network": "Network error."
       }
+    },
+    "helpdesk": {
+      "title": "Helpdesk",
+      "subtitle": "Customer requests and support replies.",
+      "allStatuses": "All statuses",
+      "count": "Total: {total}",
+      "loading": "Loading…",
+      "empty": "No tickets.",
+      "noSubject": "(no subject)",
+      "messages": "{n} messages",
+      "prev": "Previous",
+      "next": "Next",
+      "pageOf": "Page {page} of {pages}",
+      "back": "Back to list",
+      "notFound": "Ticket not found.",
+      "statusLabel": "Status:",
+      "priorityLabel": "Priority:",
+      "status": {
+        "OPEN": "Open",
+        "PENDING": "Waiting for customer",
+        "CLOSED": "Closed"
+      },
+      "priority": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High"
+      },
+      "sender": {
+        "CUSTOMER": "Customer",
+        "ADMIN": "Support",
+        "AI": "AI assistant"
+      },
+      "viaEmail": "via e-mail",
+      "hasAttachments": "Message had attachments",
+      "attachmentsNotStored": "files are not stored",
+      "replyLabel": "Reply to customer",
+      "replyPlaceholder": "Write a reply…",
+      "sendReply": "Send reply",
+      "replySent": "Reply saved and sent by e-mail.",
+      "replySavedNotSent": "The reply is saved in the ticket, but the e-mail could not be sent. Please try again later."
     }
   },
   "seatPicker": {

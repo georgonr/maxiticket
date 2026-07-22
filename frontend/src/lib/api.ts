@@ -934,3 +934,82 @@ export const telegramApi = {
   test: (token: string) =>
     apiFetch<{ sent: boolean }>('/v1/admin/telegram/test', { method: 'POST', body: JSON.stringify({}), token }),
 };
+
+// ── Helpdesk (SUPERADMIN + PLATFORM_ADMIN, krok 31) ──
+export type HelpdeskStatus = 'OPEN' | 'PENDING' | 'CLOSED';
+export type HelpdeskPriority = 'LOW' | 'NORMAL' | 'HIGH';
+export type HelpdeskSender = 'CUSTOMER' | 'AI' | 'ADMIN';
+
+export interface HelpdeskTicketListItem {
+  id: string;
+  ticketNumber: string;
+  subject: string | null;
+  customerEmail: string;
+  status: HelpdeskStatus;
+  priority: HelpdeskPriority;
+  source: 'CHAT' | 'EMAIL' | 'MANUAL';
+  messageCount: number;
+  lastMessageAt: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+export interface HelpdeskTicketList {
+  items: HelpdeskTicketListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+export interface HelpdeskAuthor {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+export interface HelpdeskMessageItem {
+  id: string;
+  sender: HelpdeskSender;
+  author: HelpdeskAuthor | null;
+  body: string;
+  viaEmail: boolean;
+  hasAttachments: boolean;
+  attachmentNote: string | null;
+  createdAt: string;
+}
+export interface HelpdeskTicketDetail extends HelpdeskTicketListItem {
+  locale: string;
+  aiSummary: string | null;
+  closedAt: string | null;
+  assignedTo: HelpdeskAuthor | null;
+  messages: HelpdeskMessageItem[];
+}
+/** Uloženie a odoslanie sú oddelené – správa ostáva uložená aj keď e-mail zlyhá. */
+export interface HelpdeskReplyResult {
+  messageSaved: boolean;
+  emailed: boolean;
+  error?: string;
+  messageId?: string;
+}
+
+export const helpdeskApi = {
+  list: (params: { status?: string; page?: number }, token: string) => {
+    const q = new URLSearchParams();
+    if (params.status) q.set('status', params.status);
+    if (params.page) q.set('page', String(params.page));
+    const qs = q.toString();
+    return apiFetch<HelpdeskTicketList>(`/v1/admin/helpdesk${qs ? '?' + qs : ''}`, { token });
+  },
+  detail: (id: string, token: string) =>
+    apiFetch<HelpdeskTicketDetail>(`/v1/admin/helpdesk/${id}`, { token }),
+  reply: (id: string, body: string, token: string) =>
+    apiFetch<HelpdeskReplyResult>(`/v1/admin/helpdesk/${id}/reply`, {
+      method: 'POST', body: JSON.stringify({ body }), token,
+    }),
+  patch: (
+    id: string,
+    body: { status?: HelpdeskStatus; priority?: HelpdeskPriority; assignedToId?: string | null },
+    token: string,
+  ) =>
+    apiFetch<HelpdeskTicketDetail>(`/v1/admin/helpdesk/${id}`, {
+      method: 'PATCH', body: JSON.stringify(body), token,
+    }),
+};

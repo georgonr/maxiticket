@@ -591,7 +591,8 @@
       "organizers": "Organizátori",
       "billing": "Fakturácia",
       "aiConversations": "AI konverzácie",
-      "telegram": "Telegram"
+      "telegram": "Telegram",
+      "helpdesk": "Helpdesk"
     },
     "roles": {
       "SUPERADMIN": "Superadmin",
@@ -1998,6 +1999,46 @@
         "generic": "Niečo sa pokazilo.",
         "network": "Chyba siete."
       }
+    },
+    "helpdesk": {
+      "title": "Helpdesk",
+      "subtitle": "Požiadavky zákazníkov a odpovede supportu.",
+      "allStatuses": "Všetky stavy",
+      "count": "Spolu: {total}",
+      "loading": "Načítavam…",
+      "empty": "Žiadne tikety.",
+      "noSubject": "(bez predmetu)",
+      "messages": "{n} správ",
+      "prev": "Predošlá",
+      "next": "Ďalšia",
+      "pageOf": "Strana {page} z {pages}",
+      "back": "Späť na zoznam",
+      "notFound": "Tiket sa nenašiel.",
+      "statusLabel": "Stav:",
+      "priorityLabel": "Priorita:",
+      "status": {
+        "OPEN": "Otvorený",
+        "PENDING": "Čaká na zákazníka",
+        "CLOSED": "Uzavretý"
+      },
+      "priority": {
+        "LOW": "Nízka",
+        "NORMAL": "Bežná",
+        "HIGH": "Vysoká"
+      },
+      "sender": {
+        "CUSTOMER": "Zákazník",
+        "ADMIN": "Support",
+        "AI": "AI asistent"
+      },
+      "viaEmail": "e-mailom",
+      "hasAttachments": "Správa mala prílohy",
+      "attachmentsNotStored": "súbory neukladáme",
+      "replyLabel": "Odpoveď zákazníkovi",
+      "replyPlaceholder": "Napíšte odpoveď…",
+      "sendReply": "Odoslať odpoveď",
+      "replySent": "Odpoveď uložená a odoslaná e-mailom.",
+      "replySavedNotSent": "Odpoveď je uložená v tikete, ale e-mail sa nepodarilo odoslať. Skúste to znova neskôr."
     }
   },
   "seatPicker": {
