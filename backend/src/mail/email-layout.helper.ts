@@ -66,7 +66,7 @@ export function renderEmailLayout(o: EmailLayoutOptions): string {
   const note = o.noteHtml
     ? `<tr><td style="padding:0 32px 20px;">
          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:${MAIL_BG};border-radius:8px;">
-           <tr><td style="padding:14px 16px;font-family:${FONT};font-size:13px;line-height:20px;color:${MAIL_MUTED};">${o.noteHtml}</td></tr>
+           <tr><td align="center" style="padding:14px 16px;font-family:${FONT};font-size:13px;line-height:20px;color:${MAIL_MUTED};text-align:center;">${o.noteHtml}</td></tr>
          </table>
        </td></tr>`
     : '';
