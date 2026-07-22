@@ -249,6 +249,8 @@ model User {
   createdCoupons       Coupon[]             @relation("CouponCreator")
   couponRedemptions    CouponRedemption[]
   posClosures          PosClosure[]
+  assignedHelpdeskTickets HelpdeskTicket[]
+  helpdeskMessages        HelpdeskMessage[]
 
   @@index([organizerId])
   @@index([role])
@@ -1149,6 +1151,7 @@ model Conversation {
   closedAt      DateTime?
 
   messages      Message[]
+  helpdeskTicket HelpdeskTicket?
 
   @@index([status, lastMessageAt])
   @@index([sessionKey])
@@ -1180,4 +1183,89 @@ model TelegramConfig {
   updatedById String?  // audit – kto naposledy zmenil (plain field, bez FK)
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// HELPDESK (krok 27) – dátová vrstva. Zámerne SAMOSTATNÉ od Conversation:
+// tá modeluje AI chat (Message.role 'user'/'assistant', sessionKey), tiket
+// potrebuje tri strany komunikácie, e-mailové hlavičky na threading a
+// priradenie operátora. Väzba na konverzáciu je voliteľná – tiket môže
+// vzniknúť aj z e-mailu alebo ručne.
+//
+// POZOR na názvoslovie: "Ticket" je v tomto projekte VSTUPENKA (model Ticket,
+// enum TicketStatus VALID/USED/…). Helpdeskové entity preto nesú prefix
+// Helpdesk*, aby sa to nedalo zameniť.
+//
+// ticketNumber (HD-00001) sa NEodvodzuje z count() ako orderNumber – po zmazaní
+// riadku by sa číslo recyklovalo a to isté číslo by dostali dvaja zákazníci do
+// e-mailu, čo rozbije aj párovanie odpovedí podľa [HD-…] v predmete.
+// Zdrojom je Postgres sekvencia ticket_number_seq.
+// ─────────────────────────────────────────────
+
+enum HelpdeskStatus {
+  OPEN
+  PENDING
+  CLOSED
+}
+
+enum HelpdeskPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum HelpdeskSource {
+  CHAT
+  EMAIL
+  MANUAL
+}
+
+enum HelpdeskSender {
+  CUSTOMER
+  AI
+  ADMIN
+}
+
+model HelpdeskTicket {
+  id             String   @id @default(cuid())
+  ticketNumber   String   @unique          // HD-00001
+  subject        String?
+  customerEmail  String
+  customerName   String?
+  locale         String   @default("sk")
+  status         HelpdeskStatus   @default(OPEN)
+  priority       HelpdeskPriority @default(NORMAL)
+  source         HelpdeskSource   @default(CHAT)
+  assignedToId   String?
+  assignedTo     User?    @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  conversationId String?  @unique          // @unique = idempotencia, z jednej konverzácie max 1 tiket
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  aiSummary      String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  closedAt       DateTime?
+
+  messages       HelpdeskMessage[]
+
+  @@index([status, updatedAt])
+  @@index([customerEmail])
+}
+
+model HelpdeskMessage {
+  id             String   @id @default(cuid())
+  ticketId       String
+  ticket         HelpdeskTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender         HelpdeskSender
+  authorId       String?                    // vyplnené len pri ADMIN
+  author         User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body           String   @db.Text
+  viaEmail       Boolean  @default(false)   // false = z webu, true = prišlo/odišlo mailom
+  emailMessageId String?  @unique           // Message-ID hlavička
+  emailInReplyTo String?                    // In-Reply-To – fallback párovanie keď chýba [HD-…]
+  hasAttachments Boolean  @default(false)
+  attachmentNote String?                    // napr. "2 prílohy: foto.jpg, doklad.pdf" – súbory NEUKLADÁME
+  createdAt      DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([emailInReplyTo])
 }
