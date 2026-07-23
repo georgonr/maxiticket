@@ -1516,7 +1516,8 @@
       "inviteSentTo": "Invitation sent to {email}.",
       "inviteFailed": "The invitation failed.",
       "cancel": "Cancel",
-      "sendInvite": "Send invitation"
+      "sendInvite": "Send invitation",
+      "inviteEmailFailed": "Member {email} was created, but the invitation email could not be sent. Use “Resend invitation”."
     },
     "scanners": {
       "title": "Scanners",
@@ -2116,7 +2117,8 @@
     "ORDER_NOT_FOUND": "The order does not exist.",
     "ORDER_NOT_YOURS": "This order does not belong to your account.",
     "EMAIL_EXISTS_CUSTOMER": "An account with this e-mail already exists. Please log in or reset your password.",
-    "EMAIL_EXISTS_STAFF": "This e-mail is already registered as a scanner/staff account. Please use a different e-mail."
+    "EMAIL_EXISTS_STAFF": "This e-mail is already registered as a scanner/staff account. Please use a different e-mail.",
+    "MIXED_CURRENCY": "An order cannot mix currencies ({currencies}). Please split the purchase by currency."
   },
   "registerChoice": {
     "title": "How would you like to register?",

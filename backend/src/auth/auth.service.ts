@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -49,6 +50,8 @@ const REFRESH_TOKEN_TTL_DAYS = 7;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
@@ -256,12 +259,20 @@ export class AuthService {
     const frontendBase = this.config.get('EMAIL_BASE_URL') ?? 'https://ticketall.eu';
     const resetLink = `${frontendBase}/reset-password?token=${rawToken}`;
 
+    // V4 (krok 51): štruktúrovaný, dohľadateľný log pri zlyhaní. Odpoveď navonok
+    // ostáva neutrálna (controller vracia „ak účet existuje, e-mail odoslaný") – NESMIE
+    // prezradiť existenciu účtu, preto používateľovi NEhlásime „zlyhalo". Marker
+    // [PASSWORD-RESET-EMAIL-FAILED] umožní nájsť incident v logoch (userId, nie heslo).
     await this.mail.sendPasswordReset({
       to: email,
       locale,
       firstName: user.firstName ?? undefined,
       resetLink,
-    }).catch((e) => console.error('Password reset email failed:', e));
+    }).catch((e) =>
+      this.logger.error(
+        `[PASSWORD-RESET-EMAIL-FAILED] userId=${user.id} email=${email}: ${e?.message ?? e}`,
+      ),
+    );
   }
 
   async resetPassword(rawToken: string, newPassword: string): Promise<void> {

@@ -21,8 +21,9 @@ export const membersApi = {
   list: (token: string) =>
     apiFetch<Member[]>('/v1/organizer/members', { token }),
 
+  // emailSent=false → člen vytvorený, ale pozvánkový e-mail zlyhal (V4, krok 51).
   create: (input: CreateMemberInput, token: string) =>
-    apiFetch<Member>('/v1/organizer/members', {
+    apiFetch<Member & { emailSent: boolean }>('/v1/organizer/members', {
       method: 'POST',
       body: JSON.stringify(input),
       token,

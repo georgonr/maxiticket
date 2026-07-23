@@ -1516,7 +1516,8 @@
       "inviteSentTo": "Pozvánka odoslaná na {email}.",
       "inviteFailed": "Pozvánka zlyhala.",
       "cancel": "Zrušiť",
-      "sendInvite": "Odoslať pozvánku"
+      "sendInvite": "Odoslať pozvánku",
+      "inviteEmailFailed": "Člen {email} bol vytvorený, ale pozvánkový e-mail sa nepodarilo odoslať. Použite „Preposlať pozvánku\"."
     },
     "scanners": {
       "title": "Skeneri",
@@ -2116,7 +2117,8 @@
     "ORDER_NOT_FOUND": "Objednávka neexistuje.",
     "ORDER_NOT_YOURS": "Táto objednávka nepatrí vášmu účtu.",
     "EMAIL_EXISTS_CUSTOMER": "Účet s týmto e-mailom už existuje. Prihláste sa, prípadne obnovte heslo.",
-    "EMAIL_EXISTS_STAFF": "Tento e-mail je už registrovaný ako účet skenera/zamestnanca. Použite prosím iný e-mail."
+    "EMAIL_EXISTS_STAFF": "Tento e-mail je už registrovaný ako účet skenera/zamestnanca. Použite prosím iný e-mail.",
+    "MIXED_CURRENCY": "Objednávka nesmie miešať meny ({currencies}). Rozdeľte nákup podľa meny."
   },
   "registerChoice": {
     "title": "Ako sa chcete registrovať?",

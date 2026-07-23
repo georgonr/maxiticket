@@ -69,7 +69,12 @@ export class MembersService {
     };
   }
 
-  private async sendInvite(member: { id: string; email: string; firstName: string | null }, organizerId: string, locale?: string) {
+  /**
+   * Odošle pozvánku. Vracia true, ak e-mail reálne odišiel; false pri zlyhaní SMTP
+   * (V4, krok 51). Volajúci (create/resendInvite) tento stav vráti pozývajúcemu, aby
+   * pozvánka neostala v limbe – buď to vidí ako varovanie, alebo použije Preposlať.
+   */
+  private async sendInvite(member: { id: string; email: string; firstName: string | null }, organizerId: string, locale?: string): Promise<boolean> {
     // Zruš predošlé nepoužité tokeny
     await this.prisma.passwordResetToken.updateMany({
       where: { userId: member.id, usedAt: null },
@@ -88,15 +93,20 @@ export class MembersService {
     const base = this.config.get<string>('EMAIL_BASE_URL') ?? 'https://ticketall.eu';
     const inviteLink = `${base}/reset-password?token=${rawToken}`;
 
-    await this.mail
-      .sendTeamInvite({
+    try {
+      await this.mail.sendTeamInvite({
         to: member.email,
         locale,
         organizerName: org?.name ?? 'TicketAll',
         inviteLink,
         firstName: member.firstName ?? undefined,
-      })
-      .catch((e) => this.logger.error(`Team invite email failed for ${member.email}: ${e.message}`));
+      });
+      return true;
+    } catch (e: any) {
+      // Dohľadateľný marker + vrátime false → volajúci to ohlási pozývajúcemu (Preposlať).
+      this.logger.error(`[TEAM-INVITE-EMAIL-FAILED] memberId=${member.id} email=${member.email}: ${e?.message ?? e}`);
+      return false;
+    }
   }
 
   async create(dto: CreateMemberDto, user: JwtPayload) {
@@ -117,8 +127,9 @@ export class MembersService {
       },
     });
 
-    await this.sendInvite(member, organizerId, dto.locale);
-    return this.serialize(member as MemberRow);
+    // emailSent=false → člen je vytvorený, ale pozvánka nedošla; UI to zobrazí + ponúkne Preposlať.
+    const emailSent = await this.sendInvite(member, organizerId, dto.locale);
+    return { ...this.serialize(member as MemberRow), emailSent };
   }
 
   async list(user: JwtPayload, organizerId?: string) {
@@ -162,8 +173,9 @@ export class MembersService {
     if (target.passwordHash != null) {
       throw new BadRequestException('Člen už má aktívny účet – pozvánku nie je možné znova poslať.');
     }
-    await this.sendInvite(target, target.organizerId!, locale);
-    return { sent: true, email: target.email };
+    // sent odzrkadľuje reálny výsledok odoslania (nie vždy true) → pozývajúci vie, či to prešlo.
+    const sent = await this.sendInvite(target, target.organizerId!, locale);
+    return { sent, email: target.email };
   }
 
   async remove(id: string, user: JwtPayload) {

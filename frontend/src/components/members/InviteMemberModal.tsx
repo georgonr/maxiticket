@@ -35,8 +35,10 @@ export function InviteMemberModal({
     try {
       const token = await getValidToken();
       if (!token) throw new Error(t('loginRequired'));
-      await membersApi.create({ email: mail, name: name.trim() || undefined, locale }, token);
-      onInvited(t('inviteSentTo', { email: mail }));
+      const res = await membersApi.create({ email: mail, name: name.trim() || undefined, locale }, token);
+      // V4: ak pozvánkový e-mail zlyhal, ohlás to pozývajúcemu (člen je vytvorený,
+      // môže použiť „Preposlať pozvánku") – nezostane v tichom limbe.
+      onInvited(res.emailSent ? t('inviteSentTo', { email: mail }) : t('inviteEmailFailed', { email: mail }));
     } catch (e) {
       setError(e instanceof Error ? e.message : t('inviteFailed'));
       setSubmitting(false);

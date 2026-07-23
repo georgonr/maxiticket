@@ -247,6 +247,22 @@ export class OrdersService {
       throw codedBadRequest('ORDER_EMPTY', 'Objednávka neobsahuje žiadne položky.');
     }
 
+    // V3 (krok 51): guard proti miešaniu mien v jednej objednávke. Mena je per-položka
+    // (TicketType.currency / TerminSection.currency), takže organizátor MÔŽE mať v rámci
+    // jedného termínu položky v rôznych menách. `totalAmount` sa sčítava naprieč položkami
+    // a `currency` bola „posledná spracovaná" – bez guardu by zmiešaná objednávka dala
+    // nezmyselný total v nesprávnej mene. Odmietni jasnou chybou.
+    const currencies = new Set(preparedItems.map((p) => p.data.currency as string));
+    if (currencies.size > 1) {
+      throw codedBadRequest(
+        'MIXED_CURRENCY',
+        `Objednávka nesmie miešať meny (${[...currencies].join(', ')}). Rozdeľte nákup podľa meny.`,
+        { currencies: [...currencies].join(', ') },
+      );
+    }
+    // Po guarde je mena jednoznačná – zafixuj ju z prvej položky (nie „posledná spracovaná").
+    currency = preparedItems[0].data.currency as string;
+
     // Guest checkout: bez prihlásenia musí DTO obsahovať buyerEmail + buyerName.
     const dbUser = user ? await this.prisma.user.findUnique({ where: { id: user.sub } }) : null;
     const buyerEmail = dto.buyerEmail ?? user?.email;
