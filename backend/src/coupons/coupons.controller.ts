@@ -20,7 +20,6 @@ import { JwtPayload } from '../casl/casl-ability.factory';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { BulkGenerateCouponsDto } from './dto/bulk-generate-coupons.dto';
 import { ValidateCouponDto } from './dto/validate-coupon.dto';
-import { RedeemCouponDto } from './dto/redeem-coupon.dto';
 
 @Controller('coupons')
 export class CouponsController {
@@ -92,13 +91,11 @@ export class CouponsController {
     return this.svc.statsForShow(user, showId);
   }
 
-  // ── Redeem (interne z order/checkout flow) ──
-  @Post(':code/redeem')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  redeem(@Param('code') code: string, @Body() dto: RedeemCouponDto) {
-    return this.svc.redeem(code, dto);
-  }
+  // Zľavu aplikuje výhradne checkout flow (initiateCheckout → coupons.validate,
+  // server-side, s ownership objednávky a serverovým výpočtom zľavy) a po platbe
+  // coupons.redeemForPaidOrder. Samostatný verejný redeem endpoint bol odstránený
+  // (krok 45): dôveroval klientom zadanej discountAmount a nemal ownership check
+  // → dal sa vynulovať total cudzej objednávky a získať lístky zadarmo.
 
   // ── Detail ──
   @Get(':id')

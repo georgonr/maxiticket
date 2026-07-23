@@ -15,7 +15,6 @@ import { JwtPayload } from '../casl/casl-ability.factory';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { BulkGenerateCouponsDto } from './dto/bulk-generate-coupons.dto';
 import { ValidateCouponDto } from './dto/validate-coupon.dto';
-import { RedeemCouponDto } from './dto/redeem-coupon.dto';
 import { generateCouponBatchPdf, CouponPdfData } from './coupon-pdf.helper';
 
 // Alfanumerická abeceda bez zámen: žiadne 0, O, 1, I
@@ -540,49 +539,12 @@ export class CouponsService {
   }
 
   // ───────────────────────── redeem ─────────────────────────
-
-  async redeem(code: string, dto: RedeemCouponDto) {
-    const normalized = code.trim().toUpperCase();
-    const coupon = await this.prisma.coupon.findUnique({ where: { code: normalized } });
-    if (!coupon) throw new NotFoundException('Kupón neexistuje');
-
-    const order = await this.prisma.order.findUnique({ where: { id: dto.orderId } });
-    if (!order) throw new NotFoundException('Objednávka neexistuje');
-
-    const existing = await this.prisma.couponRedemption.findUnique({
-      where: { orderId: dto.orderId },
-    });
-    if (existing) {
-      throw new ConflictException('Na túto objednávku už bol kupón uplatnený');
-    }
-
-    // subtotal = aktuálny totalAmount + už zapísaná zľava (default 0)
-    const subtotal = Number(order.totalAmount) + Number(order.discountAmount);
-    const discount = this.round2(Math.min(dto.discountAmount, subtotal));
-    const newTotal = this.round2(subtotal - discount);
-
-    const redemption = await this.prisma.$transaction(async (tx) => {
-      await tx.coupon.update({
-        where: { id: coupon.id },
-        data: { usedCount: { increment: 1 } },
-      });
-      const red = await tx.couponRedemption.create({
-        data: {
-          couponId: coupon.id,
-          orderId: dto.orderId,
-          userId: dto.userId ?? null,
-          discountAmount: discount,
-        },
-      });
-      await tx.order.update({
-        where: { id: dto.orderId },
-        data: { discountAmount: discount, totalAmount: newTotal },
-      });
-      return red;
-    });
-
-    return { redemptionId: redemption.id };
-  }
+  // POZOR (krok 45): samostatný redeem(code, dto) BOL ODSTRÁNENÝ – dôveroval
+  // klientom zadanej dto.discountAmount a načítal objednávku bez ownership checku,
+  // takže sa dal vynulovať total cudzej PENDING objednávky a získať lístky zadarmo.
+  // Zľavu aplikuje výhradne initiateCheckout cez validate() (server-side výpočet
+  // z kupónu + subtotal z order.items, s clampom), po platbe redeemForPaidOrder.
+  // Pravidlo: NIKDY nedôveruj klientom zadanej sume – vždy prepočítaj serverovo.
 
   /**
    * Idempotentný redeem po PAID objednávke (volané z fulfillOrder po Stripe webhook / mock pay).

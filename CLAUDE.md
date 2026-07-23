@@ -45,3 +45,11 @@ Multi-tenant SaaS ticketing platform. Backend: NestJS 10 + Fastify 4 + Prisma 5 
 - **Rotácia refresh tokenu musí byť atomická:** `updateMany({ where:{ id, revokedAt:null }, data:{ revokedAt } })` a pri `count===0` vráť 401. Read-then-write prehrá token pri dvoch súbežných paneloch.
 - **Next `/api/auth/refresh` maže cookie LEN pri backend 401.** Pri 5xx/sieti/timeoute cookie NECHAJ (inak jeden výpadok backendu odhlási natrvalo).
 - **Access token žije len v pamäti** (`lib/auth.ts`), 15 min TTL; refresh cookie je httpOnly `path=/api/auth`, `domain=.ticketall.eu`, 7 dní. `apiFetch` 401-retry maže access token len ak `getAccessToken() === token` (inak zabije čerstvý token paralelného requestu).
+
+## PENIAZE / SUMY – POUČENIE Z CHÝB
+
+- **NIKDY nedôveruj klientom zadanej sume** (discountAmount, total, price, refundAmount). Server MUSÍ prepočítať zľavu/total z autoritatívnych dát (kupón + `order.items.unitPrice`), NIE ju prevziať z requestu.
+  - **Incident (krok 45, B1):** `POST /coupons/:code/redeem` bral `dto.discountAmount` od klienta a zapisoval ho do `Order.totalAmount` + načítal objednávku podľa `dto.orderId` bez ownership → dalo sa vynulovať total cudzej PENDING objednávky a získať lístky zadarmo. Endpoint bol ODSTRÁNENÝ (mŕtvy kód); zľavu aplikuje výhradne `initiateCheckout` cez `coupons.validate()` (server-side, subtotal z `order.items`, s clampom) a po platbe `redeemForPaidOrder`.
+- **Clamp vždy:** zľava `>= 0` a `<= subtotal`, výsledný total `>= 0`. Žiadny záporný/nulový total, ktorý by fulfillOrder premenil na reálne lístky.
+- **Ownership pri každej mutácii objednávky:** načítaj objednávku a over `order.userId === user.sub` (guest = autorizácia cez neuhádnuteľné cuid `orderId`), inak `ForbiddenException`. Vzor: `initiateCheckout` (orders.service.ts) a `orders-query` owner-scoping.
+- **Cena je snapshot** (`OrderItem.unitPrice` + `priceSnapshot`) – nikdy nepočítaj total zo živej `TicketType.price` pre existujúcu objednávku.
