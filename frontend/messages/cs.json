@@ -195,7 +195,10 @@
       "past": "Ukončeno"
     },
     "close": "Zavřít",
-    "qrScanHint": "Naskenujte QR kód pro sdílení"
+    "qrScanHint": "Naskenujte QR kód pro sdílení",
+    "retry": "Zkusit znovu",
+    "loadErrorTitle": "Nepodařilo se načíst akce",
+    "loadErrorHint": "Zkuste to prosím znovu."
   },
   "eventDetail": {
     "cancelledBanner": "Tato akce byla zrušena pořadatelem. Platba vám bude vrácena na váš účet během několika pracovních dnů.",
@@ -222,7 +225,9 @@
     "saleEnded": "Prodej ukončen",
     "lastN": "Poslední {n} ks",
     "ticketCount": "{count, plural, one {# vstupenka} few {# vstupenky} other {# vstupenek}}",
-    "continueToOrder": "Pokračovat k objednávce"
+    "continueToOrder": "Pokračovat k objednávce",
+    "loadErrorTitle": "Nepodařilo se načíst akci",
+    "loadErrorDesc": "Při načítání došlo k chybě. Zkuste to prosím znovu."
   },
   "account": {
     "ordersTitle": "Moje objednávky",
@@ -2311,7 +2316,8 @@
     "shareCopyLink": "Kopírovat odkaz",
     "shareCopyImage": "Kopírovat QR",
     "shareDownload": "Stáhnout QR",
-    "clickToEnlarge": "klikni pro zvětšení"
+    "clickToEnlarge": "klikni pro zvětšení",
+    "loadError": "Nepodařilo se načíst údaje. Zkuste to prosím znovu."
   },
   "protect": {
     "badge": "Bezpečný nákup lístků",

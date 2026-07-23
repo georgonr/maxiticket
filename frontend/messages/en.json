@@ -195,7 +195,10 @@
       "past": "Ended"
     },
     "close": "Close",
-    "qrScanHint": "Scan the QR code to share"
+    "qrScanHint": "Scan the QR code to share",
+    "retry": "Try again",
+    "loadErrorTitle": "Couldn’t load events",
+    "loadErrorHint": "Please try again."
   },
   "eventDetail": {
     "cancelledBanner": "This event has been cancelled by the organizer. Your payment will be refunded to your account within a few business days.",
@@ -222,7 +225,9 @@
     "saleEnded": "Sale ended",
     "lastN": "Last {n} pcs",
     "ticketCount": "{count, plural, one {# ticket} other {# tickets}}",
-    "continueToOrder": "Continue to order"
+    "continueToOrder": "Continue to order",
+    "loadErrorTitle": "Couldn’t load the event",
+    "loadErrorDesc": "Something went wrong loading this page. Please try again."
   },
   "account": {
     "ordersTitle": "My orders",
@@ -2311,7 +2316,8 @@
     "shareCopyLink": "Copy link",
     "shareCopyImage": "Copy QR image",
     "shareDownload": "Download QR",
-    "clickToEnlarge": "click to enlarge"
+    "clickToEnlarge": "click to enlarge",
+    "loadError": "Couldn’t load the details. Please try again."
   },
   "protect": {
     "badge": "Secure ticket purchase",
