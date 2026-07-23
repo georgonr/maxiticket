@@ -14,9 +14,10 @@ import { ASSISTANT_LLM } from './llm/llm.types';
 import { OrdersModule } from '../orders/orders.module';
 import { PublicModule } from '../public/public.module';
 import { TelegramModule } from '../telegram/telegram.module';
+import { HelpdeskModule } from '../helpdesk/helpdesk.module';
 
 @Module({
-  imports: [ConfigModule, OrdersModule, PublicModule, TelegramModule],
+  imports: [ConfigModule, OrdersModule, PublicModule, TelegramModule, HelpdeskModule],
   controllers: [AssistantController, GuestAssistantController, AdminConversationsController],
   providers: [
     AssistantService,

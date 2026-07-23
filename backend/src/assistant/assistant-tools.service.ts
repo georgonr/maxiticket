@@ -75,7 +75,31 @@ export class AssistantToolsService {
         },
       },
       this.publicEventsDef(),
+      this.escalateDef(),
     ];
+  }
+
+  /**
+   * Odovzdanie ľudskej podpore (krok 38). Vytvorenie tiketu NEbeží tu – runLoop
+   * ho zachytí a zavolá HelpdeskEscalationService (potrebuje kontext konverzácie
+   * a históriu, ktoré generický dispatch nemá). Definícia je zdieľaná guest aj
+   * prihlásený, aby eskalovať mohli obaja.
+   */
+  private escalateDef(): LlmToolDef {
+    return {
+      name: 'escalateToAdmin',
+      description:
+        'Odovzdaj konverzáciu ľudskej podpore a vytvor tiket. Zavolaj, keď problém nevieš vyriešiť, keď to zákazník výslovne žiada, alebo keď ide o reklamáciu/refund mimo tvojich možností. Vždy uveď stručné zhrnutie problému.',
+      parameters: {
+        type: 'object',
+        properties: {
+          summary: { type: 'string', description: 'Stručné zhrnutie problému zákazníka (1–2 vety), v jazyku konverzácie.' },
+          priority: { type: 'string', enum: ['LOW', 'NORMAL', 'HIGH'], description: 'Priorita, default NORMAL. HIGH len pri akútnom probléme (napr. podujatie dnes).' },
+        },
+        required: ['summary'],
+        additionalProperties: false,
+      },
+    };
   }
 
   /** Nájde objednávku používateľa podľa čísla ALEBO id; len ak patrí userId. */
@@ -240,7 +264,7 @@ export class AssistantToolsService {
   // getPublicEvents. Osobné akcie (stratený lístok) → agent navedie prihlásiť sa.
 
   guestToolDefs(): LlmToolDef[] {
-    return [this.publicEventsDef()];
+    return [this.publicEventsDef(), this.escalateDef()];
   }
 
   async dispatchGuest(name: string, args: Record<string, any>, _chatSessionId: string): Promise<ToolResult> {

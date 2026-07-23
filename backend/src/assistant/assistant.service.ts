@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ASSISTANT_LLM, AssistantLlmProvider, LlmMessage } from './llm/llm.types';
 import { AssistantToolsService } from './assistant-tools.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { HelpdeskEscalationService, EscalateResult } from '../helpdesk/helpdesk-escalation.service';
 
 export type ChatHistoryMsg = { role: 'user' | 'assistant'; content: string };
 
@@ -124,6 +125,19 @@ const MSG_ERROR: Record<AssistantLocale, string> = {
   en: 'The assistant ran into an error. Please try again.',
   cs: 'Asistent narazil na chybu. Zkuste to znovu.',
 };
+// Potvrdenie eskalácie v chate (krok 38). Emituje sa deterministicky z runLoop,
+// nie z LLM, aby znenie aj číslo tiketu sedeli presne.
+const MSG_ESCALATED: Record<AssistantLocale, (num: string, email: string) => string> = {
+  sk: (num, email) => `Vytvoril som požiadavku ${num}. Potvrdenie sme poslali na ${email}. Podpora sa vám ozve čo najskôr.`,
+  en: (num, email) => `I've created request ${num}. A confirmation was sent to ${email}. Support will get back to you as soon as possible.`,
+  cs: (num, email) => `Vytvořil jsem požadavek ${num}. Potvrzení jsme poslali na ${email}. Podpora se vám ozve co nejdříve.`,
+};
+// GUEST bez e-mailu: agent má požiadať o e-mail. Vraciame to ako tool-result LLM-u.
+const ESCALATE_NEED_EMAIL: Record<AssistantLocale, string> = {
+  sk: 'Na vytvorenie požiadavky potrebujem tvoj e-mail. Poprosím, napíš mi ho.',
+  en: 'To create the request I need your e-mail. Please send it to me.',
+  cs: 'K vytvoření požadavku potřebuji tvůj e-mail. Napiš mi ho prosím.',
+};
 // Export pre controller fallback (chyby mimo runChat).
 export const assistantErrorMessage = (locale: AssistantLocale = 'sk'): string => MSG_ERROR[locale];
 
@@ -135,7 +149,33 @@ export class AssistantService {
     @Inject(ASSISTANT_LLM) private readonly llm: AssistantLlmProvider,
     private readonly tools: AssistantToolsService,
     private readonly prisma: PrismaService,
+    private readonly escalation: HelpdeskEscalationService,
   ) {}
+
+  /**
+   * GUEST eskalácia po zadaní e-mailu (krok 38, „nový endpoint"). Volá ju
+   * guest controller – vytvorenie ide cez tú istú service ako tool pri CUSTOMER,
+   * vrátane rate limitu a validácie e-mailu.
+   */
+  escalateGuest(input: {
+    chatSessionId: string;
+    email: string;
+    history: ChatHistoryMsg[];
+    priority?: string;
+    summary?: string;
+    locale?: AssistantLocale;
+  }): Promise<EscalateResult> {
+    return this.escalation.escalate({
+      channel: 'GUEST',
+      sessionKey: input.chatSessionId,
+      userId: null,
+      locale: input.locale ?? 'sk',
+      history: input.history,
+      agentSummary: input.summary,
+      priority: input.priority,
+      providedEmail: input.email,
+    });
+  }
 
   isConfigured(): boolean {
     return this.llm.isConfigured();
@@ -226,6 +266,41 @@ export class AssistantService {
           emit({ type: 'status', text: STATUS_LABELS[locale][tc.name] ?? MSG_WORKING[locale] });
           let args: Record<string, any> = {};
           try { args = JSON.parse(tc.arguments || '{}'); } catch { /* ignore */ }
+
+          // escalateToAdmin sa nerieši generickým dispatchom – potrebuje kontext
+          // konverzácie a celú históriu. runLoop ich má, dispatch nie.
+          if (tc.name === 'escalateToAdmin' && conversation) {
+            const esc = await this.escalation.escalate({
+              channel: conversation.channel,
+              sessionKey: conversation.sessionKey,
+              userId: conversation.userId,
+              locale: conversation.locale,
+              history,
+              agentSummary: typeof args.summary === 'string' ? args.summary : undefined,
+              priority: typeof args.priority === 'string' ? args.priority : undefined,
+            });
+
+            if (esc.status === 'created' || esc.status === 'existing') {
+              // Deterministické potvrdenie – neponechávame na LLM, aby znenie aj
+              // číslo tiketu sedeli. Krátky okruh ukončí ďalšie LLM ťahy.
+              const prefix = assistantText && !assistantText.endsWith('\n') ? '\n\n' : '';
+              const confirm = MSG_ESCALATED[locale](esc.ticketNumber, esc.email);
+              emit({ type: 'delta', text: prefix + confirm });
+              assistantText += prefix + confirm;
+              emit({ type: 'done' });
+              return;
+            }
+
+            // GUEST bez e-mailu / neplatný / rate-limit → vráť LLM-u, nech reaguje
+            // (spýta sa na e-mail). Tiket vznikne až cez guest endpoint.
+            messages.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: JSON.stringify({ need_email: esc.status === 'need_email', status: esc.status, hint: ESCALATE_NEED_EMAIL[locale] }),
+            });
+            continue;
+          }
+
           const res = await dispatch(tc.name, args);
           if (res.attachments) for (const a of res.attachments) emit({ type: 'attachment', attachment: a });
           messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(res.summary) });
