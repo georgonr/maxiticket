@@ -52,7 +52,11 @@ export class TicketTypesService {
     return agg._sum.quantity ?? 0;
   }
 
-  findAll(terminId: string) {
+  async findAll(terminId: string, user: JwtPayload) {
+    // Tenant scoping (krok 52): organizer vidí typy lístkov LEN svojho termínu. Predtým sa
+    // `user` vôbec neprijímal → cross-tenant read (ceny/kapacity cudzieho podujatia).
+    // Verejný predaj používa /v1/public/* (nie tento auth endpoint).
+    await this.assertTerminAccess(terminId, user);
     return this.prisma.ticketType.findMany({
       where: { terminId },
       orderBy: { sortOrder: 'asc' },

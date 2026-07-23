@@ -21,7 +21,11 @@ export class TerminsService {
     return show;
   }
 
-  findAll(showId: string, user: JwtPayload) {
+  async findAll(showId: string, user: JwtPayload) {
+    // Tenant scoping (krok 52): organizer vidí termíny LEN svojho podujatia. Predtým sa
+    // `user` ignoroval → ktokoľvek prihlásený videl termíny cudzieho show (cross-tenant read).
+    // Vzor rovnaký ako findOne. Verejný predaj používa /v1/public/* (nie tento auth endpoint).
+    await this.assertShowAccess(showId, user);
     return this.prisma.termin.findMany({
       where: { showId },
       include: { venue: true, ticketTypes: { orderBy: { sortOrder: 'asc' } } },

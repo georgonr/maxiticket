@@ -13,8 +13,12 @@ import { UserRole } from '@prisma/client';
 export class TicketTypesController {
   constructor(private readonly svc: TicketTypesService) {}
 
+  // Defense-in-depth (krok 52): @Roles na guard vrstve; tenant scoping v service.
   @Get()
-  findAll(@Param('terminId') terminId: string) { return this.svc.findAll(terminId); }
+  @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER)
+  findAll(@Param('terminId') terminId: string, @CurrentUser() u: JwtPayload) {
+    return this.svc.findAll(terminId, u);
+  }
 
   @Post()
   @Roles(UserRole.SUPERADMIN, UserRole.STAFF, UserRole.ORGANIZER_OWNER, UserRole.ORGANIZER_MEMBER)
