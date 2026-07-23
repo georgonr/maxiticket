@@ -11,7 +11,15 @@ import type { PlatformInfoPublic } from '@/lib/api';
  * Chýbajúce polia sa vynechávajú – nikdy sa nedopĺňa náhradná hodnota.
  */
 export function OperatorDetails({ info }: { info: PlatformInfoPublic | null }) {
-  if (!info) return null;
+  if (!info) {
+    // Dáta sa načítavajú na serveri (krok 40). Ak sú null, endpoint/DB zlyhali –
+    // nenechaj povinné údaje zmiznúť bez stopy: v dev upozorni, v prod to už
+    // zalogoval server fetch (platform-info.server.ts).
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('OperatorDetails: chýbajú údaje prevádzkovateľa (info=null).');
+    }
+    return null;
+  }
 
   const city = [info.addressZip, info.addressCity].filter(Boolean).join(' ');
   const country = info.addressCountry === 'SK' ? 'Slovenská republika' : info.addressCountry;

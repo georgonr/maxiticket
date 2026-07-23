@@ -103,6 +103,9 @@ services:
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ticketall.eu}
+      # Server-side (SSR) volania frontendu na backend vnútornou sieťou – krok 40
+      # (/gdpr, /kontakt čítajú údaje prevádzkovateľa na serveri). Bez hairpinu cez Caddy.
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://backend:3001}
       NODE_ENV: ${NODE_ENV:-production}
     depends_on:
       - backend

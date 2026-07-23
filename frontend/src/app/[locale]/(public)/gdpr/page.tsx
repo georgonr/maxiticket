@@ -1,16 +1,12 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { publicApi, type PlatformInfoPublic } from '@/lib/api';
+import { getTranslations } from 'next-intl/server';
 import { OperatorDetails } from '@/components/public/OperatorDetails';
+import { getPlatformInfo } from '@/lib/platform-info.server';
 
-export default function GdprPage() {
-  const t = useTranslations('gdpr');
-  const [operator, setOperator] = useState<PlatformInfoPublic | null>(null);
-  useEffect(() => {
-    publicApi.platformInfo().then(setOperator).catch(() => setOperator(null));
-  }, []);
+// Server Component (krok 40): údaje prevádzkovateľa sú v úvodnom HTML, nie až
+// po klientskom fetchi. Stránka je čisto obsahová – žiadna interaktivita.
+export default async function GdprPage() {
+  const t = await getTranslations('gdpr');
+  const operator = await getPlatformInfo();
   const collected = t.raw('collected.items') as string[];
   const purposes = t.raw('purpose.items') as string[];
   const rights = t.raw('rights.items') as string[];
