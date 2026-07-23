@@ -935,12 +935,25 @@ export class OrdersService {
   /**
    * Stores a Stripe event ID. Returns true if the event was already recorded (duplicate).
    */
-  async recordStripeEvent(eventId: string): Promise<boolean> {
+  /**
+   * Idempotencia Stripe webhooku (krok 49, V2). ROZDELENÉ na čítanie a zápis, aby sa
+   * event NEoznačil ako spracovaný PRED fulfillOrder:
+   *   - isStripeEventProcessed: len SELECT (bez zápisu) – zisti, či už bol vybavený
+   *   - markStripeEventProcessed: zapíš AŽ keď fulfill uspel (alebo pri business chybe)
+   * Predtým sa event.id ukladal pred fulfillom → keď fulfill hodil infra chybu a Stripe
+   * retryoval, retry sa zahodil ako „already processed" a objednávka ostala nevybavená.
+   */
+  async isStripeEventProcessed(eventId: string): Promise<boolean> {
+    const row = await this.prisma.stripeEvent.findUnique({ where: { id: eventId }, select: { id: true } });
+    return row !== null;
+  }
+
+  /** Označí event ako spracovaný. Idempotentné – súbežný duplikát (P2002) sa ticho ignoruje. */
+  async markStripeEventProcessed(eventId: string): Promise<void> {
     try {
       await this.prisma.stripeEvent.create({ data: { id: eventId } });
-      return false;
     } catch (e: any) {
-      if (e.code === 'P2002') return true; // unique constraint – already processed
+      if (e.code === 'P2002') return; // už zapísaný súbežným doručením – OK
       throw e;
     }
   }

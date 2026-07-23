@@ -363,7 +363,11 @@
     "totalLabel": "Total",
     "viewMyTickets": "View my tickets",
     "moreEvents": "More events",
-    "processingFee": "Processing fee"
+    "processingFee": "Processing fee",
+    "feeLoading": "Loading…",
+    "feeError": "We couldn't load the final price including the fee.",
+    "feeRetry": "Try again",
+    "feeUnavailable": "Final price unavailable"
   },
   "coupon": {
     "error": "Couldn't verify the coupon. Please try again.",

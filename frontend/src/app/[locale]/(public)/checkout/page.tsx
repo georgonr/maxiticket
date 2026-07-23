@@ -44,7 +44,10 @@ function CheckoutContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const [processingFee, setProcessingFee] = useState(0);  // Krok 2/2: zákaznícky poplatok (server quote)
+  const [processingFee, setProcessingFee] = useState<number | null>(0);  // null = quote zlyhal → NEúčtuj/nezobrazuj 0
+  const [feeLoading, setFeeLoading] = useState(false);
+  const [feeError, setFeeError] = useState(false);
+  const [feeReloadKey, setFeeReloadKey] = useState(0);  // retry trigger pre feeQuote
   // Guest checkout – buyer údaje (pre prihlásených ich neukazujeme, server berie z účtu)
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerName, setBuyerName] = useState('');
@@ -88,21 +91,29 @@ function CheckoutContent() {
 
   // Krok 2/2: zákaznícky poplatok za spracovanie – server quote (vracia LEN sumu) zo sumy po zľave.
   useEffect(() => {
-    if (!cart) { setProcessingFee(0); return; }
+    if (!cart) { setProcessingFee(0); setFeeError(false); return; }
     const base = appliedCoupon ? appliedCoupon.finalAmount : cartTotal(cart);
-    if (base <= 0) { setProcessingFee(0); return; }
+    if (base <= 0) { setProcessingFee(0); setFeeError(false); return; }
     let active = true;
+    setFeeLoading(true);
+    setFeeError(false);
     publicApi.feeQuote(cart.terminId, base)
-      .then((r) => { if (active) setProcessingFee(r.feeAmount ?? 0); })
-      .catch(() => { if (active) setProcessingFee(0); });
+      .then((r) => { if (active) { setProcessingFee(r.feeAmount ?? 0); setFeeError(false); } })
+      .catch(() => {
+        // NEZOBRAZUJ fee=0 – server ho pri platbe aj tak doúčtuje. Označ chybu (→ zablokuj
+        // tlačidlo Zaplatiť), nech zákazník nikdy nezaplatí inú sumu, než mu bola zobrazená.
+        if (active) { setProcessingFee(null); setFeeError(true); }
+      })
+      .finally(() => { if (active) setFeeLoading(false); });
     return () => { active = false; };
-  }, [cart, appliedCoupon]);
+  }, [cart, appliedCoupon, feeReloadKey]);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
   const guestFieldsOk = isLoggedIn || (emailValid && buyerName.trim().length > 0);
 
   async function handleCheckout() {
-    if (!cart || !acceptTerms || !guestFieldsOk) return;
+    // feeKnown: bez načítaného poplatku sa NESMIE platiť (inak by suma sedela iba náhodou).
+    if (!cart || !acceptTerms || !guestFieldsOk || processingFee === null) return;
     setError('');
     setSubmitting(true);
     try {
@@ -155,7 +166,8 @@ function CheckoutContent() {
   const total = cartTotal(cart);
   const currency = cart.items[0]?.currency ?? 'EUR';
   const finalTotal = appliedCoupon ? appliedCoupon.finalAmount : total;
-  const grandTotal = finalTotal + processingFee;  // Krok 2/2: cena lístkov (po zľave) + poplatok
+  const feeKnown = processingFee !== null;
+  const grandTotal = finalTotal + (processingFee ?? 0);  // Krok 2/2: cena lístkov (po zľave) + poplatok
 
   return (
     <div className="mx-auto max-w-lg">
@@ -238,7 +250,7 @@ function CheckoutContent() {
 
         {/* Súčty */}
         <div className="mt-4 space-y-1.5 border-t pt-3">
-          {(appliedCoupon || processingFee > 0) && (
+          {(appliedCoupon || feeKnown) && (
             <div className="flex items-center justify-between text-sm text-gray-500">
               <span>{t('subtotal')}</span>
               <span>{fmtPrice(total, currency)}</span>
@@ -250,18 +262,37 @@ function CheckoutContent() {
               <span>−{fmtPrice(appliedCoupon.discount, currency)}</span>
             </div>
           )}
-          {processingFee > 0 && (
+          {feeKnown && processingFee! > 0 && (
             <div className="flex items-center justify-between text-sm text-gray-500">
               <span>{t('processingFee')}</span>
-              <span>{fmtPrice(processingFee, currency)}</span>
+              <span>{fmtPrice(processingFee!, currency)}</span>
             </div>
           )}
           <div className="flex items-center justify-between pt-1">
             <span className="font-semibold text-gray-900">{t('total')}</span>
-            <span className="text-xl font-bold text-coral">{fmtPrice(grandTotal, currency)}</span>
+            {feeKnown ? (
+              <span className="text-xl font-bold text-coral">{fmtPrice(grandTotal, currency)}</span>
+            ) : (
+              <span className="text-sm text-gray-400">{feeLoading ? t('feeLoading') : '—'}</span>
+            )}
           </div>
         </div>
       </div>
+
+      {/* V1: keď sa nepodarí načítať konečnú cenu, NEDOVOLÍME platbu s neúplnou sumou. */}
+      {feeError && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <span>{t('feeError')}</span>
+          <button
+            type="button"
+            onClick={() => setFeeReloadKey((k) => k + 1)}
+            disabled={feeLoading}
+            className="shrink-0 font-medium text-amber-900 underline hover:no-underline disabled:opacity-50"
+          >
+            {feeLoading ? t('feeLoading') : t('feeRetry')}
+          </button>
+        </div>
+      )}
 
       {/* Payment info */}
       <div className="mb-4 flex items-center gap-2 rounded-lg border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-plum">
@@ -295,13 +326,17 @@ function CheckoutContent() {
 
       <Button
         onClick={handleCheckout}
-        disabled={!acceptTerms || submitting || !guestFieldsOk}
+        disabled={!acceptTerms || submitting || !guestFieldsOk || !feeKnown || feeLoading}
         loading={submitting}
         size="lg"
         className="w-full gap-2"
       >
         <ShoppingBag size={16} />
-        {submitting ? t('redirecting') : t('pay', { amount: fmtPrice(grandTotal, currency) })}
+        {submitting
+          ? t('redirecting')
+          : !feeKnown
+            ? t('feeUnavailable')
+            : t('pay', { amount: fmtPrice(grandTotal, currency) })}
       </Button>
 
       <p className="mt-3 text-center text-xs text-gray-400">

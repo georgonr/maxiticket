@@ -363,7 +363,11 @@
     "totalLabel": "Celkom",
     "viewMyTickets": "Zobraziť moje lístky",
     "moreEvents": "Ďalšie podujatia",
-    "processingFee": "Poplatok za spracovanie"
+    "processingFee": "Poplatok za spracovanie",
+    "feeLoading": "Načítavam…",
+    "feeError": "Nepodarilo sa načítať konečnú cenu vrátane poplatku.",
+    "feeRetry": "Skúsiť znova",
+    "feeUnavailable": "Konečná cena nedostupná"
   },
   "coupon": {
     "error": "Kupón sa nepodarilo overiť. Skúste znova.",

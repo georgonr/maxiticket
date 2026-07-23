@@ -363,7 +363,11 @@
     "totalLabel": "Celkem",
     "viewMyTickets": "Zobrazit moje lístky",
     "moreEvents": "Další akce",
-    "processingFee": "Poplatek za zpracování"
+    "processingFee": "Poplatek za zpracování",
+    "feeLoading": "Načítám…",
+    "feeError": "Nepodařilo se načíst konečnou cenu včetně poplatku.",
+    "feeRetry": "Zkusit znovu",
+    "feeUnavailable": "Konečná cena nedostupná"
   },
   "coupon": {
     "error": "Kupón se nepodařilo ověřit. Zkuste to znovu.",
