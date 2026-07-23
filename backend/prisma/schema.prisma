@@ -575,6 +575,7 @@ model Order {
   items         OrderItem[]
   tickets       Ticket[]
   couponRedemption CouponRedemption?
+  termsAcceptances TermsAcceptance[]
   refundRequests RefundRequest[]
   terminSeats   TerminSeat[]
 
@@ -791,15 +792,22 @@ model TermsAcceptance {
   id             String       @id @default(cuid())
   termsVersionId String
   termsVersion   TermsVersion @relation(fields: [termsVersionId], references: [id])
-  userId         String
-  user           User         @relation(fields: [userId], references: [id])
+  // userId je nullable: registrácia ho má, nákup hosťom nie (krok 44).
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  // orderId vyplnené pri nákupnom súhlase (viazané na objednávku); pri registrácii NULL.
+  orderId        String?
+  order          Order?       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   acceptedAt     DateTime     @default(now())
   ipAddress      String?
   userAgent      String?
 
-  @@unique([termsVersionId, userId])
+  // Jednorazovosť REGISTRAČNÉHO súhlasu (orderId IS NULL) je vynútená PARTIAL unique
+  // indexom v DB (TermsAcceptance_reg_unique) – Prisma partial unique v schéme nevie
+  // vyjadriť, preto tu nie je @@unique. Nákupné súhlasy (orderId set) sú bez obmedzenia.
   @@index([userId])
+  @@index([orderId])
 }
 
 // ─────────────────────────────────────────────

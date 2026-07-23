@@ -67,7 +67,7 @@ export function RegisterForm() {
         <input type="checkbox" className="mt-0.5 accent-brand" {...register('acceptTerms')} />
         <span>
           Súhlasím s{' '}
-          <a href="#" className="text-brand underline">obchodnými podmienkami</a>
+          <a href="/obchodne-podmienky?pre=organizator" target="_blank" rel="noopener noreferrer" className="text-brand underline">obchodnými podmienkami</a>
           {' '}a spracovaním osobných údajov.
         </span>
       </label>

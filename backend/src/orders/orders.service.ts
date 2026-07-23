@@ -9,7 +9,7 @@ import { MailService } from '../mail/mail.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CompOrderDto } from './dto/comp-order.dto';
 import { PosOrderDto } from './dto/pos-order.dto';
-import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole, TerminMode, SectionMode, SeatStatus } from '@prisma/client';
+import { Prisma, OrderStatus, TerminStatus, TicketStatus, UserRole, TerminMode, SectionMode, SeatStatus, TermsType } from '@prisma/client';
 import { createHmac, randomUUID } from 'crypto';
 import { PAYMENT_PROVIDER, PaymentProvider } from '../payment/payment.interface';
 import { PaymentGatewayService } from '../payment/payment-gateways.service';
@@ -42,7 +42,7 @@ export class OrdersService {
     private ekasa: EkasaService,
   ) {}
 
-  async createOrder(dto: CreateOrderDto, user?: JwtPayload) {
+  async createOrder(dto: CreateOrderDto, user?: JwtPayload, ipAddress?: string, userAgent?: string) {
     const termin = await this.prisma.termin.findUnique({
       where: { id: dto.terminId },
       include: {
@@ -245,7 +245,7 @@ export class OrdersService {
     const hasSeated = preparedItems.some((p) => p.seatIds && p.seatIds.length > 0);
 
     // orderNumber sa generuje z count() → pod súbehom môže kolidovať (P2002). Retry s prepočtom.
-    return this.withOrderNumberRetry(async (orderNumber) => {
+    const order = await this.withOrderNumberRetry(async (orderNumber) => {
       const orderData: Prisma.OrderUncheckedCreateInput = { ...baseOrderData, orderNumber };
 
       if (!hasSeated) {
@@ -279,6 +279,44 @@ export class OrdersService {
         return tx.order.findUnique({ where: { id: o.id }, include: { items: true } });
       });
     });
+
+    // Záznam súhlasu s VOP (krok 44). acceptTerms=true už vynútil ValidationPipe
+    // (CreateOrderDto @IsIn([true])), takže bez súhlasu sa sem nedôjde – toto je
+    // audit stopa „s ktorou verziou súhlasil". Best-effort: chyba záznamu nesmie
+    // zhodiť už vytvorenú (zaplatiteľnú) objednávku.
+    if (order) {
+      await this.recordPurchaseConsent(order.id, user?.sub ?? null, ipAddress, userAgent);
+    }
+    return order;
+  }
+
+  /**
+   * Zapíše TermsAcceptance pre nákup (BUYER_PURCHASE). Funguje pre prihláseného
+   * (userId) aj hosťa (userId null) – väzba je vždy cez orderId. Verzia sa nesie
+   * cez termsVersionId. Ak aktívne znenie neexistuje, len zaloguje (nezablokuje nákup).
+   */
+  private async recordPurchaseConsent(
+    orderId: string,
+    userId: string | null,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    try {
+      const terms = await this.prisma.termsVersion.findFirst({
+        where: { type: TermsType.BUYER_PURCHASE, isActive: true, organizerId: null },
+        orderBy: { publishedAt: 'desc' },
+        select: { id: true },
+      });
+      if (!terms) {
+        this.logger.warn(`Súhlas s VOP nezaznamenaný pre objednávku ${orderId}: žiadne aktívne BUYER_PURCHASE znenie.`);
+        return;
+      }
+      await this.prisma.termsAcceptance.create({
+        data: { termsVersionId: terms.id, userId, orderId, ipAddress, userAgent },
+      });
+    } catch (e: any) {
+      this.logger.error(`Záznam súhlasu s VOP pre objednávku ${orderId} zlyhal: ${e.message}`);
+    }
   }
 
   /**

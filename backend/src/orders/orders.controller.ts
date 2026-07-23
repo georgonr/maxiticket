@@ -19,8 +19,9 @@ export class OrdersController {
   @Post('orders')
   @UseGuards(OptionalJwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateOrderDto, @CurrentUser() user?: JwtPayload) {
-    return this.svc.createOrder(dto, user);
+  create(@Body() dto: CreateOrderDto, @Req() req: FastifyRequest, @CurrentUser() user?: JwtPayload) {
+    // ip/ua pre záznam súhlasu s VOP (krok 44).
+    return this.svc.createOrder(dto, user, req.ip, req.headers['user-agent']);
   }
 
   @Get('orders/:id')

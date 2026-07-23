@@ -108,7 +108,8 @@
     "forOrganizers": "Pro pořadatele",
     "protect": "TicketAll Protect",
     "protectSubtitle": "Bezpečný nákup lístků",
-    "terms": "Obchodní podmínky"
+    "terms": "Obchodní podmínky",
+    "termsOrg": "Obchodní podmínky"
   },
   "chat": {
     "title": "Asistent TicketAll",
@@ -2313,6 +2314,8 @@
     "title": "Obchodní podmínky",
     "version": "Verze {version}",
     "effectiveFrom": "účinné od {date}",
-    "pending": "Obchodní podmínky se právě připravují. Děkujeme za trpělivost."
+    "pending": "Obchodní podmínky se právě připravují. Děkujeme za trpělivost.",
+    "tabBuyer": "Pro kupující",
+    "tabOrganizer": "Pro organizátory"
   }
 }

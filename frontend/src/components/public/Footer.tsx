@@ -14,6 +14,8 @@ const FOOTER_COLS = [
       { href: '/pre-organizatorov', key: 'forOrganizers' },
       // FIX: /admin/register bol 404 → otvorí dialóg s výberom typu registrácie.
       { href: '#', key: 'register', dialog: true },
+      // Organizátorské znenie VOP (deep-link na tab).
+      { href: '/obchodne-podmienky?pre=organizator', key: 'termsOrg' },
     ],
   },
   {

@@ -108,7 +108,8 @@
     "forOrganizers": "For organizers",
     "protect": "TicketAll Protect",
     "protectSubtitle": "Secure ticket purchase",
-    "terms": "Terms and Conditions"
+    "terms": "Terms and Conditions",
+    "termsOrg": "Terms and Conditions"
   },
   "chat": {
     "title": "TicketAll Assistant",
@@ -2313,6 +2314,8 @@
     "title": "Terms and Conditions",
     "version": "Version {version}",
     "effectiveFrom": "effective from {date}",
-    "pending": "The terms and conditions are being prepared. Thank you for your patience."
+    "pending": "The terms and conditions are being prepared. Thank you for your patience.",
+    "tabBuyer": "For buyers",
+    "tabOrganizer": "For organizers"
   }
 }
