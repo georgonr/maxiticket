@@ -35,3 +35,13 @@ Multi-tenant SaaS ticketing platform. Backend: NestJS 10 + Fastify 4 + Prisma 5 
 5. Pri každej regresii najprv diagnostikuj REÁLNE z logov / odpovede / git diff, NEHÁDAJ. Ak môže byť príčin viac, vymenuj ich a navrhni overenie, pred aplikáciou opravy.
 
 6. Pred git commit VŽDY over `git diff --stat --cached` – musí ukazovať skutočné súbory zodpovedajúce commit message. NIKDY necommituj iba commit message bez implementácie (incident acac2a6: commit s popisom 9 metrics endpointov obsahoval iba .gitignore – false success, ktorý mátol Geo a vyžadoval celú novú implementáciu).
+
+---
+
+## AUTH – POUČENIE Z CHÝB
+
+- **Refresh token je OPAQUE (randomUUID), NIE JWT.** Vydáva sa v `auth.service.ts` cez `randomUUID()` a overuje sa VÝHRADNE proti DB (`RefreshToken` podľa `token`, kontrola `revokedAt IS NULL` + `expiresAt > now()`), `userId` z nájdeného riadku. NIKDY ho neoveruj passportom ako JWT.
+  - **Incident (krok 37):** od scaffoldu `bc0f5d1` backend vydával refresh token ako `randomUUID()`, ale `JwtRefreshStrategy` ho parsoval ako JWT → `/v1/auth/refresh` vždy 401 → používateľ odhlásený pri prvom tvrdom načítaní stránky / po 15 min. Ak by si niekedy pridával guard/strategy na refresh endpoint, spôsob VYDÁVANIA a OVEROVANIA tokenu musí sedieť.
+- **Rotácia refresh tokenu musí byť atomická:** `updateMany({ where:{ id, revokedAt:null }, data:{ revokedAt } })` a pri `count===0` vráť 401. Read-then-write prehrá token pri dvoch súbežných paneloch.
+- **Next `/api/auth/refresh` maže cookie LEN pri backend 401.** Pri 5xx/sieti/timeoute cookie NECHAJ (inak jeden výpadok backendu odhlási natrvalo).
+- **Access token žije len v pamäti** (`lib/auth.ts`), 15 min TTL; refresh cookie je httpOnly `path=/api/auth`, `domain=.ticketall.eu`, 7 dní. `apiFetch` 401-retry maže access token len ak `getAccessToken() === token` (inak zabije čerstvý token paralelného requestu).

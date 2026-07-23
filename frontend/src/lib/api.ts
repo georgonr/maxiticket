@@ -1,4 +1,4 @@
-import { getValidToken, clearAccessToken } from './auth';
+import { getValidToken, clearAccessToken, getAccessToken } from './auth';
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.ticketall.eu';
 
@@ -25,7 +25,10 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
     // getValidToken() zdieľa _refreshPromise, takže N paralelných requestov spustí len 1 refresh.
     // Body je string/FormData (nie skonzumovaný stream), takže zopakovanie requestu je bezpečné.
     if (res.status === 401 && token && !_retried) {
-      clearAccessToken();
+      // Zahoď LEN ten token, s ktorým sme volali. Paralelný request mohol
+      // medzitým obnoviť token; nepodmienené clearAccessToken() by ten čerstvý
+      // zmazalo a vyvolalo zbytočný druhý refresh.
+      if (getAccessToken() === token) clearAccessToken();
       const fresh = await getValidToken();
       if (fresh) {
         return apiFetch<T>(path, { ...options, token: fresh, _retried: true });

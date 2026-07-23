@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authApi } from '@/lib/api';
+import { authApi, ApiError } from '@/lib/api';
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -21,9 +21,21 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     });
     return res;
-  } catch (err: any) {
-    const res = NextResponse.json({ message: err.message }, { status: 401 });
-    res.cookies.set('refresh_token', '', { ...COOKIE_OPTS, maxAge: 0 });
-    return res;
+  } catch (err: unknown) {
+    // Cookie mažeme LEN keď backend token definitívne odmietol (401). Pri 5xx,
+    // sieťovej chybe či timeoute (err nie je ApiError, alebo status >= 500) ju
+    // NECHÁME – inak by jeden výpadok backendu odhlásil natrvalo, hoci token
+    // je stále platný a ďalší pokus by prešiel.
+    const status = err instanceof ApiError ? err.status : 0;
+    const message = err instanceof Error ? err.message : 'Refresh failed';
+
+    if (status === 401) {
+      const res = NextResponse.json({ message }, { status: 401 });
+      res.cookies.set('refresh_token', '', { ...COOKIE_OPTS, maxAge: 0 });
+      return res;
+    }
+
+    // Prechodná chyba – cookie ostáva, klient to skúsi znova.
+    return NextResponse.json({ message }, { status: 503 });
   }
 }

@@ -14,9 +14,6 @@ import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { JwtPayload } from '../casl/casl-ability.factory';
 import { FastifyRequest } from 'fastify';
 
 @Controller('auth')
@@ -43,11 +40,12 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  // Bez guardu: refresh token je opaque UUID, overuje sa v service proti DB.
+  // (Predtým tu bol JwtRefreshGuard, ktorý UUID parsoval ako JWT a vždy odmietol.)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtRefreshGuard)
-  refresh(@CurrentUser() user: JwtPayload & { rawRefreshToken: string }) {
-    return this.authService.refresh(user.sub, user.rawRefreshToken);
+  refresh(@Body() dto: RefreshDto) {
+    return this.authService.refresh(dto.refreshToken);
   }
 
   @Post('logout')

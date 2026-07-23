@@ -155,20 +155,34 @@ export class AuthService {
     return this.issueTokenPair(user.id, user.email, user.role, user.organizerId);
   }
 
-  async refresh(userId: string, rawRefreshToken: string) {
-    const stored = await this.prisma.refreshToken.findUnique({ where: { token: rawRefreshToken } });
+  /**
+   * Obnova relácie. Refresh token je OPAQUE (randomUUID), NIE JWT – overuje sa
+   * výhradne proti DB, nie cez passport-jwt. Predtým ho JwtRefreshStrategy
+   * skúšala parsovať ako JWT a UUID vždy odmietla, takže /auth/refresh vracal
+   * 401 zakaždým a používateľ vypadol pri prvom tvrdom načítaní stránky.
+   *
+   * userId sa berie z NÁJDENÉHO riadku – opaque token žiadny payload nemá.
+   */
+  async refresh(rawRefreshToken: string) {
+    if (!rawRefreshToken) throw new UnauthorizedException('Refresh token missing');
 
-    if (!stored || stored.userId !== userId || stored.revokedAt || stored.expiresAt < new Date()) {
+    const stored = await this.prisma.refreshToken.findUnique({ where: { token: rawRefreshToken } });
+    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token invalid or expired');
     }
 
-    // Rotate: revoke old, issue new
-    await this.prisma.refreshToken.update({
-      where: { id: stored.id },
+    // Atomický claim rotácie: revokuj len ak je token ešte nerevokovaný.
+    // Keď count === 0, medzičasom ho rotoval iný súbežný refresh (dva panely) –
+    // NEvydávaj nový pár, inak by si prehral platný token toho druhého.
+    const claimed = await this.prisma.refreshToken.updateMany({
+      where: { id: stored.id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    if (claimed.count === 0) {
+      throw new UnauthorizedException('Refresh token already used');
+    }
 
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: stored.userId } });
     return this.issueTokenPair(user.id, user.email, user.role, user.organizerId);
   }
 
