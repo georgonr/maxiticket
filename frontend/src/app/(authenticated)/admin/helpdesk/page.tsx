@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations, useFormatter } from 'next-intl';
 import Link from 'next/link';
+import { Lock } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { helpdeskApi, type HelpdeskTicketListItem } from '@/lib/api';
 
@@ -45,6 +46,20 @@ export default function HelpdeskPage() {
   useEffect(() => { setLoading(true); load(); }, [load]);
   useEffect(() => { setPage(1); }, [status]);
 
+  // Rýchle uzavretie priamo zo zoznamu (bez otvárania detailu). Po úspechu obnov.
+  const [closingId, setClosingId] = useState<string | null>(null);
+  const closeTicket = useCallback(async (id: string) => {
+    setClosingId(id);
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      await helpdeskApi.patch(id, { status: 'CLOSED' }, token);
+      await load();
+    } finally {
+      setClosingId(null);
+    }
+  }, [load]);
+
   // Auto-refresh: nové odpovede chodia z IMAP pollera na pozadí, takže zoznam
   // by inak zostal visieť na stave spred otvorenia stránky.
   useEffect(() => {
@@ -79,12 +94,14 @@ export default function HelpdeskPage() {
         ) : (
           <ul className="divide-y divide-slate-100">
             {items.map((it) => (
-              <li key={it.id}>
+              <li key={it.id}
+                className={`flex items-center gap-2 pr-3 hover:bg-slate-50 ${
+                  it.status === 'OPEN' ? 'border-l-2 border-coral' : 'border-l-2 border-transparent'
+                }`}
+              >
                 <Link
                   href={`/admin/helpdesk/${it.id}`}
-                  className={`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-slate-50 ${
-                    it.status === 'OPEN' ? 'border-l-2 border-coral' : 'border-l-2 border-transparent'
-                  }`}
+                  className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1 py-3 pl-4"
                 >
                   <span className="font-mono text-xs text-slate-400">{it.ticketNumber}</span>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">
@@ -104,6 +121,17 @@ export default function HelpdeskPage() {
                     })}
                   </span>
                 </Link>
+                {/* Rýchla akcia mimo <Link>, aby sa neprekrýval navigačný klik. */}
+                {it.status !== 'CLOSED' && (
+                  <button
+                    onClick={() => closeTicket(it.id)}
+                    disabled={closingId === it.id}
+                    title={t('close')}
+                    className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                  >
+                    <Lock size={12} /> {t('close')}
+                  </button>
+                )}
               </li>
             ))}
           </ul>

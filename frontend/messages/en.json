@@ -126,7 +126,13 @@
     "quickGuestRegister": "How do I sign up?",
     "quickGuestHowItWorks": "How does buying work?",
     "quickGuestRefund": "How do refunds work?",
-    "loginCta": "Sign in"
+    "loginCta": "Sign in",
+    "emailPromptTitle": "Enter the e-mail where support should reply:",
+    "emailPlaceholder": "you@email.com",
+    "emailSubmit": "Create request",
+    "emailInvalid": "Invalid e-mail",
+    "emailRateLimited": "Too many requests, please try again later.",
+    "emailError": "Could not create the request. Please try again."
   },
   "hero": {
     "buyTickets": "Buy tickets",
@@ -2038,7 +2044,11 @@
       "replyPlaceholder": "Write a reply…",
       "sendReply": "Send reply",
       "replySent": "Reply saved and sent by e-mail.",
-      "replySavedNotSent": "The reply is saved in the ticket, but the e-mail could not be sent. Please try again later."
+      "replySavedNotSent": "The reply is saved in the ticket, but the e-mail could not be sent. Please try again later.",
+      "close": "Close",
+      "reopen": "Reopen",
+      "closedNotice": "This ticket is closed. Reopen it to reply.",
+      "replyClosedPlaceholder": "Ticket is closed."
     }
   },
   "seatPicker": {

@@ -46,6 +46,47 @@ export function ChatWidget() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  // GUEST eskalácia: keď backend pošle need_email, ukáž pole na e-mail (krok 39).
+  const [escalation, setEscalation] = useState<{ summary?: string; priority?: string } | null>(null);
+  const [emailInput, setEmailInput] = useState('');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailErr, setEmailErr] = useState('');
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  async function submitEscalationEmail() {
+    const email = emailInput.trim();
+    if (!email || emailBusy) return;
+    if (!EMAIL_RE.test(email)) { setEmailErr(t('emailInvalid')); return; }
+    setEmailBusy(true);
+    setEmailErr('');
+    try {
+      const res = await fetch(`${API_BASE}/v1/assistant/guest/escalate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatSessionId: getGuestSid(),
+          email,
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+          summary: escalation?.summary,
+          priority: escalation?.priority,
+          locale,
+        }),
+      });
+      if (res.status === 429) { setEmailErr(t('emailRateLimited')); return; }
+      if (res.status === 400) { setEmailErr(t('emailInvalid')); return; }
+      if (!res.ok) { setEmailErr(t('emailError')); return; }
+      const data: { ticketNumber: string; message: string } = await res.json();
+      // Potvrdenie s číslom tiketu príde z backendu.
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.message }]);
+      setEscalation(null);
+      setEmailInput('');
+    } catch {
+      setEmailErr(t('emailError'));
+    } finally {
+      setEmailBusy(false);
+    }
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -118,6 +159,7 @@ export function ChatWidget() {
           let ev: any;
           try { ev = JSON.parse(ln.slice(5).trim()); } catch { continue; }
           if (ev.type === 'status') setStatus(ev.text);
+          else if (ev.type === 'escalation' && ev.status === 'need_email') setEscalation({ summary: ev.summary, priority: ev.priority });
           else if (ev.type === 'delta') { setStatus(''); update((m) => ({ ...m, content: m.content + ev.text })); }
           else if (ev.type === 'attachment') update((m) => ({ ...m, attachments: [...(m.attachments ?? []), ev.attachment] }));
           else if (ev.type === 'error') update((m) => ({ ...m, content: (m.content ? m.content + '\n\n' : '') + '⚠️ ' + ev.message }));
@@ -205,6 +247,36 @@ export function ChatWidget() {
               </div>
             )}
           </div>
+
+          {/* GUEST eskalácia: pole na e-mail (krok 39). Prihlásený tok ho nikdy
+              nevidí – tam tiket vzniká hneď a need_email nepríde. */}
+          {guestMode && escalation && (
+            <form
+              onSubmit={(e) => { e.preventDefault(); submitEscalationEmail(); }}
+              className="border-t border-slate-200 bg-slate-50 p-3"
+            >
+              <p className="mb-2 text-xs font-medium text-slate-600">{t('emailPromptTitle')}</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => { setEmailInput(e.target.value); setEmailErr(''); }}
+                  placeholder={t('emailPlaceholder')}
+                  disabled={emailBusy}
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-coral"
+                />
+                <button
+                  type="submit"
+                  disabled={emailBusy || !emailInput.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-coral px-3 py-2 text-xs font-medium text-white hover:bg-coral-dark disabled:opacity-40"
+                >
+                  {emailBusy ? <Loader2 size={14} className="animate-spin" /> : null}
+                  {t('emailSubmit')}
+                </button>
+              </div>
+              {emailErr && <p className="mt-1.5 text-xs text-red-600">{emailErr}</p>}
+            </form>
+          )}
 
           {/* Quick replies */}
           {messages.length === 0 && (

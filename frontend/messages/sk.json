@@ -126,7 +126,13 @@
     "quickGuestRegister": "Ako sa zaregistrujem?",
     "quickGuestHowItWorks": "Ako funguje nákup?",
     "quickGuestRefund": "Ako funguje vrátenie peňazí?",
-    "loginCta": "Prihlásiť sa"
+    "loginCta": "Prihlásiť sa",
+    "emailPromptTitle": "Zadajte e-mail, na ktorý vám podpora odpovie:",
+    "emailPlaceholder": "vas@email.sk",
+    "emailSubmit": "Vytvoriť požiadavku",
+    "emailInvalid": "Neplatný e-mail",
+    "emailRateLimited": "Príliš veľa požiadaviek, skúste neskôr.",
+    "emailError": "Požiadavku sa nepodarilo vytvoriť. Skúste to znova."
   },
   "hero": {
     "buyTickets": "Kúpiť lístky",
@@ -2038,7 +2044,11 @@
       "replyPlaceholder": "Napíšte odpoveď…",
       "sendReply": "Odoslať odpoveď",
       "replySent": "Odpoveď uložená a odoslaná e-mailom.",
-      "replySavedNotSent": "Odpoveď je uložená v tikete, ale e-mail sa nepodarilo odoslať. Skúste to znova neskôr."
+      "replySavedNotSent": "Odpoveď je uložená v tikete, ale e-mail sa nepodarilo odoslať. Skúste to znova neskôr.",
+      "close": "Uzavrieť",
+      "reopen": "Znovu otvoriť",
+      "closedNotice": "Tiket je uzavretý. Pre odpoveď ho najprv znovu otvorte.",
+      "replyClosedPlaceholder": "Tiket je uzavretý."
     }
   },
   "seatPicker": {

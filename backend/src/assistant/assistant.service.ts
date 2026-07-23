@@ -17,6 +17,9 @@ export type AssistantEvent =
   | { type: 'status'; text: string }
   | { type: 'delta'; text: string }
   | { type: 'attachment'; attachment: Record<string, unknown> }
+  // GUEST eskalácia bez e-mailu (krok 39): signál pre widget, nech zobrazí pole
+  // na e-mail. Agent to zároveň vypýta textom, ale toto je strojová akcia.
+  | { type: 'escalation'; status: 'need_email'; summary?: string; priority?: string }
   | { type: 'done' }
   | { type: 'error'; message: string };
 
@@ -291,6 +294,15 @@ export class AssistantService {
               return;
             }
 
+            // GUEST bez e-mailu → strojový signál widgetu, nech zobrazí pole.
+            if (esc.status === 'need_email') {
+              emit({
+                type: 'escalation',
+                status: 'need_email',
+                summary: typeof args.summary === 'string' ? args.summary : undefined,
+                priority: typeof args.priority === 'string' ? args.priority : undefined,
+              });
+            }
             // GUEST bez e-mailu / neplatný / rate-limit → vráť LLM-u, nech reaguje
             // (spýta sa na e-mail). Tiket vznikne až cez guest endpoint.
             messages.push({
