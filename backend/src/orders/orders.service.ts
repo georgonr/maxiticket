@@ -28,6 +28,19 @@ const FEE_LABEL: Record<string, string> = {
   cs: 'Poplatek za zpracování',
 };
 
+// Kapacitne obmedzená položka (GENERAL alebo SECTIONED). Re-overuje sa atomicky
+// pod row-lockom v assertCapacityAtomic(). `table` je fixný whitelist (nie vstup
+// od klienta) – bezpečné pre raw SELECT ... FOR UPDATE.
+type CapacityGuard = {
+  table: 'TicketType' | 'TerminSection';
+  field: 'ticketTypeId' | 'terminSectionId';
+  id: string;
+  capacity: number;
+  qty: number;
+  code: 'TICKET_INSUFFICIENT' | 'SECTION_INSUFFICIENT';
+  name: string;
+};
+
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
@@ -61,6 +74,10 @@ export class OrdersService {
     let currency = 'EUR';
     // Pripravené položky: data pre OrderItem + (pre SEATED) zoznam sedadiel na atomický claim.
     const preparedItems: { data: Prisma.OrderItemCreateWithoutOrderInput; seatIds?: string[] }[] = [];
+    // Kapacitné stráže (GENERAL/SECTIONED) – re-overia sa ATOMICKY pod row-lockom v
+    // transakcii nižšie (nie tu). Read-then-write pre-check nižšie je len rýchly fail
+    // pre UX; jediný autoritatívny check proti oversell je assertCapacityAtomic().
+    const capacityGuards: CapacityGuard[] = [];
 
     if (termin.mode === TerminMode.SEATMAP) {
       for (const item of dto.items) {
@@ -133,6 +150,11 @@ export class OrdersService {
           if (remaining < item.quantity) {
             throw codedBadRequest('SECTION_INSUFFICIENT', `Sekcia "${ts.section.name}": zostáva len ${remaining} ks.`, { section: ts.section.name, remaining });
           }
+          capacityGuards.push({
+            table: 'TerminSection', field: 'terminSectionId', id: ts.id,
+            capacity: ts.section.capacity, qty: item.quantity,
+            code: 'SECTION_INSUFFICIENT', name: ts.section.name,
+          });
         }
 
         totalAmount += Number(ts.price) * item.quantity;
@@ -189,6 +211,11 @@ export class OrdersService {
           if (remaining < item.quantity) {
             throw codedBadRequest('TICKET_INSUFFICIENT', `Only ${remaining} ticket(s) of type "${tt.name}" remaining`, { remaining, name: tt.name });
           }
+          capacityGuards.push({
+            table: 'TicketType', field: 'ticketTypeId', id: tt.id,
+            capacity: tt.totalQuantity, qty: item.quantity,
+            code: 'TICKET_INSUFFICIENT', name: tt.name,
+          });
         }
 
         totalAmount += Number(tt.price) * item.quantity;
@@ -242,42 +269,39 @@ export class OrdersService {
       expiresAt,
     };
 
-    const hasSeated = preparedItems.some((p) => p.seatIds && p.seatIds.length > 0);
-
     // orderNumber sa generuje z count() → pod súbehom môže kolidovať (P2002). Retry s prepočtom.
     const order = await this.withOrderNumberRetry(async (orderNumber) => {
       const orderData: Prisma.OrderUncheckedCreateInput = { ...baseOrderData, orderNumber };
 
-      if (!hasSeated) {
-        // GENERAL + SECTIONED: jeden create, bez seat-locku (nezmenené správanie).
-        return this.prisma.order.create({
-          data: { ...orderData, items: { create: preparedItems.map((p) => p.data) } },
-          include: { items: true },
-        });
-      }
+      // JEDNA transakcia pre všetky režimy. Poradie zámkov je vždy rovnaké:
+      //   1) kapacitné row-locky (TicketType/TerminSection FOR UPDATE),
+      //   2) potom seat-claim (podmienený UPDATE AVAILABLE→HELD).
+      // → deterministické poradie ⇒ bez deadlockov medzi súbežnými objednávkami.
+      // Kapacitný lock serializuje súbežný nákup posledného kusu (GENERAL/SECTIONED)
+      // presne ako seat-claim serializuje na konkrétnom sedadle (SEATMAP).
+      return this.prisma.$transaction(
+        async (tx) => {
+          if (capacityGuards.length) await this.assertCapacityAtomic(tx, capacityGuards);
 
-      // SEATED (príp. mix so SECTIONED): transakcia s ATOMICKÝM claimom sedadiel.
-      // Podmienený UPDATE (status=AVAILABLE → HELD) je race-safe: súbežný claim toho istého
-      // sedadla nájde 0 riadkov → 409 a celá objednávka sa rollbackne (order.create je prvý
-      // príkaz, takže kolízia orderNumber rollbackne pred claimom – žiadne uviaznuté HELD).
-      return this.prisma.$transaction(async (tx) => {
-        const o = await tx.order.create({ data: orderData });
-        for (const p of preparedItems) {
-          const oi = await tx.orderItem.create({ data: { ...p.data, order: { connect: { id: o.id } } } });
-          if (p.seatIds?.length) {
-            for (const seatId of p.seatIds) {
-              const claimed = await tx.terminSeat.updateMany({
-                where: { terminId: termin.id, seatId, status: SeatStatus.AVAILABLE },
-                data: { status: SeatStatus.HELD, orderId: o.id, orderItemId: oi.id, heldAt: new Date() },
-              });
-              if (claimed.count === 0) {
-                throw codedConflict('SEAT_TAKEN', 'Niektoré sedadlo medzitým obsadil iný zákazník – vyberte iné.');
+          const o = await tx.order.create({ data: orderData });
+          for (const p of preparedItems) {
+            const oi = await tx.orderItem.create({ data: { ...p.data, order: { connect: { id: o.id } } } });
+            if (p.seatIds?.length) {
+              for (const seatId of p.seatIds) {
+                const claimed = await tx.terminSeat.updateMany({
+                  where: { terminId: termin.id, seatId, status: SeatStatus.AVAILABLE },
+                  data: { status: SeatStatus.HELD, orderId: o.id, orderItemId: oi.id, heldAt: new Date() },
+                });
+                if (claimed.count === 0) {
+                  throw codedConflict('SEAT_TAKEN', 'Niektoré sedadlo medzitým obsadil iný zákazník – vyberte iné.');
+                }
               }
             }
           }
-        }
-        return tx.order.findUnique({ where: { id: o.id }, include: { items: true } });
-      });
+          return tx.order.findUnique({ where: { id: o.id }, include: { items: true } });
+        },
+        { timeout: 15000 }, // znesie čakanie na row-lock pod súbehom (posledný kus)
+      );
     });
 
     // Záznam súhlasu s VOP (krok 44). acceptTerms=true už vynútil ValidationPipe
@@ -316,6 +340,60 @@ export class OrdersService {
       });
     } catch (e: any) {
       this.logger.error(`Záznam súhlasu s VOP pre objednávku ${orderId} zlyhal: ${e.message}`);
+    }
+  }
+
+  /**
+   * ATOMICKÁ ochrana proti oversell pre GENERAL/SECTIONED (obdoba seat-claimu pre SEATMAP).
+   * MUSÍ bežať vnútri interaktívnej transakcie (tx), pred order.create:
+   *   1) Zamkne dotknuté TicketType/TerminSection riadky `SELECT ... FOR UPDATE`
+   *      (ORDER BY id ⇒ deterministické poradie ⇒ bez deadlockov medzi objednávkami).
+   *   2) Pod zámkom znovu zráta predané (PENDING+PAID) a porovná s kapacitou.
+   * Dvaja súbežní kupujúci posledného kusu sa serializujú na row-locku: druhý číta
+   * agregát až po commite prvého ⇒ uvidí jeho položku ⇒ dostane čistý „vypredané".
+   * Kapacita je agregát stavov objednávok, takže expiry (PENDING→CANCELLED) ju vracia
+   * automaticky – netreba žiadny counter resetovať.
+   */
+  private async assertCapacityAtomic(
+    tx: Prisma.TransactionClient,
+    guards: CapacityGuard[],
+  ): Promise<void> {
+    // Súčet požadovaného množstva na jedno id (objednávka môže to isté id uviesť viackrát).
+    const byId = new Map<string, CapacityGuard & { totalQty: number }>();
+    for (const g of guards) {
+      const cur = byId.get(g.id);
+      if (cur) cur.totalQty += g.qty;
+      else byId.set(g.id, { ...g, totalQty: g.qty });
+    }
+    const entries = [...byId.values()];
+
+    // 1) Row-locky FOR UPDATE, deterministické poradie (ORDER BY id) per tabuľka.
+    for (const table of ['TicketType', 'TerminSection'] as const) {
+      const ids = entries.filter((g) => g.table === table).map((g) => g.id).sort();
+      if (ids.length) {
+        await tx.$queryRawUnsafe(
+          `SELECT id FROM "${table}" WHERE id = ANY($1::text[]) ORDER BY id FOR UPDATE`,
+          ids,
+        );
+      }
+    }
+
+    // 2) Re-agregácia pod zámkom.
+    for (const g of entries) {
+      const sold = await tx.orderItem.aggregate({
+        where: {
+          order: { status: { in: [OrderStatus.PENDING, OrderStatus.PAID] } },
+          ...(g.field === 'ticketTypeId' ? { ticketTypeId: g.id } : { terminSectionId: g.id }),
+        },
+        _sum: { quantity: true },
+      });
+      const remaining = Math.max(0, g.capacity - (sold._sum.quantity ?? 0));
+      if (remaining < g.totalQty) {
+        if (g.code === 'SECTION_INSUFFICIENT') {
+          throw codedBadRequest('SECTION_INSUFFICIENT', `Sekcia "${g.name}": zostáva len ${remaining} ks.`, { section: g.name, remaining });
+        }
+        throw codedBadRequest('TICKET_INSUFFICIENT', `Only ${remaining} ticket(s) of type "${g.name}" remaining`, { remaining, name: g.name });
+      }
     }
   }
 

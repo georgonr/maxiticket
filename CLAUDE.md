@@ -53,3 +53,10 @@ Multi-tenant SaaS ticketing platform. Backend: NestJS 10 + Fastify 4 + Prisma 5 
 - **Clamp vždy:** zľava `>= 0` a `<= subtotal`, výsledný total `>= 0`. Žiadny záporný/nulový total, ktorý by fulfillOrder premenil na reálne lístky.
 - **Ownership pri každej mutácii objednávky:** načítaj objednávku a over `order.userId === user.sub` (guest = autorizácia cez neuhádnuteľné cuid `orderId`), inak `ForbiddenException`. Vzor: `initiateCheckout` (orders.service.ts) a `orders-query` owner-scoping.
 - **Cena je snapshot** (`OrderItem.unitPrice` + `priceSnapshot`) – nikdy nepočítaj total zo živej `TicketType.price` pre existujúcu objednávku.
+
+## DOSTUPNOSŤ LÍSTKOV / KAPACITA – POUČENIE Z CHÝB
+
+- **Dostupnosť lístkov vždy garantuj ATOMICKY na úrovni DB, NIKDY read-then-write v app vrstve.** Súbežné `aggregate(predané) → remaining → create` prepustí dvoch kupujúcich posledného kusu → predaj nad kapacitu.
+  - **Incident (krok 47, B3):** GENERAL (`TicketType.totalQuantity`) aj SECTIONED (`Section.capacity`) robili read-then-write (`orders.service.ts`) → race na poslednom kuse. **Vzor bol SEATMAP:** podmienený `updateMany({ where: { status: AVAILABLE }, data: { HELD } })`, `count===0` → obsadené.
+  - **Oprava:** `createOrder` beží v jednej `$transaction`; `assertCapacityAtomic()` najprv zamkne dotknuté `TicketType`/`TerminSection` riadky `SELECT … FOR UPDATE` (ORDER BY id ⇒ bez deadlockov) a až pod zámkom znovu zráta predané. Dvaja súbežní kupujúci sa serializujú na row-locku → prejde práve jeden, druhý dostane `TICKET_INSUFFICIENT`/`SECTION_INSUFFICIENT`.
+- **Kapacita = agregát stavov objednávok** (PENDING+PAID), NIE counter stĺpec → expiry (`@Cron` PENDING→CANCELLED) ju vracia automaticky, netreba nič resetovať. Ak by si niekedy pridal `soldCount` stĺpec, MUSÍ sa udržiavať naprieč create/expiry/cancel/refund/POS – preto ostávame pri agregáte pod row-lockom.
