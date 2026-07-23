@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 import { useTranslations, useFormatter } from 'next-intl';
-import { ArrowLeft, Loader2, User, Ticket as TicketIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Ticket as TicketIcon, MailCheck, MailX, MailWarning, Send } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
-import { OrderDetail } from '@/lib/api/orders';
+import { OrderDetail, TicketsDelivery } from '@/lib/api/orders';
 import { OrderStatusBadge } from '@/components/dashboard/parts';
 
 const TICKET_STATUS_CLS: Record<string, string> = {
@@ -15,6 +15,15 @@ const TICKET_STATUS_CLS: Record<string, string> = {
   USED: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
   CANCELLED: 'bg-red-50 text-red-700',
   REFUNDED: 'bg-orange-50 text-orange-700',
+};
+
+// Stav doručenia lístkov → farba + ikona (krok 48).
+const DELIVERY_META: Record<TicketsDelivery, { cls: string; Icon: typeof MailCheck }> = {
+  delivered: { cls: 'bg-emerald-50 text-emerald-700', Icon: MailCheck },
+  failed: { cls: 'bg-red-50 text-red-700', Icon: MailX },
+  retrying: { cls: 'bg-amber-50 text-amber-700', Icon: MailWarning },
+  unknown: { cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400', Icon: MailWarning },
+  na: { cls: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400', Icon: MailWarning },
 };
 
 const REFUND_STATUS_CLS: Record<string, string> = {
@@ -46,10 +55,13 @@ export function OrderDetailPanel({
   id,
   fetchOrder,
   backHref,
+  resend,
 }: {
   id: string;
   fetchOrder: (id: string, token: string) => Promise<OrderDetail>;
   backHref: string;
+  // Krok 48: manuálne „Odoslať lístky znova" (len admin). Ak nie je, tlačidlo sa nezobrazí.
+  resend?: (id: string, token: string) => Promise<{ orderId: string; message: string }>;
 }) {
   const t = useTranslations('organizer.orders');
   const te = useTranslations('ekasa');
@@ -78,6 +90,8 @@ export function OrderDetailPanel({
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -97,6 +111,24 @@ export function OrderDetailPanel({
       active = false;
     };
   }, [id, fetchOrder]);
+
+  async function handleResend() {
+    if (!resend) return;
+    setResending(true);
+    setResendMsg(null);
+    try {
+      const token = await getValidToken();
+      if (!token) { setResendMsg({ ok: false, text: t('detailErrorExpired') }); return; }
+      await resend(id, token);
+      const fresh = await fetchOrder(id, token); // znovu načítaj → stav doručenia sa aktualizuje
+      setOrder(fresh);
+      setResendMsg({ ok: true, text: t('delivery.resendOk') });
+    } catch (e) {
+      setResendMsg({ ok: false, text: e instanceof ApiError ? (e.message || t('delivery.resendFail')) : t('delivery.resendFail') });
+    } finally {
+      setResending(false);
+    }
+  }
 
   const subtotal = order ? order.totalAmount + order.discountAmount : 0;
 
@@ -216,6 +248,56 @@ export function OrderDetailPanel({
               </div>
             )}
           </Card>
+
+          {/* Krok 48: stav doručenia lístkov e-mailom + manuálny resend (len po PAID). */}
+          {order.ticketsDelivery !== 'na' && (() => {
+            const meta = DELIVERY_META[order.ticketsDelivery];
+            const DIcon = meta.Icon;
+            return (
+              <Card title={t('delivery.title')}>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={clsx('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium', meta.cls)}>
+                      <DIcon size={13} /> {t(`delivery.${order.ticketsDelivery}`)}
+                    </span>
+                    {resend && (
+                      <button
+                        onClick={handleResend}
+                        disabled={resending}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+                      >
+                        {resending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                        {t('delivery.resend')}
+                      </button>
+                    )}
+                  </div>
+                  {order.ticketsEmailedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">{t('delivery.emailedAt')}</span>
+                      <span className="text-gray-700 dark:text-gray-200">{fmtDate(order.ticketsEmailedAt)}</span>
+                    </div>
+                  )}
+                  {order.ticketsEmailAttempts > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">{t('delivery.attempts')}</span>
+                      <span className="text-gray-700 dark:text-gray-200 tabular-nums">{order.ticketsEmailAttempts}</span>
+                    </div>
+                  )}
+                  {order.ticketsEmailError && (order.ticketsDelivery === 'failed' || order.ticketsDelivery === 'retrying') && (
+                    <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 break-words">
+                      {t('delivery.error')}: {order.ticketsEmailError}
+                    </p>
+                  )}
+                  {order.ticketsDelivery === 'unknown' && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{t('delivery.unknownHint')}</p>
+                  )}
+                  {resendMsg && (
+                    <p className={clsx('text-xs', resendMsg.ok ? 'text-emerald-600' : 'text-red-600')}>{resendMsg.text}</p>
+                  )}
+                </div>
+              </Card>
+            );
+          })()}
 
           <Card title={t('payment')}>
             <div className="space-y-1.5 text-sm">

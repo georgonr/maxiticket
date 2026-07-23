@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 import { useTranslations, useFormatter } from 'next-intl';
-import { Search, RefreshCw, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Search, RefreshCw, ChevronLeft, ChevronRight, User, MailX, MailWarning } from 'lucide-react';
 import { getValidToken } from '@/lib/auth';
 import { ApiError } from '@/lib/api';
 import {
@@ -88,6 +88,7 @@ export function OrdersTable({
   const [dateTo, setDateTo] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [undelivered, setUndelivered] = useState(false);  // krok 48: len nedoručené lístky
 
   const [organizers, setOrganizers] = useState<{ id: string; name: string }[]>([]);
 
@@ -122,10 +123,11 @@ export function OrdersTable({
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
       search: search || undefined,
+      undelivered: undelivered ? '1' : undefined,
       limit: PAGE_SIZE,
       offset,
     }),
-    [status, provider, organizerId, dateFrom, dateTo, search, offset],
+    [status, provider, organizerId, dateFrom, dateTo, search, undelivered, offset],
   );
 
   const reqId = useRef(0);
@@ -155,7 +157,7 @@ export function OrdersTable({
   // Reset stránky pri zmene filtra (okrem offsetu samotného)
   useEffect(() => {
     setOffset(0);
-  }, [status, provider, organizerId, dateFrom, dateTo]);
+  }, [status, provider, organizerId, dateFrom, dateTo, undelivered]);
 
   const from = total === 0 ? 0 : offset + 1;
   const to = Math.min(offset + PAGE_SIZE, total);
@@ -187,6 +189,20 @@ export function OrdersTable({
         )}
         <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-2 py-2 text-sm" title={t('dateFrom')} />
         <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-lg border border-gray-300 dark:border-gray-700 px-2 py-2 text-sm" title={t('dateTo')} />
+        {/* Krok 48: rýchly filter PAID objednávok s nedoručenými lístkami */}
+        <button
+          type="button"
+          onClick={() => setUndelivered((v) => !v)}
+          className={clsx(
+            'inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium',
+            undelivered
+              ? 'border-red-300 bg-red-50 text-red-700'
+              : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800',
+          )}
+          title={t('delivery.filterUndeliveredHint')}
+        >
+          <MailX size={14} /> {t('delivery.filterUndelivered')}
+        </button>
       </div>
 
       {loading ? (
@@ -252,7 +268,17 @@ export function OrdersTable({
                       )}
                     </td>
                     <td className="px-3"><ProviderBadge provider={o.paymentProvider} label={o.paymentProvider ? providerLabel(o.paymentProvider) : ''} /></td>
-                    <td className="pl-3"><OrderStatusBadge status={o.status} /></td>
+                    <td className="pl-3">
+                      <div className="flex items-center gap-1.5">
+                        <OrderStatusBadge status={o.status} />
+                        {o.ticketsDelivery === 'failed' && (
+                          <span className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-red-700" title={t('delivery.failed')}><MailX size={12} /></span>
+                        )}
+                        {o.ticketsDelivery === 'retrying' && (
+                          <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-700" title={t('delivery.retrying')}><MailWarning size={12} /></span>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

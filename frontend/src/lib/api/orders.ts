@@ -15,6 +15,10 @@ export type OrderSort =
   | 'totalAmount_desc'
   | 'totalAmount_asc';
 
+// Stav doručenia lístkov e-mailom (krok 48). 'unknown' = objednávka spred kroku 48
+// (historicky nevieme), 'na' = ešte nezaplatená.
+export type TicketsDelivery = 'delivered' | 'failed' | 'retrying' | 'unknown' | 'na';
+
 export interface OrderListItem {
   orderId: string;
   orderNumber: string;
@@ -31,6 +35,8 @@ export interface OrderListItem {
   extraShows: number;
   ticketCount: number;
   createdAt: string;
+  ticketsDelivery: TicketsDelivery;
+  ticketsEmailError: string | null;
 }
 
 export interface OrderListResponse {
@@ -67,6 +73,10 @@ export interface OrderDetail {
   paymentRef: string | null;
   paidAt: string | null;
   refundedAt: string | null;
+  ticketsDelivery: TicketsDelivery;
+  ticketsEmailedAt: string | null;
+  ticketsEmailError: string | null;
+  ticketsEmailAttempts: number;
   ekasaStatus: 'NONE' | 'PENDING' | 'REGISTERED' | 'OFFLINE' | 'FAILED';
   ekasaReceiptNumber: string | null;
   ekasaReceiptId: string | null;
@@ -107,6 +117,7 @@ export interface ListOrdersQuery {
   sort?: OrderSort;
   limit?: number;
   offset?: number;
+  undelivered?: '1';  // len PAID s nedoručenými lístkami (krok 48)
 }
 
 function toQuery(q: ListOrdersQuery): string {
@@ -123,6 +134,12 @@ export const adminOrdersApi = {
     apiFetch<OrderListResponse>('/v1/admin/orders' + toQuery(query), { token }),
   get: (id: string, token: string) =>
     apiFetch<OrderDetail>('/v1/admin/orders/' + id, { token }),
+  // Manuálne odoslanie lístkov znova (krok 26/48). Vracia { orderId, message }.
+  resend: (id: string, token: string) =>
+    apiFetch<{ orderId: string; message: string }>('/v1/admin/orders/' + id + '/resend-tickets', {
+      method: 'POST',
+      token,
+    }),
 };
 
 export const organizerOrdersApi = {

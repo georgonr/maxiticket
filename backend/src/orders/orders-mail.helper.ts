@@ -117,8 +117,9 @@ export async function sendTicketsForOrder(
 ): Promise<void> {
   const data = await buildTicketEmailData(orderId, prisma);
   if (!data) {
-    logger.error(`sendTicketsForOrder: order ${orderId} not found or missing show/termin/venue`);
-    return;
+    // Hádžeme (nie tiché return) – volajúci deliverTickets() to zaznamená ako chybu
+    // doručenia (ticketsEmailError) a spustí alert/retry, nech to nezostane neviditeľné.
+    throw new Error(`order ${orderId} not found or missing show/termin/venue`);
   }
   await mail.sendTickets(data);
   logger.log(`sendTicketsForOrder: sent ${data.tickets.length} ticket(s) for order ${orderId} to ${data.to}`);

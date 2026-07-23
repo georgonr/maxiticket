@@ -8,7 +8,7 @@ export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   return (
     <div className="min-h-screen bg-cream dark:bg-gray-950">
-      <OrderDetailPanel id={id} fetchOrder={adminOrdersApi.get} backHref="/admin/orders" />
+      <OrderDetailPanel id={id} fetchOrder={adminOrdersApi.get} backHref="/admin/orders" resend={adminOrdersApi.resend} />
     </div>
   );
 }

@@ -30,9 +30,10 @@ export class AdminOrdersController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
     @Query('sort') sort?: string,
+    @Query('undelivered') undelivered?: string,
   ) {
     return this.query.list({
-      status, organizerId, showId, paymentProvider, search, dateFrom, dateTo, sort,
+      status, organizerId, showId, paymentProvider, search, dateFrom, dateTo, sort, undelivered,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });

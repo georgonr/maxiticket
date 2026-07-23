@@ -13,9 +13,10 @@ import { PaymentModule } from '../payment/payment.module';
 import { CouponsModule } from '../coupons/coupons.module';
 import { EkasaModule } from '../ekasa/ekasa.module';
 import { ShowsModule } from '../shows/shows.module';
+import { TelegramModule } from '../telegram/telegram.module';
 
 @Module({
-  imports: [MailModule, PaymentModule, CouponsModule, EkasaModule, ShowsModule],
+  imports: [MailModule, PaymentModule, CouponsModule, EkasaModule, ShowsModule, TelegramModule],
   controllers: [OrdersController, AdminOrdersController, OrganizerOrdersController, PosController, RefundExportController],
   providers: [OrdersService, OrdersQueryService, RefundExportService, EventCancelService],
   exports: [OrdersService, OrdersQueryService],

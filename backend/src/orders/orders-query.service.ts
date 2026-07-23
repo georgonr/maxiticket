@@ -32,6 +32,24 @@ export interface ListOrdersQuery {
   limit?: number;
   offset?: number;
   sort?: string;
+  undelivered?: string;  // '1'/'true' → len PAID s nedoručenými lístkami (krok 48)
+}
+
+// MUSÍ sedieť s MAX_ATTEMPTS v OrdersService.retryTicketDelivery.
+const MAX_TICKET_EMAIL_ATTEMPTS = 5;
+
+export type TicketsDelivery = 'delivered' | 'failed' | 'retrying' | 'unknown' | 'na';
+
+/** Odvodí stav doručenia lístkov z uložených polí (krok 48). */
+export function ticketsDeliveryStatus(o: {
+  status: OrderStatus;
+  ticketsEmailedAt: Date | null;
+  ticketsEmailAttempts: number;
+}): TicketsDelivery {
+  if (o.status !== OrderStatus.PAID) return 'na';        // lístky sa posielajú len po PAID
+  if (o.ticketsEmailedAt) return 'delivered';            // úspešne odoslané
+  if (o.ticketsEmailAttempts === 0) return 'unknown';    // stará objednávka pred krokom 48
+  return o.ticketsEmailAttempts >= MAX_TICKET_EMAIL_ATTEMPTS ? 'failed' : 'retrying';
 }
 
 const LIST_SELECT = {
@@ -45,6 +63,9 @@ const LIST_SELECT = {
   buyerEmail: true,
   userId: true,
   createdAt: true,
+  ticketsEmailedAt: true,
+  ticketsEmailError: true,
+  ticketsEmailAttempts: true,
   organizer: { select: { name: true } },
   coupon: { select: { code: true } },
   _count: { select: { tickets: true } },
@@ -63,6 +84,9 @@ const DETAIL_SELECT = {
   paymentRef: true,
   paidAt: true,
   refundedAt: true,
+  ticketsEmailedAt: true,
+  ticketsEmailError: true,
+  ticketsEmailAttempts: true,
   ekasaStatus: true,
   ekasaReceiptNumber: true,
   ekasaReceiptId: true,
@@ -120,6 +144,14 @@ export class OrdersQueryService {
     }
     if (query.paymentProvider) where.paymentProvider = query.paymentProvider;
     if (query.showId) where.items = { some: { termin: { showId: query.showId } } };
+
+    // Filter „nedoručené lístky" (krok 48): PAID objednávky, kde odoslanie zlyhalo
+    // (aspoň jeden pokus, ešte neodoslané). Vynúti status=PAID (prepíše prípadný status filter).
+    if (query.undelivered === '1' || query.undelivered === 'true') {
+      where.status = OrderStatus.PAID;
+      where.ticketsEmailedAt = null;
+      where.ticketsEmailAttempts = { gte: 1 };
+    }
 
     if (query.search) {
       const s = query.search.trim();
@@ -205,6 +237,8 @@ export class OrdersQueryService {
           extraShows: Math.max(0, names.length - 2),
           ticketCount: o._count.tickets,
           createdAt: o.createdAt,
+          ticketsDelivery: ticketsDeliveryStatus(o),
+          ticketsEmailError: o.ticketsEmailError ?? null,
         };
       }),
       total,
@@ -232,6 +266,10 @@ export class OrdersQueryService {
       paymentRef: o.paymentRef ?? null,
       paidAt: o.paidAt,
       refundedAt: o.refundedAt,
+      ticketsDelivery: ticketsDeliveryStatus(o),
+      ticketsEmailedAt: o.ticketsEmailedAt,
+      ticketsEmailError: o.ticketsEmailError ?? null,
+      ticketsEmailAttempts: o.ticketsEmailAttempts,
       ekasaStatus: o.ekasaStatus,
       ekasaReceiptNumber: o.ekasaReceiptNumber ?? null,
       ekasaReceiptId: o.ekasaReceiptId ?? null,

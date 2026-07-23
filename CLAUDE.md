@@ -60,3 +60,10 @@ Multi-tenant SaaS ticketing platform. Backend: NestJS 10 + Fastify 4 + Prisma 5 
   - **Incident (krok 47, B3):** GENERAL (`TicketType.totalQuantity`) aj SECTIONED (`Section.capacity`) robili read-then-write (`orders.service.ts`) → race na poslednom kuse. **Vzor bol SEATMAP:** podmienený `updateMany({ where: { status: AVAILABLE }, data: { HELD } })`, `count===0` → obsadené.
   - **Oprava:** `createOrder` beží v jednej `$transaction`; `assertCapacityAtomic()` najprv zamkne dotknuté `TicketType`/`TerminSection` riadky `SELECT … FOR UPDATE` (ORDER BY id ⇒ bez deadlockov) a až pod zámkom znovu zráta predané. Dvaja súbežní kupujúci sa serializujú na row-locku → prejde práve jeden, druhý dostane `TICKET_INSUFFICIENT`/`SECTION_INSUFFICIENT`.
 - **Kapacita = agregát stavov objednávok** (PENDING+PAID), NIE counter stĺpec → expiry (`@Cron` PENDING→CANCELLED) ju vracia automaticky, netreba nič resetovať. Ak by si niekedy pridal `soldCount` stĺpec, MUSÍ sa udržiavať naprieč create/expiry/cancel/refund/POS – preto ostávame pri agregáte pod row-lockom.
+
+## VEDĽAJŠIE EFEKTY PO PLATBE – POUČENIE Z CHÝB
+
+- **Nikdy „fire-and-forget-and-forget".** Odoslanie lístkov po PAID NESMIE blokovať webhook/platbu (to by bola horšia regresia), ALE výsledok MUSÍ ostať dohľadateľný – inak „zaplatené, ale bez lístkov" nikto nezistí.
+  - **Incident (krok 48, B4):** `sendTicketsForOrder(...).catch(logger.error)` – e-mail sa poslal na pozadí a keď PDF padol na ENOENT (chýbajúci font), stratilo sa to v logoch; na `Order` nebolo pole na stav → nedalo sa vyfiltrovať nedoručené.
+  - **Vzor:** `OrdersService.deliverTickets()` – `ticketsEmailAttempts` inkrementuj PRED odoslaním (viditeľné aj pri páde procesu), úspech→`ticketsEmailedAt`, zlyhanie→`ticketsEmailError` + Telegram alert. `@Cron` retry berie `attempts∈<1,5)` (staré objednávky majú `attempts=0` → neposielajú sa hromadne). Admin má filter „nedoručené" + manuálny resend.
+- **Spätná kompatibilita pri novom stavovom poli:** nerob backfill „hádaním"; nechaj staré riadky v neutrálnom stave (`attempts=0`) a navrhni dotazy tak, aby ich nový mechanizmus prirodzene ignoroval (nie hardcoded dátumový cutoff).

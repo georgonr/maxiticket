@@ -19,6 +19,8 @@ import { codedBadRequest, codedNotFound, codedConflict } from '../common/errors/
 import { CouponsService } from '../coupons/coupons.service';
 import { EkasaService } from '../ekasa/ekasa.service';
 import { generatePosClosurePdf, PosClosureByTermin } from './pos-closure-pdf.helper';
+import { TelegramService } from '../telegram/telegram.service';
+import { adminUrl } from '../common/admin-url';
 
 // Krok 2/2: názov riadku poplatku na Stripe (podľa jazyka objednávky). Sumu vidí
 // zákazník; %-konfig organizátora NIE.
@@ -53,6 +55,7 @@ export class OrdersService {
     @Inject(PAYMENT_PROVIDER) private paymentProvider: PaymentProvider,
     private gateways: PaymentGatewayService,
     private ekasa: EkasaService,
+    private telegram: TelegramService,
   ) {}
 
   async createOrder(dto: CreateOrderDto, user?: JwtPayload, ipAddress?: string, userAgent?: string) {
@@ -754,8 +757,10 @@ export class OrdersService {
     const show = termin?.show;
     const venue = termin?.venue;
 
-    sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger)
-      .catch((e) => this.logger.error(`Email failed for order ${orderId}: ${e.message}`));
+    // Best-effort doručenie lístkov: NEblokuje webhook/platbu. Stav (úspech/chyba/pokus)
+    // sa zapíše na Order; pri zlyhaní odíde Telegram alert a retry cron to dobehne.
+    this.deliverTickets(orderId)
+      .catch((e) => this.logger.error(`deliverTickets failed for order ${orderId}: ${e.message}`));
 
     // Redeem kupónu po PAID (idempotentné – no-op ak bez kupónu alebo už redeemnuté)
     this.coupons.redeemForPaidOrder(orderId)
@@ -846,8 +851,8 @@ export class OrdersService {
       return order.id;
     });
 
-    sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger)
-      .catch((e) => this.logger.error(`Comp order email failed for ${orderId}: ${e.message}`));
+    this.deliverTickets(orderId)
+      .catch((e) => this.logger.error(`Comp order deliverTickets failed for ${orderId}: ${e.message}`));
 
     return { orderId, ticketCount: dto.quantity };
   }
@@ -861,13 +866,69 @@ export class OrdersService {
     await this.prisma.order.update({ where: { id: orderId }, data: { cardLast4: last4 } });
   }
 
+  /**
+   * Doručí lístky e-mailom a ZAPÍŠE stav doručenia na Order (krok 48, audit B4):
+   *   - pokus zaznamená HNEĎ (attempts++) PRED odoslaním → aj pri páde procesu ostane
+   *     objednávka dohľadateľná; staré objednávky (pred migráciou) majú attempts=0,
+   *     takže retry cron ich neberie a nezačne hromadne preposielať históriu.
+   *   - úspech → ticketsEmailedAt=now, ticketsEmailError=null
+   *   - zlyhanie → ticketsEmailError=správa + Telegram alert (prípad z KROKU 26)
+   * Odosielanie NIKDY neblokuje platbu: fire-and-forget volajúci (fulfill/comp/POS/QR)
+   * nechajú throwOnError=false; manuálny resend/POS e-mail dá throwOnError=true, nech
+   * admin uvidí chybu. Stav ostáva v DB v každom prípade.
+   */
+  async deliverTickets(orderId: string, opts?: { throwOnError?: boolean }): Promise<void> {
+    // Pokus zaznač PRED odoslaním (nech je viditeľný aj keď proces spadne uprostred).
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: { ticketsEmailAttempts: { increment: 1 } },
+    });
+    try {
+      await sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger);
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: { ticketsEmailedAt: new Date(), ticketsEmailError: null },
+      });
+    } catch (e: any) {
+      const msg = String(e?.message ?? e).slice(0, 500);
+      this.logger.error(`Doručenie lístkov zlyhalo pre objednávku ${orderId}: ${msg}`);
+      await this.prisma.order
+        .update({ where: { id: orderId }, data: { ticketsEmailError: msg } })
+        .catch((u) => this.logger.error(`Zápis ticketsEmailError zlyhal pre ${orderId}: ${u.message}`));
+      await this.alertTicketsDeliveryFailed(orderId, msg).catch((a) =>
+        this.logger.error(`Telegram alert (nedoručené lístky) zlyhal pre ${orderId}: ${a.message}`),
+      );
+      if (opts?.throwOnError) throw e;
+    }
+  }
+
+  /** Telegram alert, keď po ÚSPEŠNEJ platbe zlyhalo odoslanie lístkov (krok 48/26). */
+  private async alertTicketsDeliveryFailed(orderId: string, error: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { orderNumber: true, buyerEmail: true, ticketsEmailAttempts: true },
+    });
+    if (!order) return;
+    const link = adminUrl(this.config.get<string>('APP_BASE_URL'), `orders/${orderId}`);
+    // Plain text (bez Markdown) – chybová správa môže obsahovať znaky, čo by rozbili parsing.
+    const text =
+      `⚠️ Lístky sa nepodarilo odoslať (objednávka zaplatená)\n` +
+      `Číslo: ${order.orderNumber}\n` +
+      `E-mail: ${order.buyerEmail}\n` +
+      `Pokus č.: ${order.ticketsEmailAttempts}\n` +
+      `Chyba: ${error}\n` +
+      `${link}`;
+    await this.telegram.sendMessage(text, { disableWebPagePreview: true });
+  }
+
   async resendTickets(orderId: string): Promise<{ orderId: string; message: string }> {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Order not found');
     if (order.status !== OrderStatus.PAID) {
       throw new BadRequestException(`Order status is ${order.status}, expected PAID`);
     }
-    await sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger);
+    // throwOnError → admin uvidí prípadnú chybu; stav (ticketsEmailedAt/Error) sa zapíše.
+    await this.deliverTickets(orderId, { throwOnError: true });
     return { orderId, message: 'Tickets resent successfully' };
   }
 
@@ -954,6 +1015,34 @@ export class OrdersService {
       }),
     ]);
     this.logger.log(`Expired ${ids.length} pending order(s)`);
+  }
+
+  /**
+   * Krok 48 (audit B4): retry doručenia lístkov pre PAID objednávky, kde odoslanie
+   * zlyhalo. Berie LEN objednávky s attempts v <1, MAX) – t. j. tie, ktoré už prešli
+   * novým doručovacím kódom a zlyhali. Staré objednávky (attempts=0) sa ignorujú, takže
+   * sa história NEpreposiela hromadne. Po MAX pokusoch prestane skúšať (alert už odišiel).
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async retryTicketDelivery() {
+    const MAX_ATTEMPTS = 5;
+    const stuck = await this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.PAID,
+        ticketsEmailedAt: null,
+        ticketsEmailAttempts: { gte: 1, lt: MAX_ATTEMPTS },
+      },
+      select: { id: true, orderNumber: true },
+      take: 50,
+      orderBy: { paidAt: 'asc' },
+    });
+    if (stuck.length === 0) return;
+    this.logger.warn(`retryTicketDelivery: ${stuck.length} PAID objednávka(ok) s nedoručenými lístkami – skúšam znova`);
+    for (const o of stuck) {
+      await this.deliverTickets(o.id).catch((e) =>
+        this.logger.error(`retryTicketDelivery ${o.orderNumber}: ${e.message}`),
+      );
+    }
   }
 
   /** Úloha 22/3b: uvoľní sedadlá objednávky späť na AVAILABLE (cancel/refund). */
@@ -1181,8 +1270,8 @@ export class OrdersService {
     }
     // Email len ak bol zadaný reálny buyerEmail (anonymný predaj = QR na obrazovke)
     if (hasEmail) {
-      sendTicketsForOrder(result.order.id, this.prisma, this.mail, this.logger)
-        .catch((e) => this.logger.error(`POS email failed for ${result.order.id}: ${e.message}`));
+      this.deliverTickets(result.order.id)
+        .catch((e) => this.logger.error(`POS deliverTickets failed for ${result.order.id}: ${e.message}`));
     }
 
     // eKasa fiškalizácia (za flagom EKASA_ENABLED). Nikdy nezhadzuje predaj:
@@ -1219,7 +1308,7 @@ export class OrdersService {
       throw new BadRequestException('Neplatný e-mail.');
     }
     await this.prisma.order.update({ where: { id: orderId }, data: { buyerEmail: clean } });
-    await sendTicketsForOrder(orderId, this.prisma, this.mail, this.logger);
+    await this.deliverTickets(orderId, { throwOnError: true });
     return { sent: true, email: clean };
   }
 

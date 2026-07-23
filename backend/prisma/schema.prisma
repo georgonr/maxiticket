@@ -569,6 +569,13 @@ model Order {
 
   notes         String?
   source        String?     // pôvod objednávky: null=web, 'QR'=rýchly nákup cez QR pri vstupe, 'POS'=pokladňa
+
+  // Stav doručenia lístkov e-mailom po PAID (krok 48). Odosielanie je best-effort a NEblokuje
+  // platbu; tieto polia robia nedoručenie DOHĽADATEĽNÝM (admin filter + retry cron + Telegram alert).
+  ticketsEmailedAt     DateTime?  // kedy sa lístky úspešne odoslali (NULL = ešte nedoručené)
+  ticketsEmailError    String?    // posledná chyba odoslania (NULL po úspechu)
+  ticketsEmailAttempts Int        @default(0)  // počet pokusov o odoslanie (>=1 = pokúsili sme sa; staré objednávky pred migráciou = 0)
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -585,6 +592,8 @@ model Order {
   @@index([orderNumber])
   @@index([couponId])
   @@index([paymentProvider])
+  // Retry cron hľadá PAID objednávky s nedoručenými lístkami (ticketsEmailedAt IS NULL).
+  @@index([status, ticketsEmailedAt])
 }
 
 // ─────────────────────────────────────────────
