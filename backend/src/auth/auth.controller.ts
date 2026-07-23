@@ -13,6 +13,7 @@ import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { FastifyRequest } from 'fastify';
 
@@ -20,6 +21,7 @@ import { FastifyRequest } from 'fastify';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   register(@Body() dto: RegisterOrganizerDto, @Req() req: FastifyRequest) {
@@ -28,12 +30,15 @@ export class AuthController {
     return this.authService.registerOrganizer(dto, ip, ua);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @Post('register-customer')
   @HttpCode(HttpStatus.CREATED)
   registerCustomer(@Body() dto: RegisterCustomerDto, @Req() req: FastifyRequest) {
     return this.authService.registerCustomer(dto, req.ip, req.headers['user-agent']);
   }
 
+  // Brute-force ochrana: prísnejší limit na prihlásenie.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {
@@ -55,6 +60,8 @@ export class AuthController {
     return this.authService.logout(dto.refreshToken);
   }
 
+  // E-mail-bombing ochrana: forgot posiela reálny mail na zadanú adresu.
+  @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @Post('password/forgot')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -62,6 +69,7 @@ export class AuthController {
     return { message: 'Ak účet existuje, e-mail bol odoslaný.' };
   }
 
+  @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
   @Post('password/reset')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {

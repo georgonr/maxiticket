@@ -1,5 +1,5 @@
-import { Controller, Post, Body, Res, UseGuards, HttpCode, HttpStatus, BadRequestException, HttpException } from '@nestjs/common';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { Controller, Post, Body, Res, HttpCode, HttpStatus, BadRequestException, HttpException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FastifyReply } from 'fastify';
 import { AssistantService, assistantErrorMessage } from './assistant.service';
 import { GuestChatDto } from './dto/guest-chat.dto';
@@ -18,8 +18,10 @@ const GUEST_ESC_MSG: Record<string, (n: string) => string> = {
  * a server-side overenie (VerifyService/Redis). IP-based throttle proti brute-force.
  * Existujúci prihlásený /v1/assistant/chat sa NEMENÍ.
  */
+// Rate limit vynucuje globálny ThrottlerGuard (app.module); tu ostáva len prísnejší
+// @Throttle (10/min/IP). Vlastný @UseGuards(ThrottlerGuard) bol odstránený – s
+// globálnym guardom by bežal dvakrát a počítal každý request dvojnásobne.
 @Controller('assistant/guest')
-@UseGuards(ThrottlerGuard)
 @Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class GuestAssistantController {
   constructor(private readonly svc: AssistantService) {}

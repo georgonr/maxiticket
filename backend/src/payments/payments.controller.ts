@@ -3,6 +3,7 @@ import {
   BadRequestException, Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
 import { FastifyRequest } from 'fastify';
 import Stripe from 'stripe';
 import { PaymentGateway } from '@prisma/client';
@@ -11,6 +12,9 @@ import { StripeSandboxPaymentProvider } from '../payment/stripe-sandbox.provider
 import { PaymentGatewayService } from '../payment/payment-gateways.service';
 import { OrdersService } from '../orders/orders.service';
 
+// Stripe webhook NESMIE byť rate-limitovaný – Stripe pri 429 retryuje a doručenie
+// eventov by sa oneskorovalo/hromadilo. Skip pre celý controller (len webhook route).
+@SkipThrottle()
 @Controller('payments')
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);

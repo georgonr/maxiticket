@@ -9,7 +9,11 @@ async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     // maxParamLength default je 100 – guest ticket token (~136 zn.) by ho prekročil a route by dala 404.
-    new FastifyAdapter({ logger: true, maxParamLength: 500 }),
+    // trustProxy: za Caddy je socket-IP vždy IP proxy; s trustProxy sa req.ip berie z
+    // X-Forwarded-For (reálna IP klienta). Nutné pre rate limiting keyovaný podľa IP
+    // (inak by všetci zdieľali jednu IP) aj pre správny ipAddress v audite (súhlas s VOP).
+    // Backend je interný (expose only), publikuje ho iba Caddy → XFF sa nedá zvonka spoofnúť.
+    new FastifyAdapter({ logger: true, maxParamLength: 500, trustProxy: true }),
   );
 
   const fastify = app.getHttpAdapter().getInstance() as any;

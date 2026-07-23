@@ -9,8 +9,7 @@ import {
   UseGuards,
   Ip,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ScanService } from './scan.service';
 import { ValidateScanDto } from './dto/scan.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,7 +21,7 @@ import { JwtPayload } from '../casl/casl-ability.factory';
 import { UserRole } from '@prisma/client';
 
 @Controller('scan')
-@UseGuards(JwtAuthGuard, RolesGuard, ActiveUserGuard, ThrottlerGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, ActiveUserGuard)
 @Roles(
   UserRole.SUPERADMIN,
   UserRole.STAFF,
@@ -30,7 +29,9 @@ import { UserRole } from '@prisma/client';
   UserRole.ORGANIZER_MEMBER,
   UserRole.SCANNER,
 )
-@Throttle({ default: { ttl: 60_000, limit: 30 } })
+// Door scanning NESMIE byť rate-limitované – na plnej sále (viac liniek za jednou
+// IP miesta) by throttle blokoval vstup. Autentizované (SCANNER rola), nízke riziko.
+@SkipThrottle()
 export class ScanController {
   constructor(private readonly svc: ScanService) {}
 

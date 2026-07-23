@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ResolveImageUrlsInterceptor } from './common/interceptors/resolve-image-urls.interceptor';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RedisModule } from './redis/redis.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -43,7 +43,11 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    // Globálny backstop 300/min/IP – dosť voľné pre bežné prehliadanie aj za zdieľanou
+    // IP (NAT/carrier), ale zastaví jednu zaplavujúcu IP. Citlivé routy majú vlastný
+    // prísnejší @Throttle; door scanning/webhook/health sú @SkipThrottle. Aktivuje sa
+    // globálnym ThrottlerGuard nižšie (bez neho boli @Throttle dekorátory mŕtve).
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 300 }]),
     ScheduleModule.forRoot(),
     RedisModule,
     PrismaModule,
@@ -80,6 +84,10 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
   ],
   controllers: [HealthController],
   providers: [
+    // Aktivuje rate limiting globálne (predtým @Throttle dekorátory nemali účinok,
+    // lebo ThrottlerGuard nebol nikde registrovaný). Beží pre všetkých vrátane
+    // neprihlásených. Výnimky cez @SkipThrottle (webhook, health, scanner).
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: ResolveImageUrlsInterceptor },
     {
