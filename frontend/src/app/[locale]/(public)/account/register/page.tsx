@@ -2,7 +2,6 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import NextLink from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useForm } from 'react-hook-form';
@@ -119,9 +118,9 @@ function RegisterContent() {
               <span className="text-sm text-slate-600 dark:text-slate-300">
                 {t.rich('acceptTermsLabel', {
                   terms: (chunks) => (
-                    <NextLink href="#" className="font-medium text-purple-700 hover:underline">
+                    <Link href="/obchodne-podmienky" target="_blank" rel="noopener noreferrer" className="font-medium text-purple-700 hover:underline">
                       {chunks}
-                    </NextLink>
+                    </Link>
                   ),
                 })}
               </span>

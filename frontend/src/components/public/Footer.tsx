@@ -26,6 +26,7 @@ const FOOTER_COLS = [
   {
     titleKey: 'colLegal',
     links: [
+      { href: '/obchodne-podmienky', key: 'terms' },
       { href: '/gdpr', key: 'gdpr' },
       { href: '/cookies', key: 'cookies' },
     ],

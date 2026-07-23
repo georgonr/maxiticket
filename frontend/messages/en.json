@@ -107,7 +107,8 @@
     "cookies": "Cookies",
     "forOrganizers": "For organizers",
     "protect": "TicketAll Protect",
-    "protectSubtitle": "Secure ticket purchase"
+    "protectSubtitle": "Secure ticket purchase",
+    "terms": "Terms and Conditions"
   },
   "chat": {
     "title": "TicketAll Assistant",
@@ -2307,5 +2308,11 @@
       "note": "TicketAll Protect applies to event cancellations by the organizer. Returning a ticket due to a change of mind follows the specific organizer's rules.",
       "backToEvents": "Browse events"
     }
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "version": "Version {version}",
+    "effectiveFrom": "effective from {date}",
+    "pending": "The terms and conditions are being prepared. Thank you for your patience."
   }
 }

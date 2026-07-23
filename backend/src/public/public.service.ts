@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { codedNotFound } from '../common/errors/coded-exception';
 import { ContactDto } from './contact.dto';
-import { EventStatus, TerminStatus, SectionMode } from '@prisma/client';
+import { EventStatus, TerminStatus, SectionMode, TermsType } from '@prisma/client';
 
 const SALE_STATUSES: TerminStatus[] = [TerminStatus.ON_SALE, TerminStatus.COMING_SOON];
 
@@ -238,6 +238,20 @@ export class PublicService {
         currency: t.ticketTypes[0]?.currency ?? 'EUR',
       })),
     }));
+  }
+
+  /**
+   * Aktuálne aktívne PLATFORMOVÉ znenie obchodných podmienok (krok 42).
+   * organizerId: null = platformové (rovnaké, čo hľadá auth.service pri registrácii).
+   * Vracia null, keď znenie ešte nebolo vložené – stránka to ošetrí.
+   */
+  async getActivePlatformTerms(type: TermsType): Promise<{ version: string; publishedAt: Date; content: string } | null> {
+    const row = await this.prisma.termsVersion.findFirst({
+      where: { type, isActive: true, organizerId: null },
+      orderBy: { publishedAt: 'desc' },
+      select: { version: true, publishedAt: true, content: true },
+    });
+    return row ?? null;
   }
 
   async getCategories(): Promise<string[]> {

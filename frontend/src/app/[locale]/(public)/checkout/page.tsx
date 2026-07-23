@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import NextLink from 'next/link';
 import { useTranslations, useFormatter, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { getCart, clearCart, cartTotal, Cart } from '@/lib/cart';
@@ -285,7 +284,7 @@ function CheckoutContent() {
         />
         <span className="text-sm text-gray-600">
           {t('agreeStart')}{' '}
-          <NextLink href="#" className="text-coral hover:underline">{t('terms')}</NextLink>
+          <Link href="/obchodne-podmienky" target="_blank" rel="noopener noreferrer" className="text-coral hover:underline">{t('terms')}</Link>
           {' '}{t('agreeEnd')}
         </span>
       </label>

@@ -107,7 +107,8 @@
     "cookies": "Cookies",
     "forOrganizers": "Pre organizátorov",
     "protect": "TicketAll Protect",
-    "protectSubtitle": "Bezpečný nákup lístkov"
+    "protectSubtitle": "Bezpečný nákup lístkov",
+    "terms": "Obchodné podmienky"
   },
   "chat": {
     "title": "Asistent TicketAll",
@@ -2307,5 +2308,11 @@
       "note": "TicketAll Protect sa vzťahuje na zrušenie podujatia organizátorom. Vrátenie lístka pri zmene názoru sa riadi pravidlami konkrétneho organizátora.",
       "backToEvents": "Prehliadať podujatia"
     }
+  },
+  "terms": {
+    "title": "Obchodné podmienky",
+    "version": "Verzia {version}",
+    "effectiveFrom": "účinné od {date}",
+    "pending": "Obchodné podmienky sa práve pripravujú. Ďakujeme za trpezlivosť."
   }
 }

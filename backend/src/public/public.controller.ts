@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Param, Query, Body, HttpCode, Ip, Headers, Res, GoneException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, HttpCode, Ip, Headers, Res, GoneException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { TermsType } from '@prisma/client';
 import { Throttle } from '@nestjs/throttler';
 import { FastifyReply } from 'fastify';
 import { ConfigService } from '@nestjs/config';
@@ -82,6 +83,18 @@ export class PublicController {
   @Get('hero')
   getHero() {
     return this.svc.getHeroSlides();
+  }
+
+  /**
+   * Aktívne platformové obchodné podmienky pre verejnú stránku (krok 42).
+   * Len na čítanie, bez autentifikácie. Vracia null, keď znenie ešte nie je vložené.
+   */
+  @Get('terms/:type')
+  getTerms(@Param('type') type: string) {
+    if (type !== TermsType.BUYER_PURCHASE && type !== TermsType.ORGANIZER_REGISTRATION) {
+      throw new BadRequestException('Neplatný typ podmienok.');
+    }
+    return this.svc.getActivePlatformTerms(type);
   }
 
   @Get('shows')
